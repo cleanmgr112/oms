@@ -1,0 +1,210 @@
+﻿@model OMS.Model.Customer.CustomerModel
+@{
+    ViewData["Title"] = "Add";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="portlet light form-fit bordered">
+        <div class="portlet-title">
+            <div class="caption">
+                <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">添加客户</font></font></span>
+            </div>
+            <div class="x-nav">
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                    <i class="layui-icon">&#xe65c;</i>
+                </a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="center-block" style="width:600px;">
+                <form id="AddCustomerForm" class="form-horizontal">
+                    @*action="/Customer/Add" method="post"*@
+                    @Html.AntiForgeryToken()
+                    <div class="form-group vgroup">
+                        <label class="col-md-3 control-label">客户名称<span class="required" aria-required="true">*</span></label>
+                        <div class="col-md-9">
+                            <input class="form-control vinput" type="type" name="Name" id="Name" value="" placeholder="请输入客户名称" required />
+                        </div>
+                    </div>
+                    <div class="form-group vgroup">
+                        <label class="col-md-3 control-label">联系人姓名<span class="required" aria-required="true">*</span></label>
+                        <div class="col-md-9">
+                            <input class="form-control vinput" type="text" name="Contact" id="Contact" value="" placeholder="请输入联系人姓名（如无则填写客户名称）" required />
+                        </div>
+                    </div>
+                    <div class="form-group vgroup">
+                        <label class="col-md-3 control-label">客户类型<span class="required" aria-required="true">*</span></label>
+                        <div class="col-md-9">
+                            @Html.DropDownList("CustomerTypeId", ViewBag.CustomerType as SelectList, "请选择", new { @class = "form-control vinput", required = true })
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">联系电话</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="tel" name="Mobile" id="Mobile" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group vgroup">
+                        <label class="col-md-3 control-label">邮箱</label>
+                        <div class="col-md-9 vinput">
+                            <input class="form-control" type="email" name="Email" id="Email" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">地址</label>
+                        <div class="col-md-9">
+                            <input id="Address" type="text" name="Address" value="" hidden />
+                            <div id="Shengshiqu" class="btn-group" data-toggle="distpicker">
+                                <select class="btn btn-default"></select>
+                                <select class="btn btn-default"></select>
+                                <select class="btn btn-default"></select>
+                            </div>
+                            <input class="form-control" type="text" name="xiangxi" id="xiangxi" value="" placeholder="详细地址" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">描述</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" name="Mark" id="Mark" value="" placeholder="" />
+                        </div>
+                    </div>
+                    @*<div class="form-group vgroup">
+                            <label class="col-md-3 control-label">价格类型<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-9">
+                                @Html.DropDownList("PriceTypeId", ViewBag.PriceType as SelectList, "请选择", new { @class = "form-control vinput", required = true })
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="col-md-3 control-label">折扣<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-9">
+                                <input class="form-control vinput" type="number" name="DisCount" step="0.01" id="DisCount" min="0" max="9.99" required />
+                            </div>
+                        </div>*@
+                    <div class="form-group vgroup">
+                        <label class="col-md-3 control-label">电子发票接收邮箱</label>
+                        <div class="col-md-9">
+                            <input class="form-control vinput" type="email" name="CustomerEmail" id="CustomerEmail" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">发票抬头</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" name="Title" id="Title" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">纳税人识别码</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" name="TaxpayerId" id="TaxpayerId" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">注册地址</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" name="RegisterAddress" id="RegisterAddress" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">注册电话</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="tel" name="RegisterTel" id="RegisterTel" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">开户银行</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" name="BankOfDeposit" id="BankOfDeposit" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">银行帐号</label>
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" name="BankAccount" id="BankAccount" value="" placeholder="" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-9">
+                            @*<button type="submit" class="btn green" id="subBtn" name="subBtn"></button>*@
+                            <input class="btn green" type="submit" value="提交" id="subBtn" name="subBtn" />
+                        </div>
+                    </div>
+                </form>
+
+
+                <!--Modal Start-->
+                <!-- loading Modal -->
+                <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+                    <div class="modal-dialog modal-sm" style="top:40%;">
+                        <div class="loader">
+                            <svg class="circular" viewBox="25 25 50 50">
+                                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+                            </svg>
+                        </div>
+                        <div id="loaderText">
+                            正在加载请稍后......
+                        </div>
+                    </div>
+                </div>
+                <!--Modal End-->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/distpicker/distpicker.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#AddCustomerForm").$validate();
+        })
+        /*表单提交*/
+        var submitForm = function () {
+            var address = "";
+            $('#Shengshiqu').children('select').each(function () {
+                address += $(this).val() + " ";
+            });
+            $("#subBtn").attr("disabled", true);
+            var xx = $("#xiangxi").val();
+            if (address != "" && xx != "") {
+                $("#Address").val(address + xx);
+            } else if (address.trim() != "" && xx.trim() == "") {
+                alertError("请填入正确的详细地址！");
+                $("#subBtn").attr("disabled", false);
+                return false;
+            }
+            if (address.trim().length == 0 && xx.trim().length != 0) {
+                alertError("请选择正确的地址！");
+                $("#subBtn").attr("disabled", false);
+                return false;
+            }
+            $("#loading").modal("show");
+            $.ajax({
+                url: "/Customer/Add",
+                data: $("#AddCustomerForm").serialize(),
+                type: "post",
+                success: function (data) {
+                    $("#loading").modal("hide");
+                    if (data.isSucc) {
+                        alertSuccess("添加成功！");
+                        setTimeout(function () { window.location.href = "/Customer/" }, 1000);
+                    } else {
+                        alertError(data.msg);
+                    }
+                    $("#subBtn").attr("disabled", false);
+                },
+                error: function () {
+                    $("#loading").modal("hide");
+                    alertError("添加失败！请查看是否有同名客户或者填写信息不全");
+                    $("#subBtn").attr("disabled", false);
+                }
+            });
+        }
+    </script>
+}

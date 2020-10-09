@@ -1,0 +1,256 @@
+﻿@using OMS.Data.Domain.Permissions
+@{
+    ViewData["Title"] = "角色管理";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+
+
+}
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/media/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Buttons/css/buttons.bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Select/css/select.bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Editor-1.7.2/css/editor.bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .roleModal {
+            width: 1024px;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Metronic//assets//global/plugins/DataTables-1.10.15/media/js/jquery.dataTables.min.js"></script>
+    <script src="~/Metronic//assets//global/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Buttons/js/dataTables.buttons.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Buttons/js/buttons.bootstrap.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Select/js/dataTables.select.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/editor/js/dataTables.editor.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/editor//js/editor.bootstrap.min.js"></script>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the role-tables
+
+        $(document).ready(function () {
+            editor = new $.fn.dataTable.Editor({
+                ajax: {
+                    create: {
+                        type: 'POST',
+                        url: '/Role/AddRole'
+                    },
+                    edit: {
+                        type: 'POST',
+                        url: '/Role/UpdateRole'
+                    },
+                    remove: {
+                        type: 'POST',
+                        url: '/Role/DeleteRoles'
+                    }
+                },
+                table: "#role-table",
+                idSrc: 'id',
+                fields: [{
+                    label: "名称:",
+                    name: "name",
+                    multiEditable: false
+                }, {
+                    label: "英文控制码:",
+                    name: "code",
+                    multiEditable: false
+                }, {
+                    label: "状态:",
+                    name: "state",
+                    type: "radio",
+                    multiEditable: false,
+                    options: [
+                        { label: "启用", value: 1 },
+                        { label: "停用", value: 0 }
+                    ],
+                    def: 1
+                }, {
+                    label: "备注:",
+                    name: "remark",
+                    type: "textarea",
+                    multiEditable: false
+                }],
+                i18n: {
+                    create: {
+                        button: "创建",
+                        title: "创建新角色",
+                        submit: "创建"
+                    },
+                    edit: {
+                        button: "编辑",
+                        title: "编辑角色信息",
+                        submit: "更新"
+                    },
+                    remove: {
+                        button: "删除",
+                        title: "删除角色",
+                        submit: "删除",
+                        confirm: {
+                            _: "是否删除被选中的 %d 个角色?",
+                            1: "是否删除被选中的 1 个角色?"
+                        }
+                    },
+                    error: {
+                        system: "发生错误，操作失败了！"
+                    },
+                    datetime: {
+                        months: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+                        weekdays: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期天']
+                    }
+                }
+            });
+
+            //表单验证
+            editor.on('preSubmit', function (e, o, action) {
+                if (action !== 'remove') {
+                    var Name = this.field('name');
+
+                    if (!Name.isMultiValue()) {
+                        if (!Name.val()) {
+                            Name.error('* 角色名称是必须的');
+                        }
+                        if (Name.val().length >= 50) {
+                            Name.error('* 请保持在50个字符以下');
+                        }
+                    }
+                    var Code = this.field('code');
+                    if (!Code.isMultiValue()) {
+                        if (!Code.val()) {
+                            Code.error("* 角色英文控制码是必须的");
+                        }
+                        if (Code.val().length > 50) {
+                            Code.error("* 请保持在50个字符以下");
+                        }
+                    }
+
+                    if (this.inError()) {
+                        return false;
+                    }
+                }
+            });
+
+            var table = $('#role-table').DataTable({
+                dom: "Bfrtip",
+                ajax: {
+                    "url": "/Role/GetRoles",
+                    "type": "POST",
+                    "dataSrc": "data",
+                    //"data": { pageIndex: 1, pageSize: 10 }
+                },
+                columns: [
+                    {
+                        data: null,
+                        defaultContent: '',
+                        className: 'select-checkbox',
+                        orderable: false
+                    },
+                    { data: "name" },
+                    { data: "code" },
+                    {
+                        data: function (val) {
+                            if (val.state == "1") {
+                                return "正常";
+                            } else {
+                                return "停用";
+                            }
+                        }
+                    },
+                    { data: "createdTime" },
+                    { data: "remark" },
+                    {
+                        "data": null,
+                        "defaultContent": "<a>编辑权限</a>"
+                    }
+                ],
+                oLanguage: {//语言设置
+                    "sLengthMenu": "每页显示 _MENU_ 条记录",
+                    "sZeroRecords": "没有检索到数据",
+                    "sInfo": "当前显示 _START_ 到 _END_ 条，共 _TOTAL_ 条记录",
+                    "sInfoEmtpy": "没有数据",
+                    "sProcessing": '<i class="fa fa-coffee"></i> 正在加载数据...',
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "前一页",
+                        "sNext": "后一页",
+                        "sLast": "尾页"
+                    }
+                },
+                select: true,
+                buttons: [
+                    { extend: "create", editor: editor },
+                    { extend: "edit", editor: editor },
+                    { extend: "remove", editor: editor }
+                ]
+            });
+
+            $('#role-table tbody').on('click', 'a', function () {
+                var data = table.row($(this).parents('tr')).data();
+                //权限增删改查
+                window.location.href = "/Permission/Role/" + data.id
+                //$('#RoleModal').modal();
+                console.log(data.id);
+            });
+
+        });
+    </script>
+
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light form-fit bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-social-dribbble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">角色管理</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <table id="role-table" class="display" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>名称</th>
+                            <th>code</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>备注</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th></th>
+                            <th>名称</th>
+                            <th>code</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>备注</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <!-- END PORTLET-->
+    </div>
+</div>
+
+
+
+
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="RoleModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog roleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title font-blue-sharp" id="myModalLabel">权限编辑</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row fontawesome-icon-list" id="role-content"></div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+

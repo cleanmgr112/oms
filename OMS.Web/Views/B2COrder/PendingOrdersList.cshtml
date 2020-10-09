@@ -1,0 +1,679 @@
+﻿@model IEnumerable<OMS.Data.Domain.Order>
+@{
+    ViewData["Title"] = "B2C待处理订单列表";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/DataTables-1.10.15/media/css/dataTables.bootstrap.css" rel="stylesheet" />
+    <link href="~/Style/loading.css" rel="stylesheet" />
+    <style type="text/css">
+        .pagehead {
+            margin-bottom: 10px;
+            padding: 20px 0 0 0;
+        }
+
+        th, td {
+            max-width: 400px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">B2C待处理订单列表</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+
+
+
+                    <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportOrderDetail" style="float:right;margin-right:50px;">导出订单明细</a>
+                    <iframe id="ifile" style="display:none"></iframe>
+                    <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportOrder" style="float:right;margin-right:20px;">导出订单</a>
+                    <div class="input-group" style="width:200px;margin-right:20px;float:right;">
+                        <span class="input-group-addon">导出格式</span>
+                        <select id="exportType" name="exportType" class="form-control">
+                            @*<option value="">请选择</option>*@
+                            <option value=".xls">.xls</option>
+                            <option value=".csv">.csv</option>
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="portlet-body">
+                    <div class="row">
+                        <!--用于列表页确定当前分页的index-->
+                        <input type="number" id="pageNumber" value="1" hidden />
+                    </div>
+                    <div class="row pagehead ">
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">店铺</span>
+                                @Html.DropDownList("shopId", ViewBag.Platforms as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        @*<div class="col-md-2">
+                <div class="input-group">
+                    <span class="input-group-addon">仓库</span>
+                    @Html.DropDownList("WareHouseId", ViewBag.WareHouse as SelectList, "请选择", new { @class = "form-control" })
+                </div>
+            </div>*@
+                        @*<div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-addon">时间</span>
+                    <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="" autocomplete="off" />
+                    <span class="input-group-addon">~</span>
+                    <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="" autocomplete="off" />
+                </div>
+            </div>*@
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">状态</span>
+                                <select id="orderState" name="orderState" class="form-control">
+                                    <option>请选择</option>
+                                    @*<option value="5">未付款</option>
+                                      <option value="6">已付款</option>
+                                      <option value="8">未发货</option>*@
+                                    @*<option value="9">已发货</option>*@
+                                    @*<option value="10">无效</option>*@
+                                    <option value="14">未确认</option>
+                                    <option value="15">未上传</option>
+                                    <option value="19">缺货</option>
+                                    <option value="7">已确认</option>
+                                    <option value="72">72小时未发货</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">锁定状态</span>
+                                <select class="form-control" id="IsLocked">
+                                    <option>请选择</option>
+                                    <option value="False">否</option>
+                                    <option value="True">是</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-addon">关键词</span>
+                                <input type="text" class="form-control" id="SearchStr" value="" placeholder="单号，收货人，运单号，手机，备注，地址" />
+                                <div class="input-group-btn">
+                                    <input type="button" class="btn btn-default red" name="BtnSearchStr" value="搜索" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-bottom:10px;">
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">仓库</span>
+                                @Html.DropDownList("WareHouseId", ViewBag.WareHouse as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">时间</span>
+                                <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="" autocomplete="off" />
+                                <span class="input-group-addon">~</span>
+                                <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="" autocomplete="off" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row margin-bottom-15">
+                        <div class="col-md-12">
+                            <button id="unLockLackBtn" type="button" class="btn btn-default red">缺货解除</button>
+                            &nbsp;&nbsp;
+                            <button id="confirmOrdersBtn" type="button" class="btn btn-default red">批量确认</button>
+                            &nbsp;&nbsp;
+                            <button id="batchUploadBtn" type="button" class="btn btn-default red">批量上传</button>
+                            &nbsp;&nbsp;
+                            <button id="batchChangeWhBtn" type="button" class="btn btn-default red">批量修改仓库</button>
+                            &nbsp;&nbsp;
+                            <button id="batchChangeDeliverBtn" type="button" class="btn btn-default red">批量修改快递</button>
+                        </div>
+                    </div>
+                    <!--DataTable Begin-->
+                    <div class="">
+                        <table id="B2COrderTable" class="table table-striped table-bordered table-hover" cellspacing="0" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>标注</th>
+                                    <th>交易创建时间</th>
+                                    <th><input type="checkbox" id="selectAllOrder" class="">订单号</th>
+                                    <th>店铺</th>
+                                    <th>收货人</th>
+                                    <th>手机号码</th>
+                                    <th>订单总价</th>
+                                    <th>平台订单号</th>
+                                    <th>快递类型</th>
+                                    <th>发货仓库</th>
+                                    <th>物流单号</th>
+                                    <th>需要纸袋</th>
+                                    <th>订单状态</th>
+                                    <th>地址</th>
+                                    <th>订单备注</th>
+                                    <th>客户留言</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        @*<ul id="pageLimit" style="float:right"></ul>*@
+                    </div>
+                    <!--DataTable End-->
+                    <!--Model begin-->
+                    <div class="modal fade" id="deliverModal" tabindex="-1" role="dialog" style="height:230px;">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title">快递方式</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-horizontal">
+                                        <div class="form-group">
+                                            <span class="col-md-4 control-label">选择新的快递方式</span>
+                                            <div class="col-md-5">
+                                                @Html.DropDownList("deliverType", ViewBag.Deliver as SelectList, new { @class = "form-control" })
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button type="button" class="btn btn-default red" id="subChangeDeliverBtn">确认修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="changeWareHouseModal" class="modal fade" style="height:230px;">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title">仓库</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-horizontal">
+                                        <div class="form-group">
+                                            <span class="col-md-4 control-label">选择新的仓库</span>
+                                            <div class="col-md-5">
+                                                @Html.DropDownList("wareHouseId", ViewBag.WareHouse as SelectList, new { @class = "form-control" })
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> 
+                                <div class="modal-footer">
+                                    <button class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button class="btn btn-default red" id="subChangeWhBtn">确认修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--Model end-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/media/js/jquery.dataTables.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/extensions/Buttons/js/dataTables.buttons.min.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/extensions/Buttons/js/buttons.bootstrap.min.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/extensions/Select/js/dataTables.select.min.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/extensions/editor/js/dataTables.editor.min.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/extensions/editor//js/editor.bootstrap.min.js"></script>
+    <script src="~/PlugIn/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.js"></script>
+    <script type="text/javascript">
+        var table = {};
+        $(function () {
+            //初始化数据
+            SerachB2COrders();
+            //搜索
+            $("input[name='BtnSearchStr']").click(function () {
+                table.destroy();
+                SerachB2COrders();
+            })
+            //监听模态框状态
+            $("#deliverModal").on("hidden.bs.modal", function (e) {
+                $("#batchChangeDeliverBtn").attr("disabled", false);
+            });
+            $("#changeWareHouseModal").on("hidden.bs.modal", function (e) {
+                $("#batchChangeWhBtn").attr("disabled", false);
+            })
+
+        });
+        //获取B2C订单列表
+        function SerachB2COrders() {
+            //查询参数
+            var data = $.trim($("#SearchStr").val());
+            var shopId = $("#shopId option:selected").val();
+            //var payState = $("#payState option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            var orderState = $("#orderState option:selected").val();
+            var isLocked = $("#IsLocked option:selected").val();
+            if (isNaN(orderState)) {
+                orderState = 15;
+                //$("#orderState").val(15);
+            }
+            if (orderState == 72) {
+                orderState = null;
+                endTime = new Date().getFullYear() + "/" + (new Date().getMonth() + 1) + "/" + (new Date().getDate() - 2);
+            }
+            var wareHouseId = $("#WareHouseId option:selected").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+
+            table = $('#B2COrderTable').DataTable({
+                //dom: "Bfrtip",
+                //"processing": true,
+                "serverSide": true,
+                scrollX: true,
+                scrollY: 600,
+                scrollCollapse: true,
+                //paging: false,
+                ordering: false,
+                retrieve: true,
+                destroy: true,
+                //select: true,
+                //"aoColumnDefs": [{ "bSortable": false, "aTargets": [0, 1, 2, 3, 4, 5, 7, 8, 9, 11, 14, 16, 18, 19, 21, 22, 23, 24] }],
+                //order: [[12, "desc"]],
+                bFilter: false, // 去掉搜索
+                lengthMenu: [10, 15, 30, 45, 60, 100],
+                ajax: {
+                    "url": "/B2COrder/GetB2COrdersTable",
+                    "type": "POST",
+                    "dataSrc": "data",
+                    "data": {
+                        searchStr: data, shopId: shopId, startTime: startTime, endTime: endTime, orderState: orderState, wareHouseId: wareHouseId, isLocked: isLocked, isvalid: true
+                    }
+                },
+                columns: [
+                    {
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            var bzhtml = "";
+                            if (row.historyOrders)
+                                bzhtml += "<span><img src='/Image/histroy.png'/ title='查看历史交易' onclick='openHistoryOrderWindow(" + row.userName + ")'></span>";
+                            if (row.invoiceInfo)
+                                bzhtml += "<span><img src='/Image/invoice.png'/ title='发票'></span>";
+                            if (row.refundOrder)
+                                bzhtml += "<span><img src='/Image/refund.png'/ title='该订单生成退单[" + row.refundNum + "]' style='width:22px;'></span>";
+                            if (row.lackStock)
+                                bzhtml += "<span><img src='/Image/no_goods.gif'/ title='缺货'></span>";
+                            if (row.chaiFen)
+                                bzhtml += "<span><img src='/Image/chaifen.png'/ title='该订单由[" + row.orgionSerialNumber + "]拆分出的订单'></span>"
+                            if (row.heBing)
+                                bzhtml += "<span><img src='/Image/add.png'/ title='查看合并订单列表' onclick='openHeBingOrderWindow(" + row.id + ")'></span>";
+                            if (row.isLocked)
+                                bzhtml += "<span><img src='/Image/lock.png'/ title='订单锁定'></span>";
+                            return bzhtml
+                        }
+                    },
+                    { data: "createdTime" },
+                    {
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return "<input type='checkbox' value='" + row.id + "'><a onclick='B2COrderDetail(\"" + row.serialNumber + "\"," + row.id + ")' style='color:blue;'>" + row.serialNumber + "</a>"
+                        }
+                    },
+                    { data: "shopName" },
+                    {
+                        data: "customerName",
+                        render: function (data, type, row, meta) {
+                            return data.replace(/(\s{1})^/, '$1*');
+                        }
+                    },
+                    {
+                        data: "customerPhone",
+                        render: function (data, type, row, meta) {
+                            return data.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2");
+                        }
+                    },
+                    { data: "sumPrice" },
+                    { data: "pSerialNumber" },
+                    { data: "deliveryName" },
+                    { data: "wareHouseName" },
+                    { data: "deliveryNumber" },
+                    {
+                        data: "isNeedPaperBag",
+                        render: function (data, type, row, meta) {
+                            return data == true ? "需要" : "不需要";
+                        }
+                    },
+                    { data: "stateName" },
+                    { data: "addressDetail" },
+                    { data: "adminMark" },
+                    { data: "customerMark" }
+                ],
+                oLanguage: zh_CN,
+                drawCallback: function () {
+                    $("#gotoBtn").click(() => {
+                        var pageIndex = parseInt($("#redirect").val());
+                        if (!isNaN($("#redirect").val())) {
+                            var ddd = 0;
+                            $("#gotoBtn").parents("ul[class='pagination']").children("li").children("a").each(function () {
+                                if (!isNaN($(this).html()) && parseInt($(this).html()) > ddd) {
+                                    ddd = parseInt($(this).html());
+                                }
+                            });
+                            if (pageIndex > 0 && pageIndex <= ddd) {
+                                table.page(pageIndex - 1).draw(false);
+                            } else {
+                                alertError("请输入正确页数！")
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        //初始化列表
+        function InitB2COrderTable() {
+            table.destroy();
+            SerachB2COrders();
+        }
+        //查看订单详情
+        function B2COrderDetail(orderSerialNumber,id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == orderSerialNumber) {
+                    parent.$tap.tabChange(orderSerialNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/B2COrder/B2COrderDetail?id=" + id;
+            parent.$tap.tabAdd("B2C订单信息", url, orderSerialNumber); // 新开一个tap页面
+            parent.$tap.tabChange(orderSerialNumber);
+            event.stopPropagation();
+        }
+        //全选订单
+        $("#selectAllOrder").change(function () {
+            if ($("#selectAllOrder").prop("checked") == true) {
+                $("#B2COrderTable tbody input:checkbox").each(function () {
+                    //$(this).attr("checked", "true");
+                    this.checked = true;
+                })
+            }
+            else if ($("#selectAllOrder").prop("checked") == false) {
+                $("#B2COrderTable tbody input:checkbox").each(function () {
+                    this.checked = false;
+                    //this.removeAttribute("checked");
+                })
+            }
+        })
+        //缺货解除
+        $("#unLockLackBtn").click(function () {
+            var orderList = new Array();
+            $("#unLockLackBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            })
+            if (orderList.length == 0) {
+                alertError("请选择需要解除缺货的订单！");
+                $("#unLockLackBtn").attr("disabled", false);
+                return false;
+            }
+            $.ajax({
+                url: "/B2COrder/UnLockLackOrder",
+                type: "post",
+                data: { orderIdList: orderList },
+                success: function (data) {
+                    $("#unLockLackBtn").attr("disabled", false);
+                    if (data.isSucc) {
+                        alertSuccess("解除缺货成功！");
+                        setTimeout(InitB2COrderTable(), 1800);
+                    } else {
+                        alertError(data.msg);
+                        setTimeout(InitB2COrderTable(), 1000);
+                    }
+                },
+                error: function (data) {
+                    $("#unLockLackBtn").attr("disabled", false);
+                    alertError("解锁失败！");
+                }
+            })
+        })
+        //批量确认
+        $("#confirmOrdersBtn").click(function () {
+            var orderList = new Array();
+            $("#confirmOrdersBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            });
+            if (orderList.length == 0) {
+                alertError("请选择需要批量确认的订单！");
+                $("#confirmOrdersBtn").attr("disabled", false);
+                return false;
+            }
+            $.ajax({
+                url: "/B2COrder/BatchConfirmOrders",
+                data: { orderList: orderList },
+                type: "post",
+                success: function (data) {
+                    if (data.isSucc) {
+                        alertSuccess("批量确认成功！");
+                        $("#confirmOrdersBtn").attr("disabled", false);
+                        setTimeout(InitB2COrderTable(), 1000);
+                    } else {
+                        alertError(data.msg);
+                        $("#confirmOrdersBtn").attr("disabled", false);
+                        setTimeout(InitB2COrderTable(), 1000);
+                    }
+                },
+                error: function (data) {
+                    alertError("批量确认失败！");
+                    $("#confirmOrdersBtn").attr("disabled", false);
+                }
+            });
+        })
+        //批量上传
+        $("#batchUploadBtn").click(function () {
+            var orderList = new Array();
+            $("#batchUploadBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            });
+            if (orderList.length == 0) {
+                alertError("请选择需要批量确认的订单！");
+                $("#batchUploadBtn").attr("disabled", false);
+                return false;
+            }
+            $.ajax({
+                url: "/B2COrder/BatchUploadOrders",
+                data: { orderList: orderList },
+                type: "post",
+                success: function (data) {
+                    $("#batchUploadBtn").attr("disabled", false);
+                    if (data.isSucc) {
+                        alertSuccess("批量上传成功！");
+                        setTimeout(InitB2COrderTable(), 1000);
+                    } else {
+                        alertError(data.msg);
+                        setTimeout(InitB2COrderTable(), 1000);
+                    }
+                },
+                error: function (data) {
+                    $("#batchUploadBtn").attr("disabled", false);
+                    alertError("批量上传错误！");
+                }
+            })
+        })
+        //批量修改快递
+        $("#batchChangeDeliverBtn").click(function () {
+            var orderList = new Array();
+            $("#batchChangeDeliverBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            });
+            if (orderList.length == 0) {
+                alertError("请选择需要批量修改快递的订单！");
+                $("#batchChangeDeliverBtn").attr("disabled", false);
+                return false;
+            }
+            $("#deliverModal").modal();
+        });
+        $("#subChangeDeliverBtn").click(function () {
+            var orderList = new Array();
+            $("#subChangeDeliverBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            });
+            if (orderList.length == 0) {
+                alertError("请选择需要批量修改快递的订单！");
+                $("#subChangeDeliverBtn").attr("disabled", false);
+                return false;
+            }
+            var deliver = $("#deliverType option:selected").val();
+            $.ajax({
+                url: "/B2COrder/BatchChangeDeliver",
+                data: { orderList: orderList, deliverType: deliver },
+                type: "post",
+                success: function (data) {
+                    $("#subChangeDeliverBtn").attr("disabled", false);
+                    $("#batchChangeDeliverBtn").attr("disabled", false);
+                    if (data.isSucc) {
+                        alertSuccess("修改成功！");
+                        $("#deliverModal").modal('hide');
+                        setTimeout(InitB2COrderTable(), 1000);
+                    } else {
+                        alertError(data.msg);
+                        $("#deliverModal").modal('hide');
+                        setTimeout(InitB2COrderTable(), 1000);
+                    }
+                },
+                error: function (data) {
+                    alertError("批量修改快递失败！");
+                    $("#subChangeDeliverBtn").attr("disabled", false);
+                }
+            })
+        });
+        //批量修改仓库
+        $("#batchChangeWhBtn").click(function () {
+            var orderList = new Array();
+            $("#batchChangeWhBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            });
+            if (orderList.length == 0) {
+                alertError("请选择需要批量修改仓库的订单！");
+                $("#batchChangeWhBtn").attr("disabled", false);
+                return false;
+            }
+            $("#changeWareHouseModal").modal();
+        });
+        $("#subChangeWhBtn").click(function () {
+            var orderList = new Array();
+            $("#subChangeWhBtn").attr("disabled", true);
+            $("#B2COrderTable tbody input:checkbox:checked").each(function () {
+                orderList.push(parseInt($(this).val()));
+            });
+            if (orderList.length == 0) {
+                alertError("请选择需要批量修改仓库的订单！");
+                $("#subChangeWhBtn").attr("disabled", false);
+                return false;
+            }
+            var wareHouseId = $("#wareHouseId option:selected").val();
+            $.ajax({
+                url: "/B2COrder/BatchChangeWareHouse",
+                data: { orderList: orderList, wareHouseId: wareHouseId },
+                type: "post",
+                success: function (data) {
+                    $("#subChangeWhBtn").attr("disabled", false);
+                    if (data.isSucc) {
+                        alertSuccess("批量修改成功！");
+                        setTimeout(InitB2COrderTable(), 1000);
+                        $("#changeWareHouseModal").modal('hide');
+                    } else {
+                        alertError(data.msg);
+                        setTimeout(InitB2COrderTable(), 1000);
+                        $("#changeWareHouseModal").modal('hide');
+                    }
+                },
+                error: function (data) {
+                    alertError("批量修改仓库错误！");
+                    $("#subChangeWhBtn").attr("disabled", false);
+                }
+            })
+        });
+        //时间显示时分秒
+        $('.form_datetime').datetimepicker({
+            /* minView: "month",  *///选择日期后，不会再跳转去选择时分秒
+            language: 'zh-CN',
+            dateFormat: 'yyyy-mm-dd',//日期显示格式
+            timeFormat: 'HH:mm:ss',//时间显示格式
+            todayBtn: 1,
+            autoclose: 1,
+            minView: 0,  //0表示可以选择小时、分钟   1只可以选择小时
+            minuteStep: 1,//分钟间隔1分钟
+        });
+        //导出订单
+        $('#exportOrder,#exportOrderDetail').click(function () {
+            var clickButtonId = this.id;
+
+            var exportType = $('#exportType option:selected').val();
+            if (exportType == null || exportType == '') {
+                alertError("请选择导出格式！");
+                return false;
+            }
+
+            var data = $("#SearchStr").val();
+            var shopId = $("#shopId option:selected").val();
+            //var payState = $("#payState option:selected").val();
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            var orderState = $("#orderState option:selected").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            //if (endTime != "") {
+            //    endTime = new Date(endTime);
+            //    endTime = (endTime.setDate(endTime.getDate() + 1));
+            //    endTime = new Date(endTime);
+            //    var year = endTime.getFullYear();
+            //    var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+            //    var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+            //    endTime = year + "-" + month + "-" + date;
+            //}
+
+            var valueStr = "?" + "startTime=" + startTime + "&endTime=" + endTime + "&shopId=" + shopId + "&orderState=" + orderState + "&search=" + data + "&exportType=" + exportType;
+
+            var dom = document.getElementById('ifile');
+            if (clickButtonId == 'exportOrder') {
+                dom.src = "/B2COrder/ExportOrder" + valueStr + "&isOrderDetail=false&isRefundOrder=false";
+            }
+            else if (clickButtonId == 'exportOrderDetail') {
+                dom.src = "/B2COrder/ExportOrder" + valueStr + "&isOrderDetail=true&isRefundOrder=false";
+            }
+        })
+
+        var openHistoryOrderWindow = function (userName) {
+            var strWindowFeatures = "width=1000,height=500,menubar=yes,location=yes,resizable=yes,scrollbars=true,status=true";
+            window.open("/B2COrder/CustomerHistoryOrderList?userName=" + userName, "B_page", strWindowFeatures);
+        }
+
+        var openHeBingOrderWindow = function (id) {
+            var strWindowFeatures = "width=1000,height=500,menubar=yes,location=yes,resizable=yes,scrollbars=true,status=true";
+            window.open("/B2COrder/HeBingOrderList?orderId=" + id, "B_page", strWindowFeatures);
+        }
+    </script>
+}

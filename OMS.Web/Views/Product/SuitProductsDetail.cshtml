@@ -1,0 +1,404 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model OMS.Model.Products.SuitProductsModel
+@{
+    ViewData["Title"] = "套装商品";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">套装商品详情</font></font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">套装名：</label>
+                                <div class="col-md-5">
+                                    <input type="text" id="suitProId" name="suitProId" value="@Model.Id" hidden/>
+                                    <input type="text" class="form-control" id="suitProName" name="suitProName" value="@Model.Name" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">套装编码：</label>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" id="suitProCode" name="suitProCode" value="@Model.Code" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label"></label>
+                                <div class="col-md-5">
+                                    <input type="button" class="btn btn-circle blue" id="changeProBtn" name="addProBtn" value="修&nbsp;&nbsp;改" />
+                                    &nbsp;&nbsp;
+                                    <input type="button" class="btn btn-circle red" id="addProBtn" name="addProBtn" value="添加商品" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>销售商品名称</th>
+                                    <th>销售商品编码</th>
+                                    <th>数量</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.SuitProductsDetail)
+                                {
+                                    <tr>
+                                        <td>@item.ProductName</td>
+                                        <td>@item.ProductCode</td>
+                                        <td>@item.Quantity</td>
+                                        <td>
+                                            <input type="button" class="btn btn-circle red" onclick="changePro(@item.Id,'@item.ProductName','@item.ProductCode',@item.Quantity)" value="修改商品" />
+                                            <input type="button" class="btn btn-circle red" onclick="deletePro(@item.Id)" value="删&nbsp;&nbsp;除" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!--Modal Start-->
+                <div class="modal fade" id="addProModal">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4>添加商品</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row margin-bottom-15">
+                                    <div class="col-md-8">
+                                        <div class="input-group">
+                                            <span class="input-group-addon">关键词</span>
+                                            <input type="text" class="form-control" id="searchStr" name="searchStr" placeholder="商品名称/商品编码" />
+                                            <div class="input-group-btn">
+                                                <input type="button" id="searchBtn" name="searchBtn" class="btn btn-default red" value="搜&nbsp;&nbsp;索" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <table class="table table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:40%;">商品名称</th>
+                                                    <th style="width:40%;">商品编码</th>
+                                                    <th style="width:10%;">操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <!--跳转页面-->
+                                        <div id="gotoPage" class=" pagination" style="float:right;width:186px;">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-addon" style="line-height:21px;background-color:white;">跳转到</span>
+                                                <input type="text" id="redirect" name="redirect" class="form-control" style="width:50px;height:33px;" value="" />
+                                                <span class="input-group-addon goto-page" style="line-height:21px;background-color:white;">页</span>
+                                                <div class="input-group-btn goto-page">
+                                                    <button class="btn btn-default" id="gotoBtn" style="height:33px;">确定</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!--用于列表页确定当前分页的index-->
+                                        <input type="number" id="pageNumber" value="1" hidden />
+                                        <ul id="pageLimit" style="float:right"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <input type="button" data-dismiss="modal" class="btn btn-primary" name="name" value="关&nbsp;&nbsp;闭" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="addProDetailModal" class="modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">商品详情</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label">商品名：</span>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="addProDetailName" name="addProDetailName" value="" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label">商品编码：</span>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="addProDetailCode" name="addProDetailCode" value="" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label">数量：</span>
+                                        <div class="col-md-6">
+                                            <input type="number" min="1" class="form-control" id="addProDetailNum" name="addProDetailNum" value="1" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label"></span>
+                                        <div class="col-md-6">
+                                            <input type="button" id="subProInfoBtn" name="subProInfoBtn" class="btn btn-default red" data-id="" value="添&nbsp;&nbsp;加" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <input type="button" data-dismiss="modal" class="btn btn-primary" name="name" value="关&nbsp;&nbsp;闭" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="updateProModal">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">商品详情</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label">商品名：</span>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="chProDetailName" name="chProDetailName" value="" readonly/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label">商品编码：</span>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="chProDetailCode" name="chProDetailCode" value="" readonly/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label">数量：</span>
+                                        <div class="col-md-6">
+                                            <input type="number" min="1" class="form-control" id="chProDetailNum" name="chProDetailNum" value="1" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <span class="col-md-3 control-label"></span>
+                                        <div class="col-md-6">
+                                            <input type="button" id="updateProInfoBtn" name="updateProInfoBtn" class="btn btn-default red" data-id="" value="修&nbsp;&nbsp;改" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <input type="button" data-dismiss="modal" class="btn btn-primary" name="name" value="关&nbsp;&nbsp;闭" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Modal End-->
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            var orderId = $("#suitProId").val();
+
+            /*添加商品*/
+            $("#addProBtn").click(function () {
+                showSaleProducts();
+                $("#addProModal").modal();
+            })
+
+
+            /*搜索商品*/
+            $("#searchBtn").click(function () {
+                showSaleProducts();
+            });
+
+
+            /*添加商品*/
+            $("#subProInfoBtn").click(function () {
+                var saleProId = $(this).attr("data-id");
+                var num = $("#addProDetailNum").val();
+                if (saleProId == null || saleProId == "") {
+                    alertError("添加商品时发生错误，无法获取到销售商品ID");
+                    return false;
+                }
+                $.ajax({
+                    url: "/Product/InsertSuitProductsDetail",
+                    data: { SuitProductsId: orderId, SaleProductId: saleProId, Quantity: num },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("添加成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                        } else {
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {
+                        alertError("添加错误！");
+                    }
+
+                });
+            });
+
+
+            /*修改商品*/
+            $("#updateProInfoBtn").click(function () {
+                var id = $(this).attr("data-id");
+                var qty = $("#chProDetailNum").val();
+                if (id == null || id == "") {
+                    alertError("提交时数据错误！");
+                    return false
+                }
+                if (qty <= 0) {
+                    alertError("请输入正确数字！");
+                    return false;
+                }
+                $.ajax({
+                    url: "/Product/UpdateSuitProductsDetail",
+                    data: { suitProDetailId: id, qty: qty, suitProId: orderId },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("修改成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+
+                        } else {
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {
+                        alertError("修改失败！");
+                    }
+                })
+
+            })
+
+
+            /*修改套装信息*/
+            $("#changeProBtn").click(function () {
+                var name = $("#suitProName").val().trim();
+                var code = $("#suitProCode").val().trim();
+                if (name == "" || code == "" || name == null || code == null) {
+                    alertError("请输入正确信息！");
+                    return false;
+                }
+                $("#changeProBtn").attr("disabled", true);
+                $.ajax({
+                    url: "/Product/UpdateSuitProducts",
+                    data: { Id: orderId, Code: code, Name: name },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("修改成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                        } else {
+                            alertError(data.msg);
+                            $("#changeProBtn").attr("disabled", false);
+                        }
+                    },
+                    error: function (data) {
+                        alertError("修改时出现错误！");
+                        $("#changeProBtn").attr("disabled", false);
+                    }
+                })
+
+            });
+        });
+
+        var showSaleProducts = function () {
+            var searchStr = $("#searchStr").val().trim();
+            var pageSize = 10;
+            if ($("#pageNumber").val() == 1) {
+                $("#redirect").val(1)
+            }
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                gotoPage: "gotoPage",
+                url: "/Product/GetAllSaleProducts",
+                data: { searchStr: searchStr, pageSize: pageSize },
+                success: function (data) {
+                    var html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data[i].name + "</td>" +
+                                "<td>" + data[i].code + "</td>" +
+                                "<td>" + "<button type='button' class='btn btn-circle red' onclick='addPro(\"" + data[i].name + "\",\"" + data[i].code + "\"," + data[i].id + ")'>添加</button>" + "</td>" +
+                                "</tr>"
+                        }
+                    }
+                    $("#addProModal table tbody").html(html);
+                }
+            });
+        }
+
+
+        var addPro = function (name, code, id) {
+            $("#addProDetailModal #addProDetailName").val(name);
+            $("#addProDetailModal #addProDetailCode").val(code);
+            $("#addProDetailModal #subProInfoBtn").attr("data-id", id);
+            $("#addProDetailModal").modal();
+        }
+
+        var deletePro = function (id) {
+            isContinue(function () {
+                $.ajax({
+                    url: "/Product/DeleteSuitProductsDetail",
+                    data: { suitProDetailId: id, suitProId: $("#suitProId").val() },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("删除成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                        } else {
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {
+                        alertError("删除错误！");
+                    }
+
+                })
+
+
+            }, null, "确定要删除此商品？");
+        }
+
+        var changePro = function (id, name, code, qty) {
+            $("#updateProModal #chProDetailName").val(name);
+            $("#updateProModal #chProDetailCode").val(code);
+            $("#updateProModal #chProDetailNum").val(qty);
+            $("#updateProModal #updateProInfoBtn").attr("data-id", id);
+            $("#updateProModal").modal();
+        }
+    </script>
+}

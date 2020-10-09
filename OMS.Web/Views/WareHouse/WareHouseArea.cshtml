@@ -1,0 +1,396 @@
+﻿@model List<OMS.Data.Domain.WareHouseArea>
+@using OMS.Data.Domain
+@{
+    ViewData["Title"] = "仓库区域管理";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-home font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">仓库区域管理</font></font></span>
+                </div>
+
+                <div class="text-align-reverse">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a href="#" class="btn green" style="margin-right:50px;" id="addWareHouseArea">添加仓库区域 <i class="fa fa-plus"></i></a>
+                </div>
+            </div>
+            <div class="row"></div>
+            <div class="row page-header" style="margin-bottom:20px;">
+                <div class="col-md-2">
+                    <div class="input-group">
+                        <span class="input-group-addon">区域名称</span>
+                        <input type="text" class="form-control" id="Name" name="name" value="" placeholder="" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group">
+                        <span class="input-group-addon">区域编码</span>
+                        <input type="text" class="form-control" id="AreaCode" name="AreaCode" value="" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <input type="button" class="btn btn-default red" name="BtnSearchStr" id="BtnSearchStr" value="搜索" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @* 详细数据展示 *@
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="portlet light bordered">
+                            <div class="portlet-body">
+                                <div class="dataTables_wrapper no-footer">
+                                    <div id="table-scrollable">
+                                        <table id="wharea-datatable" class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>名称</th>
+                                                    <th>编码</th>
+                                                    <th>首选仓库</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="AddWHAreaModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <div class="modal-title">添加仓库区域</div>
+            </div>
+            <div class="modal-body">
+                <div class="row form-group">
+                    <label class="col-md-3 control-label text-align-reverse">名称</label>
+                    <div class="col-md-9">
+                        <input type="text" id="areaName" name="areaName" class="form-control" value="" autocomplete="off" />
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <label class="col-md-3 control-label text-align-reverse">编码</label>
+                    <div class="col-md-9">
+                        <input type="text" id="areaCode" name="areaCode" class="form-control" value="" autocomplete="off" />
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <label class="col-md-6 control-label text-align-reverse">仓库优先发货排序值：</label>
+                </div>
+
+                @foreach (var item in ViewBag.WareHouses as List<WareHouse>)
+                {
+                    <div class="row form-group">
+                        <label class="col-md-3 control-label text-align-reverse">@item.Name</label>
+                        <div class="col-md-9">
+                            <input type="number" name="wareHouseRanks" data-wareHouseId="@item.Id" class="form-control" value="0" autocomplete="off" />
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    关闭
+                </button>
+                <button type="button" id="SumbitWareHouseArea" class="btn btn-default blue">
+                    提交
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="UpdateWHAreaModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <div class="modal-title">修改仓库区域</div>
+            </div>
+            <div class="modal-body">
+                <div class="row form-group">
+                    <label class="col-md-3 control-label text-align-reverse">名称</label>
+                    <div class="col-md-9">
+                        <input type="text" id="areaNameUp" name="areaNameUp" class="form-control" value="" autocomplete="off" />
+                        <input type="hidden" id="wareHouseAreaId" value="" />
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <label class="col-md-3 control-label text-align-reverse">编码</label>
+                    <div class="col-md-9">
+                        <input type="text" id="areaCodeUp" name="areaCodeUp" class="form-control" value="" autocomplete="off" />
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <label class="col-md-6 control-label text-align-reverse">仓库优先发货排序值：</label>
+                </div>
+
+                @foreach (var item in ViewBag.WareHouses as List<WareHouse>)
+                {
+                    <div class="row form-group">
+                        <label class="col-md-3 control-label text-align-reverse">@item.Name</label>
+                        <div class="col-md-9">
+                            <input type="number" name="wareHouseRanksUp" data-wareHouseId="@item.Id" data-rankId="" class="form-control" value="0" autocomplete="off" />
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    关闭
+                </button>
+                <button type="button" id="UpdateWareHouseArea" class="btn btn-default blue">
+                    提交
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--End 模态框（Modal） -->
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/datatables/datatables.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        //初始化页面内容
+        $(function () {
+
+            $("#addWareHouseArea").click(function () { 
+                $("#AddWHAreaModal").modal();
+            })
+
+            $("#SumbitWareHouseArea").click(function () {
+                var areaName = $("#areaName").val();
+                if (areaName == null || areaName == "") {
+                    alertError("区域名称不能为空！");
+                    return false;
+                }
+                var areaCode = $("#areaCode").val();
+                if (areaCode == null || areaCode == "") {
+                    alertError("区域编码不能为空！");
+                    return false;
+                }
+                var isNull = false;
+                var rankArr = new Array();
+                $("input[name='wareHouseRanks']").each(function () {
+                    if ($(this).val() == null || $(this).val() == "") {
+                        isNull = true;
+                        return false;
+                    };
+
+                    var model = {
+                        wareHouseId: $(this).attr("data-wareHouseId"),
+                        rank: $(this).val()
+                    };
+                    rankArr.push(model);
+                })
+                if (isNull == true) {
+                    alertError("排序值不能为空！");
+                    return false;
+                }
+                $.ajax({
+                    url: '/WareHouse/AddWareHouseArea',
+                    data: { "areaName": areaName, "areaCode": areaCode, "ranksArrs": rankArr },
+                    type: 'POST',
+                    success: function (res) {
+                        if (res.isSucc) {
+                            alertSuccess("添加成功！");
+                            setTimeout(function () { window.location.reload() }, 800);
+                        } else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            })
+
+            GetPageList();
+
+            $("#BtnSearchStr").click(function () {
+                GetPageList();
+            })
+        });
+
+        //获取table的数据
+        function GetPageList() {
+            $("#wharea-datatable").DataTable({
+                searching: false,
+                destroy: true,
+                processing: true,
+                aLengthMenu: [5, 10],
+                deferRender: true,//延迟渲染
+                stripeClasses: ["odd", "even"],
+                pagingType: "simple_numbers",
+                ordering: false,//禁止排序
+                order: [],//去除排序
+                paging: true,//开启表格分页
+                ajax: function (data, callback, settings) {
+                    //封装请求参数
+                    var param = {};
+                    param.limit = data.length;//页面显示记录条数，在页面显示每页显示多少项的时候
+                    param.page = (data.start / data.length) + 1;//当前页码
+                    param.areaname = $.trim($("#Name").val());
+                    param.areacode = $.trim($("#AreaCode").val());
+                    $.ajax({
+                        type: "POST",
+                        url: "/WareHouse/WareHouseAreaListJson",
+                        data: param,
+                        cache: false,
+                        success: function (result) {
+                            setTimeout(function () {
+                                //封装返回数据
+                                var returnData = {};
+                                returnData.draw = data.draw;//这里直接自行返回了draw计数器,应该由后台返回
+                                returnData.recordsTotal = result.recordsTotal;//返回数据全部记录
+                                returnData.recordsFiltered = result.recordsFiltered;//后台不实现过滤功能，每次查询均视作全部结果
+                                returnData.data = result.data;//返回的数据列表
+                                //console.log(returnData);
+                                //调用DataTables提供的callback方法，代表数据已封装完成并传回DataTables进行渲染
+                                //此时的数据需确保正确无误，异常判断应在执行此回调前自行处理完毕
+                                callback(returnData);
+                            }, 200);
+                        }
+                    });
+                },
+
+                language: {
+                    "sProcessing": '<i class="fa fa-coffee"></i> 正在加载数据...',
+                    "sLengthMenu": "显示 _MENU_ 项结果",
+                    "sInfo": "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+                    "sInfoEmpty": "显示第 0 至 0 项结果，共 0 项",
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "上页",
+                        "sNext": "下页",
+                        "sLast": "末页"
+                    },
+                    "sZeroRecords": "没有匹配结果",
+                    "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                },
+                serverSide: true,
+                columns: [//对接收到的json格式数据进行处理，data为json中对应的key
+                    {
+                        data: "id"
+                    },
+                    {
+                        data: "areaName"
+                    },
+                    {
+                        data: "areaCode"
+                    },
+                    {
+                        data: "mainWareHouse"
+                    },
+                    {
+                        data: null,
+                        defaultContent: '<button type="button" class="btn btn-primary btn-sm active editorBtn">编辑</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" class="btn btn-danger btn-sm active deleteBtn">删除</button>'
+                    }
+                ],
+                Bootstrap: true
+            });
+        }
+
+        $("body").on("click", ".editorBtn", function () {
+            var id = $(this).parent().parent().find("td").eq(0).text();
+            $.ajax({
+                url: "/WareHouse/GetWareHouseAreaById",
+                type: "Get",
+                data: { "id": id },
+                success: function (res) {
+                    if (res.isSucc) {
+                        $("#areaNameUp").val(res.data.areaName);
+                        $("#areaCodeUp").val(res.data.areaCode);
+                        $("#wareHouseAreaId").val(res.data.id);
+                        for (var i = 0; i < res.data.wareHouseRankModels.length; i++) {
+                            $("input[name='wareHouseRanksUp']").each(function () {
+                                if ($(this).attr("data-wareHouseId") == res.data.wareHouseRankModels[i].wareHouseId) {
+                                    $(this).val(res.data.wareHouseRankModels[i].rank);
+                                    $(this).attr("data-rankId", res.data.wareHouseRankModels[i].id);
+                                }
+                            })
+                        }
+
+                        $("#UpdateWHAreaModal").modal();
+                    }
+                    else {
+                        alertError(res.msg);
+                    }
+                }
+            })
+        })
+
+        $("#UpdateWareHouseArea").click(function () { 
+            var areaName = $("#areaNameUp").val();
+            if (areaName == null || areaName == "") {
+                alertError("区域名称不能为空！");
+                return false;
+            }
+            var areaCode = $("#areaCodeUp").val();
+            if (areaCode == null || areaCode == "") {
+                alertError("区域编码不能为空！");
+                return false;
+            }
+            var isNull = false;
+            var rankArr = new Array();
+            $("input[name='wareHouseRanksUp']").each(function () {
+                if ($(this).val() == null || $(this).val() == "") {
+                    isNull = true;
+                    return false;
+                };
+
+                var model = {
+                    wareHouseId: $(this).attr("data-wareHouseId"),
+                    id: $(this).attr("data-rankId"),
+                    rank: $(this).val()
+                };
+                rankArr.push(model);
+            })
+            if (isNull == true) {
+                alertError("排序值不能为空！");
+                return false;
+            }
+            $.ajax({
+                url: '/WareHouse/UpdateWareHouseArea',
+                data: { "id": $("#wareHouseAreaId").val(), "areaName": areaName, "areaCode": areaCode, "ranksArrs": rankArr },
+                type: 'POST',
+                success: function (res) {
+                    if (res.isSucc) {
+                        alertSuccess("添加成功！");
+                        setTimeout(function () { window.location.reload() }, 800);
+                    } else {
+                        alertError(res.msg);
+                    }
+                }
+            })
+        })
+    </script>
+}
+

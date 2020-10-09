@@ -1,0 +1,910 @@
+﻿@model OMS.Data.Domain.Purchasings.Purchasing
+@{
+    ViewData["Title"] = "采购订单详情";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+@section Styles{
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bag font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;">采购订单详情</font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <table id="POrderListTB" class="table table-bordered">
+                            <tr>
+                                <td>单据编号</td>
+                                <td>
+                                    <input type="text" class="form-control" name="PurchasingNumber" value="@Model.PurchasingNumber" readonly />
+                                    <input type="text" name="Id" value="@Model.Id" hidden />
+                                    <input type="text" name="State" value="@Model.State.ToString()" hidden />
+                                </td>
+                                <td>原单号</td>
+                                <td><input type="text" class="form-control" name="OrgionSerialNumber" value="@Model.OrgionSerialNumber" /></td>
+                                <td>采购计划单</td>
+                                <td><input type="text" class="form-control" name="PurchasingOrderNumber" value="@Model.PurchasingOrderNumber" /></td>
+                                <td>单据日期</td>
+                                <td><label class="control-label">@Model.CreatedTime.ToString("yyyy-MM-dd HH:mm:ss")</label></td>
+                            </tr>
+                            <tr>
+                                <td>供应商</td>
+                                <td>@Html.DropDownList("SupplierId", ViewBag.Supplier as SelectList, "请选择", new { @class = "form-control" })</td>
+                                <td>仓库</td>
+                                <td>@Html.DropDownList("WareHouseId", ViewBag.WareHouse as SelectList, "请选择", new { @class = "form-control" })</td>
+                                <td>总数</td>
+                                <td>@ViewBag.ProductsCount</td>
+                                <td>状态</td>
+                                <td>
+                                    @if (Model.State == OMS.Data.Domain.Purchasings.PurchasingState.Invalid)
+                                    {
+                                        <span class="label label-danger circle">@ViewBag.State[(int)Model.State]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-info circle">@ViewBag.State[(int)Model.State]</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>备注</td>
+                                <td colspan="2">@Html.TextArea("Mark", Model.Mark, 3, 0, new { @class = "form-control " })</td>
+                                <td></td>
+                                <td style="text-align:right;">总价</td>
+                                <td style="text-align:left;">@ViewBag.OrderSumPrice</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="8" style="text-align:center">采购订单商品&nbsp;&nbsp;<button id="AddPurchasingProduct" class="btn btn-default blue">添加商品</button></td>
+                            </tr>
+                            <tr>
+                                <td colspan="8">
+                                    <table id="purchasingOrderProductTB" class="dataTable table table-bordered">
+                                        <tr>
+                                            <td style="width:20%">商品名称</td>
+                                            <td style="width:20%">商品编号</td>
+                                            <td style="width:15%">单价</td>
+                                            <td style="width:15%">商品数量</td>
+                                            <td style="width:15%">总价</td>
+                                            <td style="width:15%">操作</td>
+                                        </tr>
+                                        <tbody>
+                                            @foreach (var item in ViewBag.PurchasingProducts)
+                                            {
+                                                <tr>
+                                                    <td>@item.Name</td>
+                                                    <td>@item.Code</td>
+                                                    <td>@item.Price</td>
+                                                    <td name="Quantity">@item.Quantity</td>
+                                                    <td>@item.SumPrice</td>
+                                                    <td>
+                                                        @if (Model.State == OMS.Data.Domain.Purchasings.PurchasingState.InitialStatus)
+                                                        {
+                                                            <a name="delPurchasingOrderProduct" class="btn-link"><span hidden>@item.ProductId</span>删除</a>
+                                                            <a name="updatePurchasingOrderProduct" class="btn-link"><span hidden>@item.Id</span><span hidden>@item.ProductId</span>修改</a>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="6"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="8">
+                                    <input type="button" class="btn btn-default red" id="savePurchasingOrder" name="savePurchasingOrder" value="&nbsp;保 &nbsp;存&nbsp;" />
+                                    <input type="button" class="btn btn-default blue" id="VerifyOrder" name="VerifyOrder" value="&nbsp;审&nbsp;核&nbsp;" />
+                                    <input type="button" class="btn btn-default red" id="UnVerifyOrder" name="UnVerifyOrder" value="反&nbsp;审&nbsp;核&nbsp;" />
+                                    <input type="button" class="btn btn-default blue" id="ConfirmOrder" name="ConfirmOrder" value="&nbsp;确&nbsp;认&nbsp;" />
+                                    <input type="button" class="btn btn-default red" id="SetInvalid" name="SetInvalid" value="&nbsp;作&nbsp;废&nbsp;" />
+                                    <input type="button" class="btn btn-default red" id="UpLoadOrder" name="UpLoadOrder" onclick="UpLoadOrder()" value="上传订单" />
+                                    <input type="button" class="btn btn-default yellow" id="CancelUpLoadOrder" name="CancelUpLoadOrder" onclick="CancelUpLoadOrder()" value="取消上传" />
+                                    <input type="button" class="btn btn-default green" id="CheckAccept" name="CheckAccept" value="验收" />
+                                    <input type="button" class="btn btn-default blue" id="CompleteOrder" name="CompleteOrder" value="完成" />
+                                    <input type="button" class="btn btn-default red" id="RefundOrder" name="RefundOrder" value="一键退货" />
+                                    <input type="button" class="btn btn-default blue" id="OrderLogInfo" name="OrderLogInfo" value="查看日志" />
+
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <!--modal-->
+                <div class="modal fade" id="addProducts" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content modal-lg">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">添加采购单商品</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row">
+                                            <div class="col-md-7"></div>
+                                            <div class="col-md-5">
+                                                <div class="form-inline">
+                                                    <label class="control-label">搜索：</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="ProductSearchStr" value="" />
+                                                        <div class="input-group-btn">
+                                                            <input type="button" class="btn btn-default red" name="searchProductBtn" value="搜索" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <table id="PProductTB" class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>商品编码</th>
+                                                    <th>商品名称</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                        <ul id="pageLimit" style="float:right"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*新增商品*@
+                <div class="modal fade" id="addProductsDetail" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content modal-lg">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">商品详情</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6 ">
+                                        <form class="form-horizontal" method="post">
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">
+                                                    商品编码
+                                                </label>
+                                                <div class="col-md-7">
+                                                    <input type="text" name="productId" value="" hidden />
+                                                    <input class="form-control" type="text" name="productCode" value="" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">
+                                                    商品名
+                                                </label>
+                                                <div class="col-md-7">
+                                                    <input class="form-control" type="text" name="productName" value="" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">数量</label>
+                                                <div class="col-md-7">
+                                                    <input class="form-control" type="number" min="1" name="productQuantity" value="" />
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">单价</label>
+                                                <div class="col-md-7">
+                                                    <input class="form-control" type="number" min="1" name="productPrice" value="" />
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                <button type="button" id="sumbitProductInfo" class="btn btn-primary">添加</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*修改商品*@
+                <div class="modal fade" id="updateProductsDetail" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content modal-lg">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">商品详情</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6 ">
+                                        <form class="form-horizontal" method="post">
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">
+                                                    商品编码
+                                                </label>
+                                                <div class="col-md-7">
+                                                    <input type="text" name="purchasingProductId" value="" hidden />
+                                                    <input type="text" name="updateProductId" value="" hidden />
+                                                    <input class="form-control" type="text" name="updateProductCode" value="" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">
+                                                    商品名
+                                                </label>
+                                                <div class="col-md-7">
+                                                    <input class="form-control" type="text" name="updateProductName" value="" readonly />
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">数量</label>
+                                                <div class="col-md-7">
+                                                    <input class="form-control" type="number" min="1" name="updateProductQuantity" value="" />
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-5">单价</label>
+                                                <div class="col-md-7">
+                                                    <input class="form-control" type="number" min="1" name="updateProductPrice" value="" />
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                <button type="button" id="updateProductInfo" class="btn btn-primary">修改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="OrderLogs" class="modal fade">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">操作日志</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:20%">操作人</th>
+                                                    <th style="width:20%">操作名称</th>
+                                                    <th style="width:20%">操作时间</th>
+                                                    <th style="width:10%">订单状态</th>
+                                                    <th style="width:30%">备注</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in ViewBag.OrderLogInfo)
+                                                {
+                                                    <tr>
+                                                        <td>@item.CreatedBy [ @ViewBag.User[item.CreatedBy] ]</td>
+                                                        <td>@item.OptionType</td>
+                                                        <td>@item.CreatedTime</td>
+                                                        <td>@ViewBag.State[item.OrderState]</td>
+                                                        <td>@item.Mark</td>
+                                                    </tr>
+
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--modal End-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- loading -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+
+    <div class="modal-dialog modal-sm">
+        <div class="loader">
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <div id="loaderText">
+            正在加载请稍后......
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            /*常用变量*/
+            var id = $("input[name='Id']").val();
+            var state = $("input[name='State']").val();
+
+
+            /*按钮控制*/
+            if (state == "Uploaded") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#SetInvalid").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#RefundOrder").attr("disabled", "true");
+                $("#CompleteOrder").attr("disabled", "true");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            } else if (state == "Finished") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#SetInvalid").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#RefundOrder").removeAttr("disabled");
+                $("#CompleteOrder").attr("disabled","true");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            } else if (state == "InitialStatus") {
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#RefundOrder").attr("disabled", "true");
+                $("#CompleteOrder").attr("disabled", "true");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            } else if (state == "Verify") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#RefundOrder").attr("disabled", "true");
+                $("#CompleteOrder").attr("disabled", "true");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").removeAttr("disabled");
+            } else if (state == "Confirmed") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#RefundOrder").attr("disabled", "true");
+                $("#CompleteOrder").attr("disabled", "true");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            } else if (state == "Invalid") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#SetInvalid").attr("disabled", "true");
+                $("#RefundOrder").attr("disabled", "true");
+                $("#CompleteOrder").attr("disabled", "true");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            } else if (state == "StoredWareHouse") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#SetInvalid").attr("disabled", "true");
+                $("#RefundOrder").removeAttr("disabled");
+                $("#CheckAccept").removeAttr("disabled");
+                $("#CompleteOrder").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            } else if (state == "CheckAccept") {
+                $("#AddPurchasingProduct").attr("disabled", "true");
+                $("#savePurchasingOrder").attr("disabled", "true");
+                $("#VerifyOrder").attr("disabled", "true");
+                $("#ConfirmOrder").attr("disabled", "true");
+                $("#UpLoadOrder").attr("disabled", "true");
+                $("#CancelUpLoadOrder").attr("disabled", "true");
+                $("#SetInvalid").attr("disabled", "true");
+                $("#RefundOrder").removeAttr("disabled");
+                $("#CompleteOrder").removeAttr("disabled");
+                $("#CheckAccept").attr("disabled", "true");
+                $("#UnVerifyOrder").attr("disabled", "true");
+            }
+
+
+
+            /*表格样式*/
+            $('#POrderListTB tr').each(function () {
+                $(this).children("td:even").attr("class", "text-align-reverse");
+            });
+
+
+            /*添加商品列表*/
+            $("#AddPurchasingProduct").click(function () {
+                ShowProducts();
+                $("#addProducts").modal();
+            });
+            $("input[name='searchProductBtn']").click(function () {
+                ShowProducts();
+            })
+
+            /*保存订单详情*/
+            $("#savePurchasingOrder").click(function () {
+                //var id = $("input[name='Id']").val();
+                var purchasingNumber = $("input[name='PurchasingNumber']").val();
+                var orgionSerialNumber = $("input[name='OrgionSerialNumber']").val();
+                var purchasingOrderNumber = $("input[name='PurchasingOrderNumber']").val();
+                var mark = $("#Mark").val();
+                var supplierId = $("#SupplierId option:selected").val();
+                var wareHouseId = $("#WareHouseId option:selected").val();
+                var data = {
+                    Id: id,
+                    PurchasingNumber: purchasingNumber,
+                    OrgionSerialNumber: orgionSerialNumber,
+                    PurchasingOrderNumber: purchasingOrderNumber,
+                    Mark: mark,
+                    SupplierId: supplierId,
+                    WareHouseId: wareHouseId
+                }
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/PurchasingOrderDetail",
+                        data: data,
+                        type: "post",
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("修改成功！");
+                                setTimeout(function () { window.location.reload() }, 800)
+
+                            } else {
+                                alertError(data.msg);
+
+                            }
+
+                        }
+                    })
+                }, null, "确定保存？")
+            });
+
+
+            /*添加订单商品*/
+            $("#sumbitProductInfo").click(function () {
+                var purchasingId = $("input[name='Id']").val();
+                var productId = $("input[name='productId']").val();
+                var productQuantity = $("input[name='productQuantity']").val();
+                var productPrice = $("input[name='productPrice']").val();
+                if (productQuantity == "" || productQuantity <= 0) {
+                    alertError("请输入正确商品数量！")
+                    return false;
+                }
+                if (productPrice == "" || productPrice <= 0) {
+                    alertError("请输入正确的价格！");
+                    return false;
+                }
+                var data = {
+                    PurchasingId: purchasingId,
+                    ProductId: productId,
+                    Quantity: productQuantity,
+                    Price: productPrice
+                }
+                $.ajax({
+                    url: "/Purchasing/AddPurchasingOrderProducts",
+                    data: data,
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("添加成功！");
+                            setTimeout(function () { window.location.reload() }, 800)
+                        } else {
+                            alertError(data.msg);
+
+                        }
+                    }
+                })
+            });
+
+            /*修改订单商品*/
+            $("#updateProductInfo").click(function () {
+                var purchasingId = $("input[name='Id']").val();
+                var purchasingProductId = $("input[name='purchasingProductId']").val();
+                var updateProductId = $("input[name='updateProductId']").val();
+                var updateProductQuantity = $("input[name='updateProductQuantity']").val();
+                var updateProductPrice = $("input[name='updateProductPrice']").val();
+                if (updateProductQuantity == "" || updateProductQuantity <= 0) {
+                    alertError("请输入正确商品数量！")
+                    return false;
+                }
+                if (updateProductPrice == "" || updateProductPrice <= 0) {
+                    alertError("请输入正确的价格！");
+                    return false;
+                }
+                var data = {
+                    Id: purchasingProductId,
+                    PurchasingId: purchasingId,
+                    ProductId: updateProductId,
+                    Quantity: updateProductQuantity,
+                    Price: updateProductPrice
+                }
+                $.ajax({
+                    url: "/Purchasing/UpdatePurchasingOrderProducts",
+                    data: data,
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#updateProductInfo").attr("disabled", true).css("pointer-events", "none");
+                        $('#updateProductInfo').css({ opacity: 0.2 });
+                    },
+                    success: function (data) {
+                        $('#updateProductsDetail').modal('hide');
+                        if (data.isSucc) {                         
+                            alertSuccess("修改成功！");
+                            setTimeout(function () { window.location.reload() }, 800)
+                        } else {
+                            alertError(data.msg);
+                            $("#updateProductInfo").attr("disabled", false).css("pointer-events", "auto");
+                            $('#updateProductInfo').css({ opacity: 1 });
+                        }
+                    }
+                })
+            });
+
+            /*表格商品总数量*/
+            var totalQuantity = 0;
+            $("#purchasingOrderProductTB tr td[name='Quantity']").each(function () {
+                totalQuantity += parseInt($(this).html());
+            });
+            $("#purchasingOrderProductTB tfoot tr td").html("总数量：" + totalQuantity);
+
+            /*删除商品*/
+            $("a[name='delPurchasingOrderProduct']").click(function () {
+                if (state == "Invalid" || state == "Verify" || state == "Confirmed") {
+                    alertError("此订单状态无法删除!");
+                    return false;
+                }
+                var purchasingOrderId = $("input[name='Id']").val();
+                var productId = $(this).children("span").html();
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/DeletePurchasingOrderProduct",
+                        data: { purchasingOrderId: purchasingOrderId, productId: productId },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("删除成功！");
+                                setTimeout(function () { window.location.reload() }, 800)
+                            } else {
+                                alertError("删除失败！")
+                            }
+                        }
+                    })
+                }, null, "确定要删除?")
+
+            });
+            //修改商品信息
+            $("a[name='updatePurchasingOrderProduct']").click(function () {
+                if (state == "Invalid" || state == "Verify" || state == "Confirmed") {
+                    alertError("此订单状态无法修改!");
+                    return false;
+                }
+                var productName = $(this).parents("tr").children("td").eq(0).text();
+                var productCode = $(this).parents("tr").children("td").eq(1).text();
+                var productPrice = $(this).parents("tr").children("td").eq(2).text();
+                var productQuantity = $(this).parents("tr").children("td").eq(3).text();
+                var productId = $(this).children("span").eq(1).html();
+                var purchasingProductId = $(this).children("span").eq(0).html();
+                $("input[name='updateProductCode']").val(productCode);
+                $("input[name='updateProductName']").val(productName);
+                $("input[name='updateProductQuantity']").val(productQuantity);
+                $("input[name='updateProductPrice']").val(productPrice);
+                $("input[name='updateProductPrice']").val(productPrice);
+                $("input[name='purchasingProductId']").val(purchasingProductId);
+                $("input[name='updateProductId']").val(productId);
+
+
+
+                $('#updateProductsDetail').modal('show');
+                
+            });
+
+
+            /*查看日志*/
+            $("input[name='OrderLogInfo']").click(function () {
+                $("#OrderLogs").modal();
+            });
+
+
+            /*审核订单*/
+            $("#VerifyOrder").click(function () {
+                $("#VerifyOrder").attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/SetOrderVerified",
+                        data: { purchasingId: id },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("审核成功！");
+                                setTimeout(function () { window.location.reload() }, 800);
+                            } else {
+                                alertError(data.msg);
+                                $("#VerifyOrder").attr("disabled", false);
+                            }
+                        }
+                    })
+                }, () => { $("#VerifyOrder").attr("disabled", false); }, "确定审核订单？");
+            })
+
+            $("#UnVerifyOrder").click(function () {
+                $("#UnVerifyOrder").attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/SetOrderUnVerified",
+                        data: { purchasingId: id },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("反审核成功！");
+                                setTimeout(function () { window.location.reload() }, 800);
+                            } else {
+                                alertError(data.msg);
+                                $("#UnVerifyOrder").attr("disabled", false);
+                            }
+                        }
+                    })
+                }, () => { $("#UnVerifyOrder").attr("disabled", false); }, "确定反审核订单？")
+            })
+
+            /*确认订单*/
+            $("#ConfirmOrder").click(function () {
+                $("#ConfirmOrder").attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/SetOrderConfirmed",
+                        data: { purchasingId: id },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("确认成功！");
+                                setTimeout(function () { window.location.reload() }, 800);
+                            } else {
+                                alertError(data.msg);
+                                $("#ConfirmOrder").attr("disabled", false);
+                            }
+                        }
+                    })
+                }, () => { $("#ConfirmOrder").attr("disabled", false); }, "确定确认订单？")
+            })
+
+            /*作废订单*/
+            $("#SetInvalid").click(function () {
+                $("#SetInvalid").attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/SetOrderInvalid",
+                        data: { purchasingId: id },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("作废成功！");
+                                setTimeout(function () { window.location.reload() }, 800);
+                            } else {
+                                alertError(data.msg);
+                                $("#SetInvalid").attr("disabled", false);
+                            }
+                        }
+                    })
+                }, () => { $("#SetInvalid").attr("disabled", false);}, "确定要作废？")
+            })
+
+            /*验收订单*/
+            $("#CheckAccept").click(function () {
+                $("#CheckAccept").attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/SetPurchasingCheckAccept",
+                        type: "POST",
+                        data: { purchasingId: id },
+                        success: function (res) {
+                            if (res.isSucc) {
+                                alertSuccess("验收成功！");
+                                setTimeout(function () { window.location.reload() }, 800);
+                            } else {
+                                alertError(res.msg);
+                                $("#CheckAccept").attr("disabled", false);
+                            }
+                        }
+                    })
+                }, null, "确定验收订单吗？");
+            })
+
+            /*完成订单*/
+            $("#CompleteOrder").click(function () {
+                $("#CompleteOrder").attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/SetPurchasingFinished",
+                        type:"POST",
+                        data: { purchasingId: id },
+                        success: function (res) {
+                            if (res.isSucc) {
+                                alertSuccess("完成成功！");
+                                setTimeout(function () { window.location.reload() }, 800);
+                            } else {
+                                alertError(res.msg);
+                                $("#CompleteOrder").attr("disabled", false);
+                            }
+                        }
+                    })
+                }, () => { $("#CompleteOrder").attr("disabled", false);}, "确定验收订单吗？")
+            })
+        });
+        //一键退货
+        $("#RefundOrder").click(function () {
+            $("#RefundOrder").attr("disabled", true);
+            isContinue(function () {
+                var orderId = [$("input[name='Id']").val()];
+                $.ajax({
+                    url: "/Purchasing/RefundPurchasingOrder",
+                    type: "POST",
+                    data: { purchaingId: orderId },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            alertSuccess("退单成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                            RefundPurchasingOrderDetail(res.refundPurchasingNumber, res.id);
+                        }
+                        else {
+                            alertError(data.msg);
+                            $("#RefundOrder").attr("disabled", false);
+                        }
+                    }
+
+                })
+            }, () => { $("#RefundOrder").attr("disabled", false); }, "确定生成退单吗？")
+        });
+        //查看采购退单详情
+        function RefundPurchasingOrderDetail(refundPurchasingNumber, id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == refundPurchasingNumber) {
+                    parent.$tap.tabChange(refundPurchasingNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/Purchasing/RefundPurchasingOrderDetail?id=" + id;
+            parent.$tap.tabAdd(refundPurchasingNumber, url, refundPurchasingNumber); // 新开一个tap页面
+            parent.$tap.tabChange(refundPurchasingNumber);
+            event.stopPropagation();
+        }
+        /*订单商品*/
+        var ShowProducts = function () {
+            var searchStr = $("#ProductSearchStr").val();
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/Purchasing/GetProducts",
+                data: { searchStr: searchStr },
+                success: function (data) {
+                    var html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data[i].code + "</td>" +
+                                "<td>" + data[i].name + "</td>" +
+                                "<td><a id='productadd' onclick='ShowProductDetail(" + data[i].id + ")' class='btn btn-default red' data-toggle='modal' data-target='#addProductsDetail'>添加</a></td>" +
+                                "</tr>";
+                        }
+                        $("#PProductTB tbody").html(html);
+                    } else {
+                        $("#PProductTB tbody").html(html);
+                    }
+                }
+            })
+        }
+
+
+        /*订单商品详情*/
+        var ShowProductDetail = function (id) {
+            $.ajax({
+                url: "/Purchasing/GetProductDetail?id=" + id,
+                success: function (data) {
+                    if (data.isSucc) {
+                        $("input[name='productCode']").val(data.data.code);
+                        $("input[name='productName']").val(data.data.name);
+                        $("input[name='productId']").val(data.data.id);
+                    }
+                }
+            })
+
+        }
+
+
+        /*上传订单*/
+        var UpLoadOrder = function () {
+            var orderId = [$("input[name='Id']").val()];
+            isContinue(function () {
+                $.ajax({
+                    url: "/Purchasing/UploadOrder",
+                    type: "post",
+                    data: { orderId: orderId },
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#UpLoadOrder").attr("disabled", true).css("pointer-events", "none");
+                        $('#UpLoadOrder').css({ opacity: 0.2 });
+                        $('#loading').modal('show');
+                    },
+                    success: function (res) {
+                        $('#loading').modal('hide');
+                        if (res.isSucc) {
+                            alertSuccess("上传成功！")
+                            window.location.reload();
+                        } else {
+                            alertError(res.msg);
+                            $("#UpLoadOrder").attr("disabled", false).css("pointer-events", "auto");
+                            $('#UpLoadOrder').css({ opacity: 1 });
+                        }
+                    },
+                    error: function (res) {
+                        $('#loading').modal('hide');
+                        alertError("上传出错！");
+                        $("#UpLoadOrder").attr("disabled", false).css("pointer-events", "auto");
+                        $('#UpLoadOrder').css({ opacity: 1 });
+                    }
+                });
+            }, null, "确定继续上传订单？");
+        };
+
+
+        /*取消上传订单*/
+        var CancelUpLoadOrder = function () {
+            var orderId = [$("input[name='Id']").val()];
+            isContinue(function () {
+                $.ajax({
+                    url: "/Purchasing/CancelUploadOrder",
+                    data: { orderId: orderId },
+                    type: "POST",
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#CancelUpLoadOrder").attr("disabled", true).css("pointer-events", "none");
+                        $('#CancelUpLoadOrder').css({ opacity: 0.2 });
+                        $('#loading').modal('show');
+                    },
+                    success: function (res) {
+                        $('#loading').modal('hide');
+                        if (res.data.isSucc) {
+                            alertSuccess("取消上传成功！")
+                            window.location.reload();
+                        } else {
+                            alertError(res.data.msg);
+                            $("#CancelUpLoadOrder").attr("disabled", false).css("pointer-events", "auto");
+                            $('#CancelUpLoadOrder').css({ opacity: 1 });
+                        }
+                    },
+                    error: function (res) {
+                        $('#loading').modal('hide');
+                        alertError("取消出错！");
+                        $("#CancelUpLoadOrder").attr("disabled", false).css("pointer-events", "auto");
+                        $('#CancelUpLoadOrder').css({ opacity: 1 });
+                    }
+                })
+            }, null, "确定取消上传订单？")
+
+        }
+    </script>
+}

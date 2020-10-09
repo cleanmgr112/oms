@@ -1,0 +1,93 @@
+﻿
+@{
+    ViewData["Title"] = "CheckOrderIsSent";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="col-md-12">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-bubble font-green"></i>
+                        <span class="caption-subject font-green bold uppercase">K3查询订单状态</span>
+                    </div>
+                    <div class="x-nav">
+                        <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                            <i class="layui-icon">&#xe9aa;</i>
+                        </a>
+                        <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                            <i class="layui-icon">&#xe65c;</i>
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row margin-bottom-15">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-2 margin-bottom-15">
+                                    <input type="text" class="form-control col-md-2" id="searchStr" placeholder="请输入订单单号" />
+                                </div>
+                                <div class="col-md-2 margin-bottom-15">
+                                    <input type="button" class="btn btn-circle red" id="searchBtn" onclick="showList()" value="&nbsp;搜&nbsp;索&nbsp;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="width:20%">OMS订单号</th>
+                                        <th style="width:20%">K3单号</th>
+                                        <th>备注</th>
+                                        <th style="width:20%">时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <ul id="pageLimit" style="float:right"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            showList();
+        })
+        var showList = function () {
+            var searchStr = $("#searchStr").val().trim();
+            var pageSize = 20;
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/K3/GetBillNoRelatedList",
+                data: { searchStr: searchStr, pageSize: pageSize },
+                success: function (data) {
+                    var html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i].k3BillNo == "Failed") {
+                                html += "<tr class='bg-red'>";
+                            } else {
+                                html += "<tr>";
+                            }
+                            html += "<td>" + data[i].omsSeriNo + "</td>" +
+                                "<td>" + data[i].k3BillNo + "</td>" +
+                                "<td>" + data[i].message + "</td>" +
+                                "<td>" + data[i].createdTime + "</td>" +
+                                "</tr>"
+                        }
+                    }
+                    $("table tbody").html(html);
+                }
+            });
+
+        }
+    </script>
+}

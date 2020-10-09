@@ -1,0 +1,332 @@
+﻿@model IEnumerable<OMS.Data.Domain.ScheduleTask>
+@{
+    ViewData["Title"] = "系统任务";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-settings font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">系统任务</font></font></span>
+                </div>
+                <div class="text-align-reverse">
+                    <a class="btn btn-default green" onclick="addScheduleTask()">添加任务<i class="fa fa-plus"></i></a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="portlet light bordered">
+                            <div class="portlet-body">
+                                <div class="dataTable">
+                                    <table id="category-datable" class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <td>名称</td>
+                                                <td>类型</td>
+                                                <td>方法</td>
+                                                <td>分（执行周期）</td>
+                                                <td>是否有效</td>
+                                                <td>编辑</td>
+                                                <td>操作</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.Name</td>
+                                                    <td>@item.Type</td>
+                                                    <td>@item.Functions</td>
+                                                    <td>@item.Minutes</td>
+                                                    <td>
+                                                        @if (item.Enabled)
+                                                        {
+                                                            <span class="glyphicon glyphicon-ok" style="color:#46a546"></span>
+                                                        }
+                                                    </td>
+                                                    <td><a class="primary-link" onclick="updateScheduleTask(@item.Id)">修改</a>&nbsp;&nbsp;<a class="primary-link" onclick="delScheduleTask(@item.Id)">删除</a></td>
+                                                    <td>
+                                                        @if (item.Enabled)
+                                                        {
+                                                            /**/
+                                                            <a class="primary-link" onclick="execute(@item.Id)">手动执行</a>
+                                                        }
+
+                                                    </td>
+
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--Model Start-->
+        <div class="modal fade" id="scheduleTaskModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title add">新增系统任务</h4>
+                        <h4 class="modal-title update">修改系统任务</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editScheduleTask" class="form-horizontal" method="post">
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">名称</label>
+                                <div class="col-md-9"><input class="form-control" type="text" name="Name" /></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">类型</label>
+                                <div class="col-md-9"><input class="form-control" type="text" name="Type" /></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">方法</label>
+                                <div class="col-md-9"><input class="form-control" type="text" name="Functions" /></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">分(周期)</label>
+                                <div class="col-md-9"><input class="form-control" type="text" name="Minutes" /></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">是否有效</label>
+                                <div class="col-md-9">
+                                    <input id="trueEn" type="radio" name="Enabled" value="true" checked> 是
+                                    <input id="falseEn" type="radio" name="Enabled" value="false"> 否
+                                </div>
+                            </div>
+                            <input type="text" name="Id" value="" hidden />
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" id="subscheduleTask">修改</button>
+                        <button type="button" class="btn btn-primary" id="addscheduleTask">新增</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--Model End-->
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/datatables/datatables.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#category-form").$validate();
+            $("#category-datable").DataTable({
+                "lengthMenu": [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                language: {
+                    "sLengthMenu": "显示 _MENU_ 项结果",
+                    "sSearch": "搜索：",
+                    "sInfo": "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+                    "sInfoEmpty": "显示第 0 至 0 项结果，共 0 项",
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "上页",
+                        "sNext": "下页",
+                        "sLast": "末页"
+                    },
+                    "sZeroRecords": "没有匹配结果",
+                    "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                },
+                stateSave: true,
+                "Bootstrap": true,
+            });
+            $("#category-datable_filter").attr("class", "dataTables_filter  text-align-reverse");
+            $("#category-datable_paginate").attr("class", "dataTables_paginate paging_simple_numbers text-align-reverse");
+        });
+
+        //删除系统任务
+        var delScheduleTask = function (id) {
+            if (id != 0) {
+                isContinue(function () {
+                    $.ajax({
+                        url: "/ScheduleTask/DelScheduleTask?scheduleTaskId=" + id,
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("删除成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 800);
+                            } else {
+                                alertError("删除失败！");
+                            }
+                        },
+                        error: function () {
+                            alertError("删除失败！");
+                        }
+                    });
+                }, null, "是否删除？");
+            }
+        }
+        //新增系统任务
+        var addScheduleTask = function () {
+            $(".update").hide();
+            $("#subscheduleTask").hide();
+            $(".add").show();
+            $("#addscheduleTask").show();
+            $("#scheduleTaskModal").modal();
+            $("#scheduleTaskModal input[name='Id']").val("");
+            $("#scheduleTaskModal input[name='Name']").val("");
+            $("#scheduleTaskModal input[name='Type']").val("");
+            $("#scheduleTaskModal input[name='Functions']").val("");
+            $("#scheduleTaskModal input[name='Minutes']").val("");
+            $("#trueEn").attr("checked", "checked");
+        }
+
+        //确认新增系统任务
+        $("#addscheduleTask").click(function () {
+            if ($("input[name='Name']").val() == "") {
+                alertError("名称不能为空！");
+                return false;
+            }
+
+            if ($("input[name='Type']").val() == "") {
+                alertError("类型不能为空！");
+                return false;
+            }
+
+            if ($("input[name='Functions']").val() == "") {
+                alertError("方法不能为空！");
+                return false;
+            }
+
+            if ($("input[name='Minutes']").val() == "") {
+                alertError("分(周期)不能为空！");
+                return false;
+            }
+
+            $.ajax({
+                url: "/ScheduleTask/AddScheduleTask",
+                type: "post",
+                data: $("#editScheduleTask").serialize(),
+                success: function (data) {
+                    if (data.isSucc) {
+                        alertSuccess("添加成功！");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 800);
+                    } else {
+                        alertError("添加失败！" + data.msg);
+                    }
+                },
+                error: function () {
+                    alertError("添加失败！");
+                }
+            });
+        });
+
+        //修改系统任务
+        var updateScheduleTask = function (id) {
+            $.ajax({
+                url: "/ScheduleTask/GetScheduleTaskInfo?id=" + id,
+                success: function (data) {
+                    $("#scheduleTaskModal input[name='Id']").val(data.data.id);
+                    $("#scheduleTaskModal input[name='Name']").val(data.data.name);
+                    $("#scheduleTaskModal input[name='Type']").val(data.data.type);
+                    $("#scheduleTaskModal input[name='Functions']").val(data.data.functions);
+                    $("#scheduleTaskModal input[name='Minutes']").val(data.data.minutes);
+                    if (data.data.enabled == true) {
+                        $("#trueEn").attr("checked", "checked");
+                    } else {
+                        $("#falseEn").attr("checked", "checked");
+                    }
+                }
+            });
+            $(".add").hide();
+            $("#addscheduleTask").hide();
+            $(".update").show();
+            $("#subscheduleTask").show();
+            $("#scheduleTaskModal").modal();
+        }
+
+        //确认修改系统任务
+        $("#subscheduleTask").click(function () {
+            if ($("input[name='Name']").val() == "") {
+                alertError("名称不能为空！");
+                return false;
+            }
+
+            if ($("input[name='Type']").val() == "") {
+                alertError("类型不能为空！");
+                return false;
+            }
+
+            if ($("input[name='Functions']").val() == "") {
+                alertError("方法不能为空！");
+                return false;
+            }
+
+            if ($("input[name='Minutes']").val() == "") {
+                alertError("分(周期)不能为空！");
+                return false;
+            }
+            var id = $("#scheduleTaskModal input[name='Id']").val();
+            var name = $("#scheduleTaskModal input[name='Name']").val();
+            var type = $("#scheduleTaskModal input[name='Type']").val();
+            var functions = $("#scheduleTaskModal input[name='Functions']").val();
+            var minutes = $("#scheduleTaskModal input[name='Minutes']").val();
+            var enabled = $("#scheduleTaskModal input[name='Enabled']").val();
+            var scheduleTask = {
+                Id: id,
+                Name: name,
+                Type: type,
+                Functions: functions,
+                Minutes: minutes,
+                Enabled: enabled
+            };
+            $.ajax({
+                url: "/ScheduleTask/UpdateScheduleTask",
+                data: scheduleTask,
+                success: function (data) {
+                    if (data.isSucc) {
+                        alertSuccess("修改成功！");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 800);
+                    } else {
+                        alertError("修改失败！" + data.msg);
+                    }
+                },
+                error: function () {
+                    alertError("修改失败！");
+                }
+            });
+        });
+
+        //手动执行系统任务
+        var execute = function (id) {
+
+            if (id != 0) {
+                isContinue(function () {
+                    $.ajax({
+                        url: "/ScheduleTask/ExecuteScheduleTask?id=" + id,
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("执行成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 800);
+                            } else {
+                                alertError("执行失败！");
+                            }
+                        },
+                        error: function () {
+                            alertError("执行失败！");
+                        }
+                    });
+                }, null, "是否执行？");
+            }
+        }
+    </script>
+}

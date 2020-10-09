@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "采购退单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <style type="text/css">
+        .pagehead { margin-bottom: 10px; padding: 20px 0 30px 0; }
+    </style>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bag font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;">采购退单</font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a href="/Purchasing/AddPurchasingRefundOrder" class="btn btn-default blue align-reverse" style="float:right;margin-right:50px;">添加采购退单</a>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="row pagehead ">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">仓库</span>
+                                    @Html.DropDownList("wareHouse", ViewBag.WareHouse as SelectList, "请选择", new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">供应商</span>
+                                    @Html.DropDownList("supplierName", ViewBag.Suppliers as SelectList, "请选择", new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">下单时间</span>
+                                    <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="" autocomplete="off" />
+                                    <span class="input-group-addon">~</span>
+                                    <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="" autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">关键词</span>
+                                    <input type="text" class="form-control" id="SearchStr" value="" />
+                                    <div class="input-group-btn">
+                                        <input type="button" class="btn btn-default red" name="BtnSearchStr" value="搜索" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dataTable">
+                            <table class="table  table-striped table-hover table-bordered" @*id="PurchasingDatatable" *@>
+                                <thead>
+                                    <tr>
+                                        <th style="width:10%">单据编号</th>
+                                        <th style="width:10%">关联原单号</th>
+                                        <th style="width:10%">采购计划单</th>
+                                        <th style="width:10%">仓库</th>
+                                        <th style="width:20%">供应商</th>
+                                        <th style="width:10%">数量</th>
+                                        <th style="width:10%">状态</th>
+                                        <th style="width:10%">创建时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody"></tbody>
+                            </table>
+                            <ul id="pageLimit" style="float:right"></ul>
+                        </div>
+
+                        <!--用于列表页确定当前分页的index-->
+                        <input type="number" id="pageNumber" value="1" hidden />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            ShowPurchasingOrders();
+
+            $("input[name='BtnSearchStr']").click(function () {
+                $("#pageNumber").val(1);
+                ShowPurchasingOrders();
+            })
+            //跳转页面
+            $("#gotoBtn").click(() => {
+                var maxPage = 0;
+                $("#pageLimit").children("li").children("a").each(function () {
+                    if (!isNaN($(this).html()) && parseInt($(this).html()) >= maxPage) {
+                        maxPage = $(this).html();
+                    }
+                })
+                if ($("#redirect").val() > 0 && parseInt($("#redirect").val()) <= maxPage) {
+                    $("#pageNumber").val($("#redirect").val());
+                    ShowPurchasingOrders();
+                } else {
+                    alertError("请输入正确页数！")
+                }
+            })
+        });
+
+        var ShowPurchasingOrders = function () {
+            var data = $("#SearchStr").val().trim();
+            var supplierName = $("#supplierName option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+            }
+            if (endTime != "") {
+                endTime = new Date(endTime);
+                endTime = (endTime.setDate(endTime.getDate() + 1));
+                endTime = new Date(endTime);
+                var year = endTime.getFullYear();
+                var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                endTime = year + "-" + month + "-" + date;
+            }
+            if ($("#pageNumber").val() == 1) {
+                $("#redirect").val(1)
+            }
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                gotoPage: "gotoPage",
+                url: "/Purchasing/GetRefundPurchasingOrders",
+                data: { pageIndex: $("#pageNumber").val(),search: data, pageSize: pageSize, wareHouse: wareHouse, supplierName: supplierName, startTime: startTime, endTime: endTime},
+                success: function (data) {
+                    html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td><a onclick='RefundPurchasingOrderDetail(\"" + data[i].purchasingNumber + "\"," + data[i].id +")'>" + data[i].purchasingNumber + "</td>" +
+                                "<td>" + (data[i].orgionSerialNumber == null ? "" : data[i].orgionSerialNumber) + "</td>" +
+                                "<td>" + (data[i].purchasingOrderNumber == null ? "" : data[i].purchasingOrderNumber) + "</td>" +
+                                "<td>" + data[i].wareHouseName + "</td>" +
+                                "<td>" + data[i].supplierName + "</td>" +
+                                "<td>" + data[i].sumQuantity + "</td>" +
+                                "<td><span " + (data[i].stateStr.indexOf("无效") == 0 ? "class= \"label label-danger circle\" " : " class= \"label label-info circle\"") + ">" + data[i].stateStr + "</span></td>"+
+                                "<td>" + data[i].createdTime + "</td>" +
+                            "</tr>";
+                        }
+                        $("#tbody").html(html);
+                    } else {
+                        $("#tbody").html(html);
+                    }
+
+                }
+            });
+
+        }
+
+        //查看采购退单详情
+        function RefundPurchasingOrderDetail(refundPurchasingNumber,id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == refundPurchasingNumber) {
+                    parent.$tap.tabChange(refundPurchasingNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/Purchasing/RefundPurchasingOrderDetail?id=" + id;
+            parent.$tap.tabAdd(refundPurchasingNumber, url, refundPurchasingNumber); // 新开一个tap页面
+            parent.$tap.tabChange(refundPurchasingNumber);
+            event.stopPropagation();
+        }
+    </script>
+}

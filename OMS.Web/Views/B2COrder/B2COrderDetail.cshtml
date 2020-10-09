@@ -1,0 +1,2297 @@
+﻿@model OMS.Data.Domain.Order
+@{
+    ViewData["Title"] = "B2C订单详情";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+    var isLackStock = false;
+}
+
+@section Styles{
+    <link href="~/Style/loading.css" rel="stylesheet" />
+    <link href="~/Style/common.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">B2C订单详情</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    @*<a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                            <i class="layui-icon">&#xe65c;</i>
+                        </a>*@
+                </div>
+            </div>
+            <div class="portlet-body">
+                <form id="OrderForm" method="post">
+                    <table class="table table-bordered table-hover" id="mainTable">
+                        <tbody>
+                            <tr>
+                                <td colspan="4" style="text-align:center"><strong>基本信息</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="width:15%"><strong>订单号</strong></td>
+                                <td style="width:30%">
+                                    <span>@Model.SerialNumber</span>
+                                    <input type="text" name="Id" value="@Model.Id" hidden />
+                                    <input type="text" id="IsCopied" name="IsCopied" value="@Model.IsCopied.ToString()" hidden />
+                                </td>
+                                <td style="width:15%"><strong>订单状态</strong></td>
+                                <td style="width:30%">
+                                    <span id="OrderStateStr" class="label label-info">@ViewBag.OrderStateStr[(int)Model.State]</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>订单来源</strong></td>
+                                <td>@Model.PSerialNumber</td>
+                                <td><strong>下单时间</strong></td>
+                                <td>@string.Format("{0:yyyy-MM-dd HH:mm:ss}", Model.CreatedTime) </td>
+                            </tr>
+                            <tr>
+                                <td><strong>店铺</strong></td>
+                                <td>@Html.DropDownList("ShopId", ViewBag.Platform as SelectList, null, new { @class = "form-control", @disabled = false })</td>
+                                <td><strong>支付方式</strong></td>
+                                <td>
+                                    <div class="input-group">
+                                        @Html.DropDownList("PayType", ViewBag.PayType as SelectList, "请选择", new { @class = "form-control", @disabled = false })
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default" type="button" name="ChangePayType" data-toggle="modal" data-target="#ChangePayTypeAndState">修改支付方式</button>
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>购买人帐号</strong></td>
+                                <td><label class="control-label">@Model.UserName</label></td>
+                                <td><strong>支付时间</strong></td>
+                                <td><label class="control-label">@(ViewBag.OrderPayRecord == null ? "" : string.Format("{0:yyyy-MM-dd HH:mm:ss}", ViewBag.OrderPayRecord.CreatedTime))</label>
+                            </tr>
+
+
+                            <tr>
+                                <td><strong>客户留言</strong></td>
+                                <td><input class="form-control" type="text" name="CustomerMark" value="@Model.CustomerMark" /></td>
+                                <td><strong>订单回写</strong></td>
+                                <td><span class="label label-info">@Model.WriteBackState</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>发票信息</strong></td>
+                                <td>
+                                    <div class="input-group">
+                                        @{
+                                            var invoiceInfo = "";
+                                            if (Model.InvoiceInfo != null)
+                                            {
+                                                if (!string.IsNullOrEmpty(Model.InvoiceInfo.Title))
+                                                {
+                                                    invoiceInfo += "抬头：" + Model.InvoiceInfo.Title;
+                                                }
+                                                if (!string.IsNullOrEmpty(Model.InvoiceInfo.TaxpayerID))
+                                                {
+                                                    invoiceInfo += " 识别号：" + Model.InvoiceInfo.TaxpayerID;
+                                                }
+                                                if (!string.IsNullOrEmpty(Model.InvoiceInfo.InvoiceNo))
+                                                {
+                                                    invoiceInfo += "发票号：" + Model.InvoiceInfo.InvoiceNo;
+                                                }
+                                                if (Model.InvoiceInfo.CustomerEmail.Length != 0)
+                                                {
+                                                    invoiceInfo += " 邮箱：" + Model.InvoiceInfo.CustomerEmail;
+                                                }
+                                            }
+                                        }
+                                        <input class="form-control" type="text" name="InvoiceNo" value="@invoiceInfo" disabled />
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default" name="ChangeInvoiceNo" type="button" data-toggle="modal" data-target="#myModal">修改发票</button>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center"><strong>发货信息</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>收货人姓名</strong></td>
+                                <td><input class="form-control" type="text" name="CustomerName" value="@Model.CustomerName" /></td>
+                                <td><strong>收货人手机号码</strong></td>
+                                <td><input class="form-control" type="text" name="CustomerPhone" value="@Model.CustomerPhone" /></td>
+                            </tr>
+                            <tr>
+                                <td><strong>省市区</strong></td>
+                                <td>
+                                    <div class="vgroup">
+                                        <input id="ssq" type="text" name="District" value="" hidden />
+                                        <div id="Shengshiqu" class="btn-group" data-toggle="distpicker">
+                                            <select class="btn btn-default"></select>
+                                            <select class="btn btn-default"></select>
+                                            <select class="btn btn-default vinput" required></select>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><strong>详细地址</strong></td>
+                                <td>
+                                    <span name="FullAddress" hidden>@Model.AddressDetail</span>
+                                    <input class="form-control" type="text" name="XXAddress" value="" />
+                                    <input type="text" name="AddressDetail" value="" hidden />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><label class="control-label"><strong>快递</strong></label></td>
+                                <td>@Html.DropDownList("KDFS", ViewBag.Delivery as SelectList, null, new { @class = "form-control", @disabled = false })</td>
+                                <td><strong>发货仓库</strong></td>
+                                <td>
+                                    <div style="width:60%;float:left;">
+                                        @Html.DropDownList("WarehouseId", ViewBag.WareHouse as SelectList, null, new { @class = "form-control" })
+                                    </div>
+                                    <div style="width:40%;float:left;">
+                                        @*<button class="btn red" type="button" id="getWareHouse">匹配仓库</button>*@
+                                        <button class="btn blue" type="button" id="saveWareHouse">保存仓库</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>快递单号</strong></td>
+                                <td>
+                                    <div class="input-group">
+                                        <input class="form-control" type="text" name="DeliveryNumber" value="@Model.DeliveryNumber" readonly />
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default" type="button" name="ChangeDeliveryNumber" data-toggle="modal" data-target="#ChangeDelivery">修改快递</button>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td><strong>给仓库留言</strong></td>
+                                <td><input class="form-control" type="text" name="ToWarehouseMessage" value="@Model.ToWarehouseMessage" multiple /></td>
+                            </tr>
+                            <tr>
+                                <td><strong>订单备注</strong></td>
+                                <td><input class="form-control" type="text" name="AdminMark" value="@Model.AdminMark" /></td>
+                                @*<td><strong>沟通备注</strong></td>
+                        <td><input class="form-control" type="text" name="CommunicateMark" value="" /></td>*@
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center"><strong>订单金额信息</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>订单总金额（原价计算）</strong></td>
+                                <td>@ViewBag.OriginalPrice</td>
+                                <td><strong>订单已付金额</strong></td>
+                                <td>@Model.PayPrice</td>
+                            </tr>
+                            <tr>
+                                <td><strong>订单应付总金额（销售价计算）</strong></td>
+                                <td>@Model.SumPrice</td>
+                                <td><strong>代金券</strong></td>
+                                <td>@Model.ProductCoupon</td>
+                            </tr>
+                            <tr>
+                                <td><strong>订单优惠金额</strong></td>
+                                <td>@(ViewBag.OriginalPrice - Model.SumPrice)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>中民网积分金额</strong></td>
+                                <td>@Model.ZMIntegralValuePrice</td>
+                                <td><strong>中民券</strong></td>
+                                <td>@Model.ZMCoupon</td>
+                            </tr>
+                            <tr>
+                                <td><strong>中民红酒券</strong></td>
+                                <td>@Model.ZMWineCoupon</td>
+                                <td><strong>红酒网红酒券</strong></td>
+                                <td>@Model.WineWorldCoupon</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table id="tOrderProducts" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th colspan="9" style="text-align:center">订单商品信息&nbsp;<button class="btn btn-default btn-sm" type="button" id="OrderProducts" name="OrderProducts">添加商品</button></th>
+                            </tr>
+                            <tr>
+                                <th>商品名</th>
+                                <th>商品编码</th>
+                                <th>数量(锁定数)</th>
+                                <th>退货数量</th>
+                                <th>总库存</th>
+                                <th>商品价格</th>
+                                <th>销售单价</th>
+                                <th>销售总价</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ViewBag.OrderProducts)
+                            {
+                                @if (item.IsLackStock) { isLackStock = true; }
+                                var trclass = "";
+                                if (item.IsLackStock) { trclass = "danger"; }
+                                if (item.RefundQuantity != 0) { trclass = "warning"; }
+
+                                <tr class="@trclass">
+                                    <td name="tProductName" style="text-align:left">@item.ProductName</td>
+                                    <td class="text-left" name="tProductCode">@item.ProductCode</td>
+                                    <td name="tQuantity" style="text-align:left" data-quantity="@item.Quantity">@item.Quantity <span style="color:red;">(@item.LockNum)</span></td>
+                                    <td name="refundQuantity" style="text-align:left" data-quantity="@item.RefundQuantity">@item.RefundQuantity</td>
+                                    <td><a id="orderProTotalStock" onclick="getProductStock(@item.ProductId)" style="color:blue;text-decoration:underline">@item.TotalQuantity</a></td>
+                                    <td style="text-align:left" name="tOrginPrice">@item.OrginPrice</td>
+                                    <td name="tPrice" style="text-align:left">@item.Price</td>
+                                    <td name="tSumPrice" style="text-align:left">@item.SumPrice</td>
+                                    <td style="text-align:left">
+                                        <input class="btn btn-default btn-sm" type="button" name="delSaleProduct" value="删除" data-id="@item.Id" />
+                                        <input class="btn btn-default btn-sm" type="button" name="updateSaleProduct" value="修改" data-id="@item.Id" data-toggle="modal" data-target="#ChangeProductPrice" />
+                                        <input class="btn btn-default btn-sm" type="button" name="changeProEqValue" data-proId="@item.Id" value="等价换货" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                        <tr>
+                            <td colspan="9" style="text-align:right">商品总数量: <label name="zongshuliang"></label>&nbsp;&nbsp;&nbsp;商品总价：<label name="zongjia">@ViewBag.OriginalPrice</label>   &nbsp;&nbsp;&nbsp;商品销售总价：<label name="salezongjia"></label></td>
+                        </tr>
+                    </table>
+                    <div class="row" style="margin-bottom:10px;">
+                        <div class="col-md-4 text-right"><strong>备注</strong></div>
+                        <div class="col-md-5">
+                            <input class="form-control" type="text" name="CommunicateMark" value="" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <span name="IsLocked" hidden>@Model.IsLocked</span>
+                            <input class="btn btn-primary red" type="button" name="LackStockUnLock" value="缺货解锁" disabled />
+                            <input class="btn btn-primary" type="button" name="TurnOrder" value="转单" disabled style="display:none;" />
+                            <input class="btn btn-primary" type="button" name="LockOrder" value="锁定订单" disabled />
+                            <input class="btn btn-primary" type="button" name="UnLockOrder" value="解锁订单" disabled />
+                            <input class="btn btn-primary" type="button" name="ConfirmOrder" value="确认订单" disabled />
+                            <input class="btn btn-primary" type="button" name="UnConfirmOrder" value="反确认订单" disabled />
+                            @if (Model.Type == OMS.Data.Domain.OrderType.B2B || Model.Type == OMS.Data.Domain.OrderType.B2C_XH)
+                            {
+                                <input class="btn btn-primary" type="button" id="UploadOrder" name="UploadOrder" value="上传订单" disabled />
+                            }
+                            <input class="btn red" type="button" id="CancelUploadOrder" name="CancelUploadOrder" value="取消上传" disabled />
+                            <input class="btn btn-warning" type="button" name="SetInvalid" value="设为无效" disabled />
+                            <button class="btn btn-primary" type="button" name="SplitOrder" data-toggle="modal" data-target="#SplitOrder" disabled>拆分订单</button>
+                            <input class="btn red" type="button" name="SubmitOrder" value=" 保 存 " disabled />
+                            <button class="btn red" type="button" name="TransactionRefund" disabled> 一键退货 </button>
+                            <button class="btn red" type="button" name="PartRefund" data-toggle="modal" data-target="#PartRefund" disabled>部分退货</button>
+                            <button class="btn red" type="button" name="CopyOrder" disabled>复制订单</button>
+                            <button class="btn red" type="button" id="quickPay" name="QuickPay" @((Model.SumPrice == (Model.PayPrice + (decimal)Model.ZMWineCoupon + (decimal)Model.WineWorldCoupon) || Model.PayState == 0) ? "disabled" : "")>一键支付</button>
+                            <button class="btn blue" type="button" name="Communicate" style="display:none;"> 沟 通 </button>
+                        </div>
+                    </div>
+                </form>
+                <!--Modal Begin-->
+                <!--发票-->
+                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form id="invoiceInfoForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">发票信息</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup"></label>
+                                        <div class="col-sm-6">
+                                            <span class="label label-danger inline-block margin-bottom-5">注意选择发票类型及所填信息正确性</span>
+                                            <span class="label label-danger inline-block">个人发票必填信息：发票抬头</span>
+                                            <span class="label label-danger inline-block">普通单位发票：发票抬头、纳税人识别号</span>
+                                            <span class="label label-danger inline-block">专用发票：除发票号之外都需要填写 </span>
+                                            <span class="label label-danger inline-block">发票方式为电子发票：必须填写邮箱信息</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">发票类型</label>
+                                        <div class="col-sm-6 vinput">
+                                            @*<label><input type="radio" name="InvoiceType" id="InvoiceType1" value="1" checked />普通个人发票</label>&nbsp;
+                                    <label><input type="radio" name="InvoiceType" id="InvoiceType2" value="2" />普通单位发票</label>&nbsp;
+                                    <label><input type="radio" name="InvoiceType" id="InvoiceType3" value="3" />专用发票</label>*@
+
+                                            @Html.DropDownList("InvoiceTypes", ViewBag.InvoiceTypes as SelectList, null, new { @class = "form-control" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">发票方式</label>
+                                        <div class="col-sm-6 vinput">
+                                            @Html.DropDownList("InoviceModes", ViewBag.InoviceModes as SelectList, null, new { @class = "form-control" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">发票号</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="InvoiceNo" name="InvoiceNo" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.InvoiceNo)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">发票抬头<br /><small>（个人或单位名称）</small></label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="Title" name="Title" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.Title)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">纳税人识别码</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="TaxpayerID" name="TaxpayerID" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.TaxpayerID)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">注册地址</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="RegisterAddress" name="RegisterAddress" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.RegisterAddress)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">注册电话</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="RegisterTel" name="RegisterTel" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.RegisterTel)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">开户银行</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="BankOfDeposit" name="BankOfDeposit" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.BankOfDeposit)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">银行帐号</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" id="BankAccount" name="BankAccount" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.BankAccount)" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">收取发票邮箱</label>
+                                        <div class="col-sm-6">
+                                            <input class="form-control vinput" type="text" name="CustomerEmail" id="CustomerEmail" value="@(Model.InvoiceInfo==null?"":Model.InvoiceInfo.CustomerEmail)" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="addInvoiceInfo" type="button" class="btn btn-primary">添加发票</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!--支付方式-->
+                <div class="modal fade" id="ChangePayTypeAndState" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form id="payTypeInfoForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">支付方式修改</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">订单总金额</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="name" value="@Model.SumPrice" disabled /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">支付方式<span class="required"> * </span></label>
+                                        <div class="col-sm-6">@Html.DropDownList("PayType", ViewBag.PayType as SelectList, null, new { @class = "form-control" })</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">支付金额</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="Price" value="@Model.PayPrice" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">备注</label>
+                                        <div class="col-sm-6"><textarea class="form-control" name="Mark">@(ViewBag.OrderPayRecord==null? "":ViewBag.OrderPayRecord.Mark)</textarea></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="addPayTypeInfo" type="button" class="btn red">付款</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!--快递方式-->
+                <div class="modal fade" id="ChangeDelivery" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form id="deliveryInfoForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">快递修改</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">快递方式<span class="required"> * </span></label>
+                                        <div class="col-sm-6">@Html.DropDownList("DeliveryTypeId", ViewBag.Delivery as SelectList, null, new { @class = "form-control" })</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">快递单号</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="DeliveryNumber" value="@Model.DeliveryNumber" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">快递日期</label>
+                                        <div class="col-sm-6"><input class="form-control form_datetime vinput" type="text" name="DeliveryDate" value="@string.Format("{0:yyyy-MM-dd}",Model.DeliveryDate)" /></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="addDeliveryInfo" type="button" class="btn btn-primary">修改快递方式</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!--修改商品数量和价格-->
+                <div class="modal fade" id="ChangeProductPrice" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form id="productPriceInfoForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">数量价格修改</h4>
+                                    <input type="text" name="OrderProductId" value="" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">商品名</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="productName" value="" disabled /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">商品编码</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="productCode" value="" disabled /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">商品价格</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="productOriginalPrice" value="" disabled /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">数量</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="number" name="productQuantity" oninput="changeSumPrice()" value="" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">销售单价</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="text" name="productSalePrice" oninput="changeSumPrice()" value="" /></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">商品总价</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="number" min="0" oninput="changePrice()" name="productSumPrice" value="" /></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="UpdateProductPriceInfo" type="button" class="btn red">确定</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!--订单商品-->
+                <div class="modal fade" id="AddOrderProducts" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <form id="OrderProductsForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">商品信息</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <div class="dataTable">
+                                                <div class="row margin-bottom-15">
+                                                    <div class="col-md-3">
+                                                        <input type="text" id="saleProSearchStr" name="saleProSearchStr" class="form-control" placeholder="请输入商品SKU" />
+                                                    </div>
+                                                    <div class="col-md-1">
+                                                        <input type="button" id="btnSearch" name="btnSearch" class="btn btn-circle red" onClick="showSaleProducts()" value="&nbsp;搜&nbsp;索&nbsp;" />
+                                                    </div>
+                                                </div>
+                                                <table id="OrderProductsTable" class="table table-striped table-bordered">
+                                                    <thead>
+                                                        <tr role="row">
+                                                            <th>商品名称</th>
+                                                            <th>商品编码</th>
+                                                            <th>库存（锁定库存）</th>
+                                                            <th>操作</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                                <ul id="pageLimit" style="float:right"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal fade" id="addSaleProductDetail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">销售商品详情</h4>
+                            </div>
+                            <form id="saleProductDetail" method="post" class="form-horizontal">
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label class="col-md-4 text-align-reverse">商品名</label>
+                                        <input id="OrderId" name="OrderId" value="@Model.Id" hidden />
+                                        <input id="SaleProductId" name="SaleProductId" hidden />
+                                        <label class="col-md-6"><input id="saleProName" name="Name" class="form-control" readonly /></label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-4 text-align-reverse">库存（锁定库存）</label>
+                                        <label class="col-md-6" id="saleProStock"></label>
+                                    </div>
+                                    <div class="form-group">
+
+                                        <label class="col-md-4 text-align-reverse">标准价</label>
+                                        <label class="col-md-6"><input id="saleProOrginPrice" name="OrginPrice" class="form-control" readonly /></label>
+                                    </div>
+                                    <div class="form-group">
+
+                                        <label class="col-md-4 text-align-reverse">单价</label>
+                                        <label class="col-md-6"><input type="number" id="saleProPrice" name="Price" class="form-control" oninput="addProCalcPrice()"></label>
+                                    </div>
+                                    <div class="form-group vgroup">
+
+                                        <label class="col-md-4 text-align-reverse">数量</label>
+                                        <label class="col-md-6"><input type="number" name="Quantity" min="1" class="form-control vinput" value="" oninput="addProCalcPrice()" required></label>
+                                    </div>
+                                    <div class="form-group vgroup">
+                                        <label class="col-md-4 text-align-reverse">总价</label>
+                                        <label class="col-md-6"><input type="number" name="SumPrice" class="form-control vinput" oninput="addProCalcProPrice()"></label>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                <button id="addSaleProduct" type="button" class="btn btn-default">确定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--拆分订单-->
+                <div class="modal fade" id="SplitOrder" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <form id="splitOrderForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">拆分订单</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-right">
+                                                    订单号
+                                                </td>
+                                                <td>
+                                                    <span name="SerialNumber">@Model.SerialNumber</span>
+                                                    @*<input class="form-control vinput" type="text" name="name" value="@Model.SerialNumber" readonly />*@
+                                                </td>
+                                                <td class="text-right">
+                                                    平台单号
+                                                </td>
+                                                <td>
+                                                    @Model.PSerialNumber
+                                                    @*<input class="form-control vinput" type="text" name="name" value="" readonly />*@
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-right">
+                                                    快递类型
+                                                </td>
+                                                <td>
+                                                    @Html.DropDownList("KDFS", ViewBag.Delivery as SelectList, null, new { @class = "form-control", @disabled = false })
+                                                </td>
+                                                <td class="text-right">
+                                                    快递单号
+                                                </td>
+                                                <td>
+                                                    <input class="form-control vinput" type="text" name="name" value="@Model.DeliveryNumber" readonly />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="4" style="text-align:center"><strong>订单商品</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="4">
+                                                    <table class="table table-bordered" id="splitOrderProductsTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th></th>
+                                                                <th>商品名</th>
+                                                                <th>编号</th>
+                                                                <th>单价</th>
+                                                                <th>数量</th>
+                                                                <th>拆分数量</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ViewBag.OrderProducts)
+                                                            {
+                                                                @if (item.IsLackStock) { isLackStock = true; }
+                                                                var trclass = "";
+                                                                if (item.IsLackStock) { trclass = "danger"; }
+                                                                <tr class="@trclass">
+                                                                    <td></td>
+                                                                    <td>@item.ProductName</td>
+                                                                    <td>@item.ProductCode</td>
+                                                                    <td>@item.Price</td>
+                                                                    <td>@item.Quantity</td>
+                                                                    <td class="vgroup">
+                                                                        <input class="form-control vinput" type="number" min="0" max="@item.Quantity" name="@item.SaleProductId" data-id="@item.Id" value="0" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="submitSplitOrder" type="button" class="btn btn-primary">拆分</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!--部分退货-->
+                <div class="modal fade" id="PartRefund" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <form id="partRefundForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                    <h4 class="modal-title">部分退货</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-right">
+                                                    订单号
+                                                </td>
+                                                <td>
+                                                    <span name="SerialNumber">@Model.SerialNumber</span>
+                                                    @*<input class="form-control vinput" type="text" name="name" value="@Model.SerialNumber" readonly />*@
+                                                </td>
+                                                <td class="text-right">
+                                                    平台单号
+                                                </td>
+                                                <td>
+                                                    @Model.PSerialNumber
+                                                    @*<input class="form-control vinput" type="text" name="name" value="" readonly />*@
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-right">
+                                                    快递类型
+                                                </td>
+                                                <td>
+                                                    @Html.DropDownList("KDFS", ViewBag.Delivery as SelectList, null, new { @class = "form-control", @disabled = false })
+                                                </td>
+                                                <td class="text-right">
+                                                    快递单号
+                                                </td>
+                                                <td>
+                                                    <input class="form-control vinput" type="text" name="name" value="@Model.DeliveryNumber" readonly />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="4" style="text-align:center"><strong>订单商品</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="4">
+                                                    <table class="table table-bordered" id="partRefundProductsTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="display:none"></th>
+                                                                <th>商品名</th>
+                                                                <th>编码</th>
+                                                                <th>单价</th>
+                                                                <th>可退数量</th>
+                                                                <th>退货数量</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ViewBag.CanRefundOrderProducts)
+                                                            {
+                                                                <tr>
+                                                                    <td style="display:none"></td>
+                                                                    <td>@item.ProductName</td>
+                                                                    <td>@item.ProductCode</td>
+                                                                    <td>
+                                                                        <input class="form-control vinput" type="number" name="RefundPrice" value="@item.Price" />
+                                                                    </td>
+                                                                    <td>@item.CanRedundQuantity</td>
+                                                                    <td class="vgroup">
+                                                                        <input class="form-control vinput" type="number" min="0" max="@item.CanRedundQuantity" name="RefundQuantity" data-saleproductid="@item.SaleProductId" data-id="@item.OrderProductId" value="0" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    <button id="submitPartRefund" type="button" class="btn btn-primary">退货</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!--订单库存查询-->
+                <div id="proStockModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title"><strong>商品实时库存</strong></h4>
+                            </div>
+                            <div class="modal-body">
+                                数据查询中，请稍后<img src="~/Image/loading.gif" />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--等价换货-->
+                <div id="changeProEqValueModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <form id="orderProForm" class="form-horizontal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">商品信息</h4>
+                                    <input type="text" name="orderId" value="@Model.Id" hidden />
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <div class="col-sm-12">
+                                            <div class="dataTable">
+                                                <div class="row margin-bottom-15">
+                                                    <div class="col-md-3">
+                                                        <input type="text" id="changeProSearchStr" name="changeProSearchStr" class="form-control" placeholder="请输入商品SKU" />
+                                                    </div>
+                                                    <div class="col-md-1">
+                                                        <input type="button" @*id="btnSearch" name="btnSearch" *@ class="btn btn-circle red" onClick="showChangeProByPage()" value="&nbsp;搜&nbsp;索&nbsp;" />
+                                                    </div>
+                                                </div>
+                                                <table id="proTb" class="table table-striped table-bordered">
+                                                    <thead>
+                                                        <tr role="row">
+                                                            <th>商品名称</th>
+                                                            <th>商品编码</th>
+                                                            <th>库存（锁定库存）</th>
+                                                            <th>操作</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                                <ul id="changeProPageLimit" style="float:right"></ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="addChangePro" class="modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">商品信息</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">商品名</label>
+                                        <div class="col-sm-6">
+                                            <input type="text" id="changeProId" name="changeProId" value="" hidden />
+                                            <input type="text" id="orignProId" name="orignProId" value="" hidden />
+                                            <input class="form-control vinput" type="text" id="changeProName" name="changeProName" value="" disabled />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label vgroup">数量</label>
+                                        <div class="col-sm-6"><input class="form-control vinput" type="number" min="0" id="changeProQty" name="changeProQty" value="" /></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default red" id="changeSubmitBtn">确定</button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--库存锁定-->
+                <div class="modal fade" id="proLockedQuery">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria--hidden="true">&times;</button>
+                                <h4 class="modal-title">锁定信息</h4>
+                            </div>
+                            <div class="modal-body">
+                                <table class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>行号</th>
+                                            <th>订单号</th>
+                                            <th>锁定数量</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <div class="" style="display:block;height:25px;">
+                                    <ul id="pageLimit2" style="float:right;margin:0px;"></ul>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Modal End-->
+                <div>
+                    <div class="col-md-12"></div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th colspan="6">操作记录</th>
+                            </tr>
+                            <tr>
+                                <th width="20%">操作人</th>
+                                <th width="10%">操作名称</th>
+                                <th width="20%">操作时间</th>
+                                <th width="10%">订单状态</th>
+                                @*<th>发货状态</th>*@
+                                <th width="40%">备注</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in ViewBag.OrderLog)
+                            {
+                                <tr>
+                                    <td class="text-left">@i.CreatedBy [@ViewBag.User[i.CreatedBy]]</td>
+                                    <td class="text-left">@i.OptionType</td>
+                                    <td class="text-left">@string.Format("{0:yyyy-MM-dd HH:mm:ss}", i.CreatedTime) </td>
+                                    <td class="text-left">@ViewBag.OrderStateStr[(int)i.OrderState]</td>
+                                    @*<td class="text-left">@ViewBag.OrderStateStr[(int)i.DeliveryState]</td>*@
+                                    <td class="text-left">@i.Mark</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- loading -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+    <div class="modal-dialog modal-sm" style="top:40%;">
+        <div class="loader" >
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <div id="loaderText">
+            正在加载请稍后......
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/datatables/datatables.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.js" type="text/javascript"></script>
+    <script src="~/Metronic/assets/global/plugins/distpicker/distpicker.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#invoiceInfoForm").$validate();
+            $('#saleProductDetail').$validate();
+            $('#splitOrderForm').$validate();
+            $('#mainTable tr').each(function () {
+                $(this).children("td:even").attr("class", "text-align-reverse");
+            });
+            //日期选择器
+            $('.form_datetime').datetimepicker({ language: 'zh-CN', format: 'yyyy-mm-dd hh:ii' });
+
+
+
+
+            //控制按钮
+            var State = "@Model.State.ToString()";
+            var RefundState = "@ViewBag.RefundState.ToString()";
+            var iscopied = $("#IsCopied").val();
+            if (State == "Invalid") {
+                $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+                $('#getWareHouse').attr("disabled", true);
+                $('#saveWareHouse').attr("disabled", true);
+                if (iscopied.length == 0 || iscopied == 'False') {
+                    $('button[name="CopyOrder"]').attr('disabled', false);
+                }
+            } else if (State == "Delivered") {
+                $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+
+                $('input[name="CancelUploadOrder"]').attr('disabled', 'disabled');
+                //$('input[name="CancelUploadOrder"]').removeAttr('disabled');
+                if (RefundState == "No") {
+                    $('button[name="TransactionRefund"]').removeAttr('disabled');
+                    $('button[name="PartRefund"]').removeAttr('disabled');
+                }
+                if (RefundState == "Part") {
+                    $('button[name="PartRefund"]').removeAttr('disabled');
+                }
+                $('#getWareHouse').attr("disabled", true);
+                $('#saveWareHouse').attr("disabled", true);
+
+            } else if (State == "ToBeTurned") {
+                $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+
+                $('input[name="TurnOrder"]').removeAttr('disabled');
+                $('#getWareHouse').attr("disabled", true);
+                $('#saveWareHouse').attr("disabled", true);
+                if (@isLackStock.ToString().ToLower())
+                {
+                    $("input[name='LackStockUnLock']").attr("disabled", false);
+                }
+            } else if (State == "Paid" || State == "Unpaid" || State == "ToBeConfirmed") {
+                if ($('span[name="IsLocked"]').html() == "False") {
+                    $('input[name="LockOrder"]').removeAttr('disabled');
+                    $('input[name="ConfirmOrder"]').removeAttr('disabled');
+                    $('input[name="SetInvalid"]').removeAttr('disabled');
+                    $('input[name="SubmitOrder"]').removeAttr('disabled');
+                    $('button[name="SplitOrder"]').removeAttr('disabled');
+
+                    //若商品列表无商品，设置付款按钮无法点击
+                    if (typeof ($('#tOrderProducts tbody tr td[name="tProductName"]').html()) == "undefined" || $('span[name="IsLocked"]').html() == "True") {
+                        $("button[name='ChangePayType']").attr("disabled", "disabled");
+                    }
+
+                    $('#getWareHouse').attr("disabled", false);
+                    $('#saveWareHouse').attr("disabled", false);
+                    if (@isLackStock.ToString().ToLower())
+                    {
+                        $("input[name='LackStockUnLock']").attr("disabled", false);
+                    }
+                } else if (($('span[name="IsLocked"]').html() == "True")) {
+                    $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                    $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                    $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                    $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                    $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                    $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                    $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+
+                    $('input[name="UnLockOrder"]').removeAttr('disabled');
+                    $('#getWareHouse').attr("disabled", true);
+                    $('#saveWareHouse').attr("disabled", true);
+                    if (@isLackStock.ToString().ToLower())
+                    {
+                        $("input[name='LackStockUnLock']").attr("disabled", false);
+                    }
+                }
+            } else if (State == "B2CConfirmed") {
+                $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+
+                $('input[name="UnConfirmOrder"]').removeAttr('disabled');
+                $('input[name="UploadOrder"]').removeAttr('disabled');
+                $('input[name="SetInvalid"]').removeAttr('disabled');
+                $('#getWareHouse').attr("disabled", true);
+                $('#saveWareHouse').attr("disabled", true);
+                if (@isLackStock.ToString().ToLower())
+                {
+                    $("input[name='LackStockUnLock']").attr("disabled", false);
+                }
+            } else if (State == "Unshipped") {
+                $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+                $('#getWareHouse').attr("disabled", true);
+                $('#saveWareHouse').attr("disabled", true);
+
+
+                $('input[name="CancelUploadOrder"]').removeAttr('disabled');
+                if (@isLackStock.ToString().ToLower())
+                {
+                    $("input[name='LackStockUnLock']").attr("disabled", false);
+                }
+            } else if (State == "Uploaded") {
+                $('button[name="ChangePayType"]').attr('disabled', 'disabled');
+                $('button[name="ChangeDeliveryNumber"]').attr('disabled', 'disabled');
+                $('button[name="OrderProducts"]').attr('disabled', 'disabled');
+                $('input[name="delSaleProduct"]').attr('disabled', 'disabled');
+                $('input[name="updateSaleProduct"]').attr('disabled', 'disabled');
+                $('button[name="ChangeInvoiceNo"]').attr('disabled', 'disabled');
+                $('input[name="changeProEqValue"]').attr('disabled', 'disabled');
+
+                $('input[name="UnConfirmOrder"]').attr('disabled', 'disabled');
+                $('input[name="UploadOrder"]').attr('disabled', 'disabled');
+                $('input[name="SetInvalid"]').attr('disabled', 'disabled');
+                $('input[name="CancelUploadOrder"]').removeAttr('disabled');
+                $('#getWareHouse').attr("disabled", true);
+                $('#saveWareHouse').attr("disabled", true);
+
+            }
+
+
+
+            //转单
+            $('input[name="TurnOrder"]').click(function () {
+                $('input[name="TurnOrder"]').attr("disabled", true);
+                $.ajax({
+                    url: '/B2COrder/TurnOrder?orderId=' +@Model.Id,
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("订单转单成功！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            },1000)
+                        } else {
+                            alertError(data.msg);
+                            $('input[name="TurnOrder"]').attr("disabled", false);
+                        }
+                    }
+                })
+            })
+            //锁定订单
+            $('input[name="LockOrder"]').click(function () {
+                isContinue(function () {
+                    $.ajax({
+                        url: '/B2COrder/LockOrder?orderId=' +@Model.Id,
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("订单已锁定！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 800);
+                            } else {
+                                alertError(data.msg);
+                            }
+
+                        }
+                    })
+                }, null,"确定锁定订单？")
+            })
+            //解锁订单
+            $('input[name="UnLockOrder"]').click(function () {
+                isContinue(function () {
+                    $.ajax({
+                        url: '/B2COrder/UnLockOrder?orderId=' +@Model.Id,
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("订单已解锁！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 800);
+                            } else {
+                                alertError(data.msg);
+                            }
+
+                        }
+                    })
+                }, null,"确定解锁订单？")
+            })
+            //确认订单
+            $('input[name="ConfirmOrder"]').click(function () {
+                var ssq = "";
+                $('#Shengshiqu').children('select').each(function () {
+                    ssq += $(this).val() + " ";
+                });
+                var address = ssq + $('input[name="XXAddress"]').val();
+                $('input[name="AddressDetail"]').val(address);
+                var orderModel = {
+                    CustomerMark: $('input[name="CustomerMark"]').val(),
+                    CustomerName: $('input[name="CustomerName"]').val(),
+                    CustomerPhone: $('input[name="CustomerPhone"]').val(),
+                    AddressDetail: $('input[name="AddressDetail"]').val(),
+                    AdminMark: $('input[name="AdminMark"]').val(),
+                    WarehouseId: $('#WarehouseId').val(),
+                    ToWarehouseMessage: $('input[name="ToWarehouseMessage"]').val(),
+                    CommunicateMark: $("input[name='CommunicateMark']").val()
+
+                };
+                isContinue(function () {
+                    $.ajax({
+                        url: '/B2COrder/ConfirmOrder',
+                        data: { orderId: @Model.Id, orderType: '@Model.Type.ToString()', orderModel: orderModel },
+                        type: 'post',
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("订单已确认");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                alertError(data.msg);
+                            }
+                        },
+                        error: function () {
+                            alertError("确认失败！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        }
+                    })
+                }, null,"确定确认订单？")
+            })
+            //反确认订单
+            $('input[name="UnConfirmOrder"]').click(function () {
+                isContinue(function () {
+                    $.ajax({
+                        url: '/B2COrder/UnConfirmOrder?orderId=' +@Model.Id+'&orderType=@Model.Type',
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("订单已取消确认！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                alertError(data.msg);
+                            }
+
+                        }
+                    })
+                }, null,"确定反确认订单？")
+            })
+            //无效订单
+            $('input[name="SetInvalid"]').click(function () {
+                $('input[name="SetInvalid"]').attr("disabled", true);
+                isContinue(function () {
+                    $.ajax({
+                        url: '/B2COrder/SetInvalid?orderId=' +@Model.Id,
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("订单已设置为无效！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                alertError(data.msg);
+                                $('input[name="SetInvalid"]').attr("disabled", false);
+                            }
+
+                        }
+                    })
+                }, function () { $('input[name="SetInvalid"]').attr("disabled", false); }, "确定设置订单无效？设置无效后订单作废");
+                $("#basic").on("hidden.bs.modal", function () {
+                    $('input[name="SetInvalid"]').attr("disabled", false);
+                });
+            });
+            //填写拆分数量进行判断
+            $("#splitOrderProductsTable tr td input").blur(function () {
+                var inputVal = parseInt($(this).val());
+                var maxInputVal = parseInt($(this).attr("max"));
+                if (inputVal < 0) { alertError("请输入正确的数量！"); }
+                if (inputVal > maxInputVal) {
+                    alertError("填写的数据大于可拆分的数量，请重新填写！");
+                }
+            });
+            //拆分订单
+            $('#submitSplitOrder').click(function () {
+                var productInfo = [];
+                var isNotInputQuantity = true;
+                var isMoreQuantity = false;
+                $('#splitOrderProductsTable tr td input').each(function () {
+                    productInfo.push({
+                        'saleProductId': parseInt($(this).attr('name')),
+                        'splitQuantity': parseInt($(this).val()),
+                        'splitOrderProductId': parseInt($(this).data('id'))
+                    });
+                    if (parseInt($(this).val()) > 0) {
+                        isNotInputQuantity = false;
+                    }
+
+                    if (parseInt($(this).val()) > parseInt($(this).attr("max"))) {
+                        isMoreQuantity = true;
+                    }
+
+                });
+                //判断拆分时是否填写拆分数量
+                if (isNotInputQuantity) {
+                    alertError("请填写拆分数量！");
+                    return false;
+                }
+                //判断填写数量是否超过可拆分数量
+                if (isMoreQuantity) {
+                    alertError("填写的数据大于可拆分的数量，请重新填写！");
+                    return false;
+                }
+
+                var isPay ="@Model.PayState.ToString()";
+                if (isPay == "Success") {
+                    var sumPrice =@Model.SumPrice;
+                    var payPrice=@Model.PayPrice;
+                    if (sumPrice != payPrice) {
+                        isContinue(function () {
+                            $.ajax({
+                                type: 'post',
+                                url: '/B2COrder/SplitOrder',
+                                data: { 'orderId':@Model.Id , 'productInfo': JSON.stringify(productInfo) },
+                                success: function (data) {
+                                    if (data.isSucc) {
+                                        alertSuccess("拆单成功！");
+                                        setTimeout(function () { window.location.reload() }, 800);
+                                    } else {
+                                        alertError(data.msg);
+
+                                    }
+                                },
+                                error: function (e) {
+                                    alertError("拆单失败！" + e);
+                                    setTimeout(function () { window.location.reload() }, 800)
+                                }
+                            });
+                        }, null, "商品总价与支付总金额不一致，请检查是否有优惠券信息及新增商品，是否要拆单？")
+                    }
+                    else {
+                        $.ajax({
+                            type: 'post',
+                            url: '/B2COrder/SplitOrder',
+                            data: { 'orderId':@Model.Id , 'productInfo': JSON.stringify(productInfo) },
+                            success: function (data) {
+                                if (data.isSucc) {
+                                    alertSuccess("拆单成功！");
+                                    setTimeout(function () { window.location.reload() }, 800);
+                                } else {
+                                    alertError(data.msg);
+
+                                }
+                            },
+                            error: function (e) {
+                                alertError("拆单失败！" + e);
+                                setTimeout(function () { window.location.reload() }, 800)
+                            }
+                        });
+                    }
+
+                } else {
+                    alertError("订单未支付！")
+                }
+            });
+
+            //填写退货数量进行判断
+            $("#partRefundProductsTable tr td input[name='RefundQuantity']").blur(function () {
+                var inputVal = parseInt($(this).val());
+                var maxInputVal = parseInt($(this).attr("max"));
+                if (inputVal < 0) { alertError("请输入正确的数量！"); }
+                if (inputVal > maxInputVal) {
+                    alertError("填写的数据大于可退货的数量，请重新填写！");
+                }
+            });
+            //填写退货价格
+            $("#partRefundProductsTable tr td input[name='RefundPrice']").blur(function () {
+                var inputVal = parseInt($(this).val());
+                if (inputVal < 0) { alertError("请输入正确的价格！"); }
+            });
+            //部分退单
+            $("#submitPartRefund").click(function () {
+                var refundProductInfo = [];
+                var isNotInputQuantity = true;
+                var isMoreQuantity = false;
+                $('#partRefundProductsTable tr td input[name="RefundQuantity"]').each(function () {
+                    if (parseInt($(this).val()) > 0) { 
+                        refundProductInfo.push({
+                            'saleProductId': parseInt($(this).data('saleproductid')),
+                            'refundQuantity': parseInt($(this).val()),
+                            'refundOrderProductId': parseInt($(this).data('id')),
+                            'price': $(this).parent("td").parent("tr").find("input[name='RefundPrice']").val()
+                        });
+                    }
+                    if (parseInt($(this).val()) > 0) {
+                        isNotInputQuantity = false;
+                    }
+
+                    if (parseInt($(this).val()) > parseInt($(this).attr("max"))) {
+                        isMoreQuantity = true;
+                    }
+                });
+                //判断退货时是否填写退货数量
+                if (isNotInputQuantity) {
+                    alertError("请填写退货数量！");
+                    return false;
+                }
+                //判断填写数量是否超过可退货数量
+                if (isMoreQuantity) {
+                    alertError("填写的数据大于可退货的数量，请重新填写！");
+                    return false;
+                }
+                if (State == "Delivered") {
+                     isContinue(function () {
+                            $.ajax({
+                                type: 'post',
+                                url: '/B2COrder/PartRefund',
+                                data: { 'orderId':@Model.Id , 'refundProductInfo': JSON.stringify(refundProductInfo) },
+                                success: function (data) {
+                                    if (data.isSucc) {
+                                        alertSuccess("退单成功！");
+                                        setTimeout(function () { window.location.reload() }, 1000);
+                                        B2CRefundOrderDetail(data.data.refundSerialNumber, data.data.refundOrderId);
+                                    } else {
+                                        alertError(data.msg);
+
+                                    }
+                                },
+                                error: function (e) {
+                                    alertError("退单失败！" + e);
+                                    setTimeout(function () { window.location.reload() }, 800)
+                                }
+                            });
+                        }, null, "确定进行退单操作？")
+
+                } else {
+                    alertError("订单未发货不能进行退单操作！");
+                }
+
+            });
+            //上传订单
+            $("#UploadOrder").click(function () {
+                if ("@ViewBag.IsLackStock" == "True") {
+                    alertError("商品库存不足，不能上传到WMS！");
+                    return false;
+                }
+                isContinue(function () {
+                    $.ajax({
+                        url: '/B2COrder/UploadOrder',
+                        data: { id: @Model.Id },
+                        type: 'post',
+                        beforeSend: function () {
+                            //防止重复提交
+                            $("#UploadOrder").attr("disabled", true).css("pointer-events", "none");
+                            $('#UploadOrder').css({ opacity: 0.2 });
+                            $('#loading').modal('show');
+                        },
+                        success: function (res) { //返回的是json格式的字符串
+                            $('#loading').modal('hide');
+                            if (res.isSucc) {
+                                alertSuccess("推送到WMS成功！")
+                                setTimeout(function () { window.location.reload(); }, 1000);
+                            } else {
+                                alertError(res.msg);
+                                $("#UploadOrder").attr("disabled", false).css("pointer-events", "auto");
+                                $('#UploadOrder').css({ opacity: 1 });
+                            }
+                        },
+                        error: function (res) {
+                            $('#loading').modal('hide');
+                            alertError("上传出错！");
+                            $("#UploadOrder").attr("disabled", false).css("pointer-events", "auto");
+                            $('#UploadOrder').css({ opacity: 1 });
+                        }
+                    })
+                },null,"确定要上传订单吗？")
+            });
+            //取消上传订单
+            $("#CancelUploadOrder").click(function () {
+                isContinue(function () {
+                    $.ajax({
+                        url: '/b2corder/CancelUploadB2COrder',
+                        data: { id:@Model.Id},
+                        type: 'post',
+                        beforeSend: function () {
+                            //防止重复提交
+                            $("#CancelUploadOrder").attr("disabled", true).css("pointer-events", "none");
+                            $('#CancelUploadOrder').css({ opacity: 0.2 });
+                            $('#loading').modal('show');
+                        },
+                        success: function (res) {
+                            $('#loading').modal('hide');
+                            if (res.data.isSucc) {
+                                alertSuccess("取消成功！");
+                                setTimeout(function () { window.location.reload(); }, 1000);
+                            }
+                            else {
+                                if (res.data.isOut) {
+                                    alertError("取消失败，订单已拣货完成或已出库，只能走退货流程");
+                                }
+                                else {
+                                    alertError("取消失败," + res.data.msg);
+                                }
+
+                            }
+                        },
+                        error: function (res) {
+                            $('#loading').modal('hide');
+                            alertError("取消出错！");
+                            $("#CancelUploadOrder").attr("disabled", false).css("pointer-events", "auto");
+                            $('#CancelUploadOrder').css({ opacity: 1 });
+
+                        }
+                    })
+                },null,"确定要取消上传订单吗？")
+            });
+
+            /*自动匹配满足库存情况下的距离客户收货地址最近的仓库*/
+
+            $("#getWareHouse").click(function () {
+                $.ajax({
+                    url: '/B2COrder/MatchWareHouseForOrder',
+                    type: "POST",
+                    data: { id:@Model.Id},
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#getWareHouse").attr("disabled", true).css("pointer-events", "none");
+                        $('#getWareHouse').css({ opacity: 0.2 });
+                        $('#loading').modal('show');
+                    },
+                    success: function (res) {
+                        $('#loading').modal('hide');
+                        if (res.isSucc) {
+                            $("#WarehouseId").val(res.wareHouseId);
+                            alertSuccess("匹配成功！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            alertError(res.msg);
+                        }
+                        $("#getWareHouse").attr("disabled", false).css("pointer-events", "auto");
+                        $('#getWareHouse').css({ opacity: 1 });
+                    },
+                    error: function (res) {
+                        $('#loading').modal('hide');
+                        alertError("匹配出错！");
+                        $("#getWareHouse").attr("disabled", false).css("pointer-events", "auto");
+                        $('#getWareHouse').css({ opacity: 1 });
+
+                    }
+                })
+            })
+
+            //手动保存仓库
+            $("#saveWareHouse").click(
+                function () {
+                    var warehouseId = $("#WarehouseId").val();
+                    if (warehouseId == 0) {
+                        alertError("请选择仓库进行保存！");
+                        return false;
+                    }
+                $.ajax({
+                    url: '/B2COrder/SaveWareHouseForOrder',
+                    type: "POST",
+                    data: { id:@Model.Id, wareHouseId: warehouseId},
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#saveWareHouse").attr("disabled", true).css("pointer-events", "none");
+                        $('#saveWareHouse').css({ opacity: 0.2 });
+                        $('#loading').modal('show');
+                    },
+                    success: function (res) {
+                        $('#loading').modal('hide');
+                        if (res.isSucc) {
+                            $("#WarehouseId").val(res.wareHouseId);
+                            alertSuccess("保存仓库成功！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            alertError(res.msg);
+                        }
+                        $("#saveWareHouse").attr("disabled", false).css("pointer-events", "auto");
+                        $('#saveWareHouse').css({ opacity: 1 });
+                    },
+                    error: function (res) {
+                        $('#loading').modal('hide');
+                        alertError("保存仓库出错！");
+                        $("#saveWareHouse").attr("disabled", false).css("pointer-events", "auto");
+                        $('#saveWareHouse').css({ opacity: 1 });
+
+                    }
+                })
+                }
+            );
+
+            //设置省市区
+            var add_split = ($('span[name="FullAddress"]').html()).split(" ");
+            //直辖市
+            var arrZXCity = ['北京', '上海', '天津', '重庆'];
+            if (arrZXCity.indexOf(add_split[0]) != -1 || arrZXCity.indexOf(add_split[1]) != -1) {
+                $("#Shengshiqu").children('select:first').append('<option value="' + add_split[0] + '" selected>' + add_split[0] + '</option>');
+            } else {
+                $("#Shengshiqu").children('select:first').find("option[value='" + add_split[0] + "']").attr("selected", true);
+            }
+    
+
+            $("#Shengshiqu").children('select:eq(1)').append('<option value="' + add_split[1] + '" selected>' + add_split[1] + '</option>')
+            $("#Shengshiqu").children('select:last').append('<option value="' + add_split[2] + '" selected>' + add_split[2] + '</option>')
+            //最后剩下的全部是详细地址信息
+            var addressEnd = "";
+            for (var i = 3; i < add_split.length; i++) {
+                if (i == 3) {
+                    addressEnd = add_split[i];
+                } else {
+                    addressEnd += " " + add_split[i];
+                }
+            }
+            $("input[name='XXAddress']").val(addressEnd);
+
+            if (add_split.length == 4) {
+                //机场店提货设置省市区
+                if (add_split[3].indexOf("深圳宝安机场到达出口直行150米大厅右侧（星巴克对面）") != -1) {
+                    $("#Shengshiqu").children('select:first').find("option[value='广东省']").attr("selected", true);
+                    $("#Shengshiqu").children('select:eq(1)').append('<option value="深圳市" selected>深圳市</option>')
+                    $("#Shengshiqu").children('select:last').append('<option value="宝安区" selected>宝安区</option>')
+                }
+            }
+ 
+
+            //销售商品添加
+            $("#OrderProducts").click(function () {
+                showSaleProducts();
+                $("#AddOrderProducts").modal();
+            })
+            $("#addSaleProduct").click(function () {
+                if ($('input[name="Quantity"]').val() == "") {
+                    alertWarn("请填写商品数量！");
+                }
+                if ($('#addSaleProductDetail input[name="SumPrice"]').val() == "") {
+                    alertWarn("请填写商品总价！");
+                }
+                if ($('#addSaleProductDetail input[name="Price"]').val() == "") {
+                    alertWarn("请填写商品价格！");
+                }
+                if ($('input[name="Quantity"]').val() != "" && $('#addSaleProductDetail input[name="SumPrice"]').val() != "" && $('#addSaleProductDetail input[name="Price"]').val() != "") {
+                    $("#addSaleProduct").attr("disabled", true);
+                    $("#loading").modal();
+                    $.ajax({
+                        type: 'post',
+                        data: $('#saleProductDetail').serialize(),
+                        url: '/B2COrder/AddOrderProducts',
+                        success: function (result) {
+                            $("#addSaleProduct").attr("disabled", false);
+                            $("#loading").modal("hide");
+                            if (!result.isSucc) {
+                                alertError(result["msg"]);
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else if (result["code"] == 200) {
+                                alertSuccess("添加成功！")
+                                setTimeout(function () {
+                                    window.location.reload();
+                                },1000)
+                            }
+                        },
+                        error: function () {
+                            alertError("添加失败！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        }
+                    })
+                }
+            });
+            //商品总数
+            var sumQuantity = 0;
+            var tQuantity = new Array();
+            $("td[name='tQuantity']").each(function () {
+                tQuantity.push(parseInt($(this).attr("data-quantity")));
+            })
+            $.each(tQuantity, function(){
+                sumQuantity += this;
+            })
+            $('label[name="zongshuliang"]').html(sumQuantity);
+            //商品总价
+            var sumPrice = 0;
+            var tsumPrice = new Array();
+            $('td[name="tSumPrice"]').each(function () {
+                //tsumPrice.push(parseInt($(this).html() * parseInt($(this).siblings('td[name="tQuantity"]').html())));
+                tsumPrice.push(parseFloat($(this).html()));
+            })
+            $.each(tsumPrice, function () {
+                //sumPrice += this;
+                sumPrice = Number(sumPrice) + Number(this);
+            })
+            $('label[name="salezongjia"]').html(sumPrice.toFixed(2));
+
+
+            //删除销售商品
+            $("input[name='delSaleProduct']").click(function () {
+                var orderState = $("#OrderStateStr").html();
+                if (orderState == "无效") {
+                    alertError("订单无效，无法删除！");
+                    return false;
+                }
+                var url = '/B2COrder/DelOrderProduct?id=' + $(this).data("id") + '&&orderId=' +@Model.Id+'&&name=' + $('td[name="tProductName"]').html();
+                isContinue(function () {
+                    $("input[name='delSaleProduct']").attr("disabled", true);
+                    $("#loading").modal();
+                    $.ajax({
+                        url: url,
+                        success: function (result) {
+                            $("input[name='delSaleProduct']").attr("disabled", false);
+                            $("#loading").modal("hide");
+                            if (result.isSucc) {
+                                alertSuccess("删除成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1500);
+                            } else {
+                                alertError(result.msg);
+                            }
+
+                        }
+                    })
+                }, null,"是否删除")
+            })
+            /*修改商品*/
+            $("input[name='updateSaleProduct']").click(function () {
+                var id = $(this).data("id");
+                var name = $(this).parent().siblings("[name='tProductName']").text();
+                var code = $(this).parent().siblings("[name='tProductCode']").text();
+                var quantity = $(this).parent().siblings("[name='tQuantity']").attr("data-quantity");
+                var originPrice = $(this).parent().siblings("[name='tOrginPrice']").text();
+                var salePrice = $(this).parent().siblings("[name='tPrice']").text();
+                var sumPrice = $(this).parent().siblings("[name='tSumPrice']").text();
+
+                var modelObj = $('#ChangeProductPrice');
+                modelObj.find("input[name='OrderProductId']").val(id);
+                modelObj.find("input[name='productName']").val(name);
+                modelObj.find("input[name='productCode']").val(code);
+                modelObj.find("input[name='productQuantity']").val(quantity);
+                modelObj.find("input[name='productOriginalPrice']").val(originPrice);
+                modelObj.find("input[name='productSalePrice']").val(salePrice);
+                modelObj.find("input[name='productSumPrice']").val(sumPrice);
+            })
+            $('#UpdateProductPriceInfo').click(function () {
+                var modelObj = $('#ChangeProductPrice');
+                var id = modelObj.find("input[name='OrderProductId']").val();
+                var quantity = modelObj.find("input[name='productQuantity']").val();
+                var originPrice = modelObj.find("input[name='productOriginalPrice']").val();
+                var salePrice = modelObj.find("input[name='productSalePrice']").val();
+                var sumPrice = modelObj.find("input[name='productSumPrice']").val();
+                if (quantity == null || quantity == '') {
+                    alertError('数量不能为空');
+                    return;
+                }
+                if (originPrice == null || originPrice == '') {
+                    alertError('商品价格不能为空');
+                    return;
+                }
+                if (salePrice == null || salePrice == '') {
+                    alertError('销售价格不能为空');
+                    return;
+                }
+                $("#loading").modal();
+                $('#UpdateProductPriceInfo').attr("disabled", true);
+                $.ajax({
+                    url: '/B2COrder/ChangeOrderProduct',
+                    type: 'POST',
+                    data: { id: id, quantity: quantity, originPrice: originPrice, salePrice: salePrice, sumPrice: sumPrice },
+                    success: function (res) {
+                        $("#loading").modal("hide");
+                        $('#UpdateProductPriceInfo').attr("disabled", false);
+                        if (res.isSucc) {
+                            alertSuccess("修改成功！");
+                            window.location.reload();
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            });
+
+
+            //保存订单信息
+            $('input[name="SubmitOrder"]').click(function () {
+                var ssq = "";
+                $('#Shengshiqu').children('select').each(function () {
+                    ssq += $(this).val() + " ";
+                });
+                var address = ssq + $('input[name="XXAddress"]').val(); 
+                var remark = ssq + $('input[name="Mark"]').val();
+                $('input[name="AddressDetail"]').val(address);
+                var formdata = $('#OrderForm').serialize();
+                isContinue(function () {
+                    $.ajax({
+                        type: 'post',
+                        url: '/B2COrder/UpdateOrder',
+                        data: $('#OrderForm').serialize(),
+                        success: function (result) {
+                            if (result.isSucc) {
+                                alertSuccess("保存成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000)
+                            } else{
+                                alertError(result["msg"]);
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            }
+                        }
+                    })
+                 }, null,"确定保存信息？")
+            })
+
+
+            //支付修改
+            $("#addPayTypeInfo").click(function () {
+                $.ajax({
+                    type: 'post',
+                    url: "/B2COrder/AddOrderPayPrice",
+                    data: $('#payTypeInfoForm').serialize(),
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("订单已付款！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            alertError(data.msg);
+                        }
+
+                    },
+                    error: function (e) { alertError("付款失败！") }
+                })
+            });
+            //一键支付
+            $("#quickPay").click(function () {
+                isContinue(function () {
+                    var id = $("input[name='Id']").val();
+                    $.ajax({
+                        type: 'post',
+                        url: '/B2COrder/QuickPayOrder',
+                        data: {id:id},
+                        success: function (result) {
+                            if (result.isSucc) {
+                                alertSuccess("一键支付成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000)
+                            } else {
+                                alertError(result["msg"]);
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            }
+                        }
+                    })
+                }, null, "确定一键支付订单？")
+            });
+            //发票添加
+            $("#addInvoiceInfo").click(function () {
+                var invoiceTypes = $("#InvoiceTypes option:selected").val();//发票类型
+                var inoviceModes = $("#InoviceModes option:selected").val();//发票方式
+                var title = $.trim($('#Title').val());//发票抬头
+                var taxpayerID = $.trim($("#TaxpayerID").val());//纳税人识别码
+                var registerAddress = $.trim($("#RegisterAddress").val());//注册地址
+                var registerTel = $.trim($("#RegisterTel").val());//注册电话
+                var bankOfDeposit = $.trim($("#BankOfDeposit").val());//开户银行
+                var bankAccount = $.trim($("#BankAccount").val());//银行帐号
+                var invoiceNo = $.trim($("#InvoiceNo").val());//发票号
+                var customerEmail = $.trim($("#CustomerEmail").val());//邮箱
+                //验证发票信息
+                var str = "";
+                //电子发票
+                if (invoiceTypes != 0) {
+
+                    if (title == null || title == "") {
+                        str += "发票抬头为必填项！";
+
+                    }
+                    if (inoviceModes == 0) {
+                        if (customerEmail == null || customerEmail == "") {
+
+                            str += "电子发票请填写邮箱！";
+                        }
+                    }
+                }
+
+                //单位发票
+                if (invoiceTypes == 2 || invoiceTypes==3) {
+                    if (taxpayerID == null || taxpayerID == "") {
+                        str += "纳税人识别码必填项！";
+                    }
+                }
+                //专用发票
+                if (invoiceTypes == 3) {
+                    if (registerAddress == null || registerAddress == "") {
+                        str += "注册地址必填项！";
+                    }
+                    if (registerTel == null || registerTel == "") {
+                        str += "注册电话必填项！";
+                    }
+                    if (bankOfDeposit == null || bankOfDeposit == "") {
+                        str += "开户银行必填项！";
+                    }
+                    if (bankAccount == null || bankAccount == "") {
+                        str += "银行帐号必填项！";
+                    }
+                }
+                if (str != null && str != "") {
+                    alertError(str);
+                    return;
+                }
+                if (title != "") {
+                    $.ajax({
+                        type: 'post',
+                        url: "/B2COrder/AddInvoiceInfo",
+                        data: $('#invoiceInfoForm').serialize(),
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("发票添加成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                alertError(data.msg);
+                            }
+
+                        },
+                        error: function (e) { alertError("发票添加失败！") }
+                    })
+                }
+            });
+            //快递方式修改
+            $("#addDeliveryInfo").click(function () {
+                $.ajax({
+                    type: 'post',
+                    url: "/B2COrder/AddDeliveryType",
+                    data: $('#deliveryInfoForm').serialize(),
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("快递修改成功！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            alertError(data.msg);
+
+                        }
+
+                    },
+                    error: function (e) { alertError("快递修改失败！") }
+                })
+            });
+            //退单
+            $("button[name='TransactionRefund']").click(function () {
+                isContinue(function () {
+                    var id = $("input[name='Id']").val();
+                    $.ajax({
+                        url: "/B2COrder/RefundOrder",
+                        data: { id: id },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("退单成功！");
+                                setTimeout(function () { window.location.reload() }, 1000);
+                                B2CRefundOrderDetail(data.data.refundSerialNumber, data.data.refundOrderId);
+                            } else {
+                                alertError(data.msg);
+                            }
+
+                        }
+                    })
+                 }, null,"确定生成退单？生成退单后此订单作废")
+            });
+            //复制订单
+            $("button[name='CopyOrder']").click(function () {
+                $("button[name='CopyOrder']").attr("disabled", true);
+                isContinue(function () {
+                    var orderId = $("input[name='Id']").val();
+                    $.ajax({
+                        url: "/B2COrder/CopyOrder",
+                        data: { orderId: orderId },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("复制订单成功！");
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                alertError(data.msg);
+                                $("button[name='CopyOrder']").attr("disabled", false);
+                            }
+                        },
+                        error: function (data) {
+                            alertError(data);
+                            $("button[name='CopyOrder']").attr("disabled", false);
+                        }
+                    });
+                }, function () { $("button[name='CopyOrder']").attr("disabled", false); }, "确定要复制订单信息吗？");
+                $("#basic").on("hidden.bs.modal", function () {
+                    $("button[name='CopyOrder']").attr("disabled", false);
+                });
+            });
+            //备注沟通
+            $("button[name='Communicate']").click(function () {
+                var mark = $("input[name='CommunicateMark']").val();
+                if (mark == null || mark == "") {
+                    alertError("备注不能为空！");
+                    return false;
+                }
+                var id = $("input[name='Id']").val();
+                $.ajax({
+                    url: "/B2COrder/OrderCommunicateMark",
+                    type: "post",
+                    data: { "id": id, "mark": mark },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            alertSuccess("备注成功！");
+                            setTimeout(function () { window.location.reload() }, 800);
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            })
+            //等价换货
+            $("input[name='changeProEqValue']").click(function () {
+                var orderProId = $(this).attr("data-proId");
+                $("#addChangePro #orignProId").val(orderProId);
+                showChangeProByPage();
+                $("#changeProEqValueModal").modal();
+            })
+            $("#changeSubmitBtn").click(function () {
+                $("#changeSubmitBtn").attr("disabled", true);
+                var orderProId = $("#addChangePro #orignProId").val();
+                var saleProId = $("#addChangePro #changeProId").val();
+                var proQty = $("#addChangePro #changeProQty").val();
+                if (proQty == 0) {
+                    alertError("请输入换货数量！");
+                    return false;
+                }
+                if (orderProId == "" || saleProId == "") {
+                    alertError("无法获取原订单商品ID或获取商品ID");
+                    return false;
+                }
+                $("#loading").modal();
+                $.ajax({
+                    url: "/B2COrder/ChangeProEqValue",
+                    type: "post",
+                    data: { orderProId: orderProId, saleProId: saleProId, proNum: proQty },
+                    success: function (data) {
+                        $("#loading").modal("hide");
+                        if (data.isSucc) {
+                            alertSuccess("等价换货成功！");
+                            setTimeout(function () { window.location.reload() }, 800);
+                        } else {
+                            alertError(data.msg);
+                            $("#changeSubmitBtn").attr("disabled", false);
+                        }
+                    },
+                    error: function (data) {
+                        alertError("等价换货失败！");
+                        $("#changeSubmitBtn").attr("disabled", false);
+                    }
+                })
+            });
+            //缺货订单解锁
+            $("input[name='LackStockUnLock']").click(function () {
+                $("input[name='LackStockUnLock']").attr("disabled", true);
+                var list = new Array();
+                list.push(parseInt($("input[name='Id']").val()));
+                if (list.length <= 0) {
+                    alertError("解锁失败！无法获取订单号！");
+                    return false;
+                }
+                $.ajax({
+                    url: "/B2COrder/UnLockLackOrder",
+                    data: { orderIdList: list },
+                    type:"post",
+                    success: function (data) {
+                        $("input[name='LackStockUnLock']").attr("disabled", false);
+                        if (data.isSucc) {
+                            alertSuccess("解除缺货成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                        } else {
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {
+                        $("input[name='LackStockUnLock']").attr("disabled", false);
+                        alertError("解锁失败！");
+                    }
+                })
+            });
+        });
+        /*Modal添加商品*/
+        var showSaleProducts = function () {
+            var pageSize = 10;
+            var data = $("#saleProSearchStr").val().trim();
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/B2COrder/GetAllSaleProducts",
+                data: { search: data, pageSize: pageSize },
+                success: function (data) {
+                    html = "";
+                    for (var i = 0; i < data.length; i++) {
+                        html += "<tr>" +
+                            "<td style='text-align:left'>" + data[i].name + "</td>" +
+                            "<td>" + data[i].code + "</td>" +
+                            "<td style='text-align:left'>" + data[i].stock + "(" + data[i].lockStock + ")</td>" +
+                            "<td>" +
+                            "<button id='productadd' type='button' class='btn btn-circle red' onClick='showProductInfo(" + data[i].id + ")'>添加</button>" +
+                            "</td>" +
+                            "</tr>";
+                    }
+                    $("#OrderProductsTable tbody").html(html);
+                }
+            });
+        }
+        /*销售商品祥情*/
+        var showProductInfo = function (productId) {
+            $.ajax({
+                type:"get",
+                url: "/B2COrder/GetOrderProductDetial",
+                data: { id: productId },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#saleProductDetail #saleProName").val(data[0].SaleProductName);
+                        $("#saleProductDetail #SaleProductId").val(data[0].SaleProductId);
+                        $("#saleProductDetail #SaleProductId").val(data[0].SaleProductId);
+                        $("#saleProductDetail #saleProStock").html(data[0].Stock + " (" + data[0].LockStock + ") ");
+                        $("#saleProductDetail #saleProOrginPrice").val(data[0]["SaleProductPriceBaseList"][0]["Price"]);
+                        $("#saleProductDetail #saleProPrice").val(data[0]["SaleProductPriceBaseList"][0]["Price"]);
+                    } else {
+                        alertError("无法获取商品库存信息!")
+                    }
+
+                },
+                error: function (data) {
+                    alertError(data.msg);
+                }
+            })
+
+
+            $("#addSaleProductDetail").modal();
+        }
+        /*等价换货商品页*/
+        var showChangeProByPage = function () {
+            var pageSize = 10;
+            var data = $("#changeProSearchStr").val().trim();
+            $oms.paginator({
+                pageLimitId: "changeProPageLimit",
+                url: "/B2COrder/GetAllSaleProducts",
+                data: { search: data, pageSize: pageSize },
+                success: function (data) {
+                    html = "";
+                    for (var i = 0; i < data.length; i++) {
+                        html += "<tr>" +
+                            "<td style='text-align:left'>" + data[i].name + "</td>" +
+                            "<td>" + data[i].code + "</td>" +
+                            "<td style='text-align:left'>" + data[i].stock + "(" + data[i].lockStock + ")</td>" +
+                            "<td>" +
+                            "<button /*id='productadd'*/ type='button' class='btn btn-circle red' onClick='showChangeProDetail(" + data[i].id + ")'>添加</button>" +
+                            "</td>" +
+                            "</tr>";
+                    }
+                    $("#changeProEqValueModal #proTb tbody").html(html);
+                }
+            });
+        }
+        /*等价换货商品详情*/
+        var showChangeProDetail = function (productId) {
+            $.ajax({
+                type: "get",
+                url: "/B2COrder/GetOrderProductDetial",
+                data: { id: productId },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#addChangePro #changeProName").val(data[0].SaleProductName);
+                        $("#addChangePro #changeProId").val(data[0].SaleProductId);
+                        //$("#addChangePro #changeProCode").val(data[0].SaleProductCode);
+                    } else {
+                        alertError("无法获取商品库存信息!")
+                    }
+                },
+                error: function (data) {
+                    alertError(data.msg);
+                }
+            })
+            $("#addChangePro").modal();
+        }
+
+        /*查看商品库存*/
+        var getProductStock = function (productId) {
+            $("#proStockModal").modal();
+            $.ajax({
+                url: "/B2COrder/GetProStock",
+                type: "get",
+                data: { productId: productId },
+                success: function (data) {
+                    var html = "";
+                    if (data.data.length <= 0) {
+                        html = "当前OMS查询不到库存！";
+                    } else {
+                        var tStr1 = "<table class='table table-bordered table-hover table-text-center'><thead><tr><th>仓&nbsp;&nbsp;库</th><th>库存信息</th></tr></thead><tbody>"
+                        var tStr2 = "</tdody></table>";
+                        html += tStr1;
+                        for (var i = 0; i < data.data.length; i++) {
+                            html += "<tr>" +
+                                "<td class='table-text-center'>" + data.data[i]["wareHouseName"] + "</td>" +
+                                "<td class='text-align-left'>" + "<span class='span-outline'>总库存：" + data.data[i]["stock"] + "</span>" +
+                                "<span class='span-outline'>锁定库存：<a onclick='getLockedProInfo(" + data.data[i]["saleProductId"] + "," + data.data[i]["wareHouseId"] + ")' style='color:red;text-decoration:underline'>" + data.data[i]["lockStock"] + "</a></span>" +
+                                "<span class='span-outline'>可用库存：" + (data.data[i]["stock"] - data.data[i]["lockStock"]) + "</span>" +
+                                "</td>" + "</tr>";
+                        }
+                        html += tStr2;
+                    }
+                    $("#proStockModal .modal-body").html(html);
+                },
+                error: function (data) {
+                    $("#proStockModal .modal-body").html("数据查询出错！");
+                }
+            })
+
+        }
+        /*查看锁定库存信息*/
+        var getLockedProInfo = function (saleProId, wareHouseId) {
+            $oms.paginator({
+                pageLimitId: "pageLimit2",
+                url: "/B2COrder/GetProLockedTackLog",
+                data: { saleProductId: saleProId, wareHouseId: wareHouseId },
+                success: function (data) {
+                    html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + (i + 1) + "</td>" +
+                                "<td><a onclick='B2COrderDetail(\"" + data[i].orderSerialNumber + "\"," + data[i].orderId + ")' style='color:blue;text-decoration:underline;'>" + data[i].orderSerialNumber + "</a></td>" +
+                                "<td>" + data[i].lockNumber + "</td>" +
+                                "</tr>";
+                        }
+                    }
+                    $("#proLockedQuery table tbody").html(html);
+                    $("#proLockedQuery").modal();
+                }
+            });
+        };
+        /*查看订单详情*/
+        var B2COrderDetail = function (orderSerialNumber,id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == orderSerialNumber) {
+                    parent.$tap.tabChange(orderSerialNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            $.ajax({
+                url: "/B2COrder/OrderDetail",
+                data: { orderId: id },
+                success: function (data) {
+                    if (data.isSucc) {
+                        var url = data.data + id;
+                        var tabName = orderSerialNumber;
+                        if (url.indexOf('B2B') != -1) {
+                            tabName = orderSerialNumber;
+                        }
+                        parent.$tap.tabAdd(tabName, url, orderSerialNumber); // 新开一个tap页面
+                        parent.$tap.tabChange(orderSerialNumber);
+                        event.stopPropagation();
+                    }
+                },
+                error: function (data) {
+                    alertError("无法跳转！");
+                }
+            });
+        }
+        /*跳转到退单详情*/
+        function B2CRefundOrderDetail(refundSerialNumber, id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == refundSerialNumber) {
+                    parent.$tap.tabChange(refundSerialNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/B2COrder/B2CRefundOrderDetail?id=" + id;
+            parent.$tap.tabAdd(refundSerialNumber, url, refundSerialNumber); // 新开一个tap页面
+            parent.$tap.tabChange(refundSerialNumber);
+            event.stopPropagation();
+        }
+        /*修改商品输入总价自动计算价格*/
+        var changePrice = function () {
+            var sumPrice = $("#ChangeProductPrice input[name='productSumPrice']").val();
+            var qty = $("#ChangeProductPrice input[name='productQuantity']").val();
+            var salePrice = $("#ChangeProductPrice input[name='productSalePrice']").val();
+            if (qty != 0) {
+                var data = Math.floor((sumPrice / qty) * 100) / 100;
+                $("#ChangeProductPrice input[name='productSalePrice']").val(data);
+            }
+        }
+        //修改商品数量和销售单价时计算总价
+        var changeSumPrice = function () {
+            var qty = $("#ChangeProductPrice input[name='productQuantity']").val();
+            var salePrice = $("#ChangeProductPrice input[name='productSalePrice']").val();
+            if (qty != 0) {
+                $("#ChangeProductPrice input[name='productSumPrice']").val(qty * salePrice)
+            }
+        }
+        /*添加商品输入总价自动计算价格*/
+        var addProCalcPrice = function () {
+            var price = $("#saleProductDetail input[name='Price']").val();
+            var qty = $("#saleProductDetail input[name='Quantity']").val();
+            var sumPrice = $("#saleProductDetail input[name='SumPrice']").val();
+            if (qty != 0) {
+                $("#saleProductDetail input[name='SumPrice']").val(qty * price);
+            }
+        }
+        /*添加商品输入总价自动计算价格*/
+        var addProCalcProPrice = function () {
+            var qty = $("#saleProductDetail input[name='Quantity']").val();
+            var sumPrice = $("#saleProductDetail input[name='SumPrice']").val();
+            if (qty != 0) {
+                var data = Math.floor((sumPrice / qty) * 100) / 100;
+                $("#saleProductDetail input[name='Price']").val(data);
+            }
+        }
+    </script>
+}

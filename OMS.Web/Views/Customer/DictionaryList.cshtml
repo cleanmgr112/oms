@@ -1,0 +1,299 @@
+﻿@using OMS.Data.Domain;
+@{
+    ViewData["Title"] = "数据字典列表";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Style/b2b.css" rel="stylesheet" />
+}
+<div class="portlet light bordered " style="height:600px; padding-bottom:30px;">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-equalizer font-green-haze"></i>
+            <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">数据字典列表</font></font></span>
+        </div>
+
+        <div class="text-align-reverse">
+            <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                <i class="layui-icon">&#xe9aa;</i>
+            </a>
+            <a href="#" class="btn green" style="margin-right:50px;" id="addDictionary">添加 <i class="fa fa-plus"></i></a>
+        </div>
+    </div>
+    <div class="row padding-tb-20" style="background-color:#fff;">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">类型</font></font></label>
+                <div class="col-md-8">
+                    @Html.DropDownList("DictionaryType",ViewBag.DictionaryTypes as SelectList,"请选择",new { @class="form-control"})
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关键词</font></font></label>
+                <div class="col-md-8">
+                    <input id="keyword" class="form-control  class-edit" value="" placeholder="名称" autocomplete="off" />
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <div class="btn-group open">
+                    <button class="btn green-haze btn-outline btn-circle btn-sm" id="BtnSearchStr" style="margin-left:15px;">
+                        搜&nbsp;索
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" style="background-color:#fff;">
+        <div class="portlet-body">
+            <table class="table table-striped table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th> ID </th>
+                        <th> 名称 </th>
+                        <th> 类型 </th>
+                        <th> 排序 </th>
+                        <th> 是否已经同步到WMS </th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+            <ul id="pageLimit" style="float:right"></ul>
+        </div>
+    </div>
+    <!--用于列表页确定当前分页的index-->
+    <input type="number" id="pageNumber" value="1" hidden />
+
+    <!-- 模态框（Modal） -->
+    <div class="modal fade" id="dictionaryModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <div class="modal-title">修改/添加数据字典</div>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row form-group">
+                        <label class="col-md-3 control-label text-align-reverse">类型</label>
+                        <div class="col-md-9">
+                            @Html.DropDownList("DictionaryTypes", ViewBag.DictionaryTypes as SelectList, "请选择", new { @class = "form-control" })
+                        </div>
+                    </div>
+
+                    <div class="row form-group">
+                        <label class="col-md-3 control-label text-align-reverse">名称</label>
+                        <div class="col-md-9">
+                            <input type="text" id="userName" name="userName" class="form-control" value="" autocomplete="off" />
+                            <input type="hidden" id="dictionaryId" name="dictionaryId" class="form-control" value="" />
+                        </div>
+                    </div>
+
+                    <div class="row form-group">
+                        <label class="col-md-3 control-label text-align-reverse">排序</label>
+                        <div class="col-md-9">
+                            <input type="number" id="sort" name="sort" class="form-control" value="0" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <label class="col-md-3 control-label text-align-reverse">已经同步到WMS</label>
+                        <div class="md-radio-inline col-md-9">
+                            <div class="md-radio">
+                                <input type="radio" id="FSyncRadio" name="isSyncRadio" class="md-radiobtn" value="0" checked>
+                                <label for="FSyncRadio">
+                                    <span></span>
+                                    <span class="check"></span>
+                                    <span class="box"></span> 否
+                                </label>
+                            </div>
+                            <div class="md-radio">
+                                <input type="radio" id="YSyncRadio" name="isSyncRadio" class="md-radiobtn" value="1" >
+                                <label for="YSyncRadio">
+                                    <span></span>
+                                    <span class="check"></span>
+                                    <span class="box"></span> 是
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        关闭
+                    </button>
+                    <button type="button" id="SumbitDictionary" class="btn btn-default blue">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--End 模态框（Modal） -->
+
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            showList();
+
+            $("#BtnSearchStr").click(function () {
+                $("#pageNumber").val(1);
+                showList();
+            })
+
+            $("#addDictionary").click(function () {
+                $("#dictionaryId").val("");
+                $("#userName").val("");
+                $("#sort").val("");
+                $("#DictionaryTypes").val("");
+                $("#YSyncRadio").prop("checked", false);
+                $("#FSyncRadio").prop("checked", true);
+                $("#dictionaryModal").modal();
+            })
+
+            $("#SumbitDictionary").click(function () {
+                var id = $("#dictionaryId").val();
+                var name = $("#userName").val();
+                if (name == null || name == "") {
+                    alertError("名称不能为空！");
+                    return false;
+                }
+                var sort = $("#sort").val();
+                if (sort == null || sort == "") {
+                    alertError("排序值不能为空！");
+                    return false;
+                }
+                var dictionary = $("#DictionaryTypes option:selected").val();
+                if (dictionary == null || dictionary == "") {
+                    alertError("请选择所属类型");
+                    return false;
+                }
+                var checkVal = $('input[name=isSyncRadio]:checked').val();
+                var isSync = false;
+                if (checkVal=="1") {
+                    isSync = true;
+                }
+
+                if (id == null || id == "") {
+                    $.ajax({
+                        url: "/Customer/AddDictionary",
+                        type: "POST",
+                        data: { "name": name, "sort": sort, "type": dictionary, "isSync": isSync },
+                        success: function (res) {
+                            if (res.isSucc) {
+                                alertSuccess("添加成功！");
+                                setTimeout(function () { window.location.reload(); }, 1000);
+                            }
+                            else {
+                                alertError(res.msg);
+                            }
+                        }
+                    })
+                }
+                else {
+                    $.ajax({
+                        url: "/Customer/UpdateDictionary",
+                        type: "POST",
+                        data: { "id": id, "name": name, "sort": sort, "type": dictionary, "isSync": isSync},
+                        success: function (res) {
+                            if (res.isSucc) {
+                                alertSuccess("修改成功！");
+                                setTimeout(function () { window.location.reload(); }, 1000);
+                            }
+                            else {
+                                alertError(res.msg);
+                            }
+                        }
+                    })
+                }
+            })
+        });
+        var showList = function () {
+            var searchStr = $("#keyword").val().trim();
+            var type = $("#DictionaryType option:selected").val();
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/Customer/GetDictionaryList",
+                data: { pageIndex: $("#pageNumber").val(), type: type, searchVal: searchStr },
+                success: function (data) {
+                    var html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data[i].id + "</td >" +                               
+                                "<td>" + data[i].name + "</td >" +
+                                "<td>" + data[i].typeName + "</td>" +
+                                "<td>" + data[i].sort + "</td>" +
+                                "<td>" + data[i].isSyncToWMS + "</td>" +
+                                "<td>" +
+                                "<div class=\"btn-group open\">"+
+                                "<button class=\"btn green-haze btn-outline btn-circle btn-sm\" onclick=\"linkToDetail(" + data[i].id+")\" type=\"button\"> 查看"+
+                                "</button ></div >" +
+                                "<div class=\"btn-group open\">" +
+                                "<button class=\"btn red btn-outline btn-circle btn-sm\" onclick=\"deleteDictionary(" + data[i].id + ")\" type=\"button\" style=\"margin-left: 10px;\"> 删除" +
+                                "</button ></div >" +
+                                "</td>" +
+                                "</tr>";
+                        }
+                    }
+                    $("#tbody").html(html);
+                }
+            });
+        }
+        var linkToDetail = function (id) {
+            $.ajax({
+                url: "/Customer/GetDictionaryById",
+                type: "POST",
+                data: { "id": id },
+                success: function (res) {
+                    if (res.isSucc) {
+                        $("#userName").val(res.data.value);
+                        $("#sort").val(res.data.sort);
+                        $("#DictionaryTypes").val(res.data.type);
+                        $("#dictionaryId").val(res.data.id);
+                        if (res.data.isSynchronized) {
+                            $("#YSyncRadio").prop("checked", true);
+                            $("#FSyncRadio").prop("checked", false);
+                        } else {
+                            $("#YSyncRadio").prop("checked", false);
+                            $("#FSyncRadio").prop("checked", true);
+                        }
+
+                        $("#dictionaryModal").modal();
+                    }
+                    else {
+                        alertError("查看失败！");
+                    }
+                }
+            })
+        }
+        var deleteDictionary = function (id)
+        {
+            isContinue(function () {
+                $oms.ajax({
+                    url: "/Customer/DeleteDictionary",
+                    data: { id: id },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("删除成功");
+                            showList();
+                        }
+                        else {
+                            alertError(data.msg);
+                        }
+                    }
+
+                })
+            });
+
+        }
+    </script>
+}

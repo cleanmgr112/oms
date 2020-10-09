@@ -1,0 +1,289 @@
+﻿
+@{
+    ViewData["Title"] = "CreatedProduct";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/Metronic/assets/global/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    @*<link href="~/Metronic/assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" rel="stylesheet" type="text/css" />*@
+    <link href="~/Metronic/assets/global/plugins/bootstrap-wysihtml5/bootstrap-wysihtml5.css" rel="stylesheet" type="text/css" />
+    <link href="~/Metronic/assets/global/plugins/bootstrap-markdown/css/bootstrap-markdown.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/Metronic/assets/global/plugins/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/bootstrap-select/css/bootstrap-select.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/fileinput/css/fileinput.css" rel="stylesheet" />
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light portlet-fit portlet-form bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">新增商品</span>
+                </div>
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                    <i class="layui-icon">&#xe65c;</i>
+                </a>
+            </div>
+            <div class="portlet-body">
+                @using (Html.BeginForm("", "", FormMethod.Post, new { id = "product-form", @class = "form-horizontal" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="form-body">
+                        <div class="alert alert-danger display-hide">
+                            <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                        </div>
+                        <div class="alert alert-success display-hide">
+                            <button class="close" data-close="alert"></button> Your form validation is successful!
+                        </div>
+                        <div class="form-group  margin-top-20 vgroup">
+                            <label class="control-label col-md-3">
+                                中文名
+                                <span class="required"> * </span>
+                            </label>
+                            <div class="col-md-4">
+                                <div class="input-icon right">
+                                    <input class="form-control vinput" type="text" id="Name" name="Name" value="" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                英文名
+                            </label>
+                            <div class="col-md-4">
+                                <div class="input-icon right">
+                                    <i class="fa"></i>
+                                    <input class="form-control vinput" type="text" id="NameEn" name="NameEn" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="control-label col-md-3">
+                                商品编码
+                                <span class="required"> * </span>
+                            </label>
+                            <div class="col-md-4">
+                                <input class="form-control vinput" type="text" id="Code" name="Code" value="" required />
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="control-label col-md-3">
+                                商品副条码
+                                <span class="required"> * </span>
+                            </label>
+                            <div class="col-md-4">
+                                <input class="form-control vinput" type="text" id="DeputyBarcode" name="DeputyBarcode" value="" required />
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="control-label col-md-3">
+                                商品类型
+                                <span class="required"> * </span>
+                            </label>
+                            <div class="col-md-4">
+                                @Html.DropDownList("Type", ViewBag.Types as SelectList, "请选择", new { @class = "form-control vinput", required = true })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                葡萄品种
+                            </label>
+                            <div class="col-md-4">
+                                <select id="ArrayGrapes" name="ArrayGrapes" class="form-control selectpicker" data-live-search="true" title="" multiple>
+                                    @foreach (var item in ViewBag.Grapes)
+                                    {
+                                        <option>@item.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                商品封面图
+                            </label>
+                            <div class="col-md-5">
+                                <input id="files" class="file" type="file" name="files" multiple data-min-file-count="1">
+                            </div>
+
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="control-label col-md-3">
+                                商品系列
+                            </label>
+                            <div class="col-md-4">
+                                @Html.DropDownList("CategoryId", ViewBag.Category as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                国家
+                            </label>
+                            <div class="col-md-4">
+                                @Html.DropDownList("Country", ViewBag.Country as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                产区
+                            </label>
+                            <div class="col-md-4">
+                                @Html.DropDownList("Area", ViewBag.Area as SelectList, "请选择", new { @class = "form-control select2" })
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                容量
+                            </label>
+                            <div class="col-md-4">
+                                @Html.DropDownList("Capacity", ViewBag.Capacity as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                包装方式
+                            </label>
+                            <div class="col-md-4">
+                                @Html.DropDownList("Packing", ViewBag.Packing as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-3">
+                                年份
+                            </label>
+                            <div class="col-md-4">
+                                <div class="input-icon right">
+                                    <i class="fa"></i>
+                                    @Html.DropDownList("year", ViewBag.Year as SelectList, "请选择", new { @class = "form-control select2" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="control-label col-md-3">
+
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-icon right">
+                                    <input id="add" class="btn green" type="button" name="name" value="添加" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<!-- loading -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+
+    <div class="modal-dialog modal-sm">
+        <div class="loader">
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <div id="loaderText">
+            正在导入中请稍后......
+        </div>
+    </div>
+</div>
+@section Scripts{
+    @*<script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modal.js"></script>
+        <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modalmanager.js"></script>*@
+    <script src="~/Metronic/assets/global/plugins/bootstrap-select/js/bootstrap-select.js"></script>
+    <script src="~/Metronic/assets/fileinput/JS/fileinput.js"></script>
+    <script src="~/Metronic/assets/fileinput/JS/fileinput_locale_zh.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#product-form").$validate();
+        });
+        $("#files").fileinput({
+            'allowedFileExtensions': ['jpg', 'png', 'gif'],
+        });
+        var fileObj = null;
+        $("#files").on("filebatchselected", function (event, files) {
+            fileObj = files[0];
+        });
+        //添加商品
+        $("#add").click(function () {
+            var formData = new FormData();
+            formData.append("files", fileObj);
+            if (!$.trim($("#Name").val()) || !$.trim($("#Code").val()) || !$("#DeputyBarcode").val() || !$("#Type").val()) {
+                alertInfo("请填写必要字段！");
+                return false;
+            }
+            var type = (parseInt($("#Type").val()) == null || isNaN(parseInt($("#Type").val())) || typeof (parseInt($("#Type").val())) == "undefined") ? 0 : parseInt($("#Type").val());
+            var categoryId = (parseInt($("#CategoryId").val()) == null || isNaN(parseInt($("#CategoryId").val())) || typeof (parseInt($("#CategoryId").val())) == "undefined") ? 0 : parseInt($("#CategoryId").val());
+            var country = (parseInt($("#Country").val()) == null || isNaN(parseInt($("#Country").val())) || typeof (parseInt($("#Country").val())) == "undefined") ? 0 : parseInt($("#Country").val());
+            var area = (parseInt($("#Area").val()) == null || isNaN(parseInt($("#Area").val())) || typeof (parseInt($("#Area").val())) == "undefined") ? 0 : parseInt($("#Area").val());
+            var capacity = (parseInt($("#Capacity").val()) == null || isNaN(parseInt($("#Capacity").val())) || typeof (parseInt($("#Capacity").val())) == "undefined") ? 0 : parseInt($("#Capacity").val());
+            var packing = (parseInt($("#Packing").val()) == null || isNaN(parseInt($("#Packing").val())) || typeof (parseInt($("#Packing").val())) == "undefined") ? 0 : parseInt($("#Packing").val());
+
+            var model = JSON.stringify({
+                Name: $.trim($("#Name").val()), NameEn: $.trim($("#NameEn").val()), Code: $.trim($("#Code").val()), DeputyBarcode: $.trim($("#DeputyBarcode").val()), Type: type, ArrayGrapes: $("#ArrayGrapes").val(), CategoryId: categoryId, Country: country, Area: area, Capacity: capacity, Packing: packing, Year: $.trim($("#year").val())
+            });
+            formData.append("modelstring", model);
+            $.ajax({
+                cache: false,
+                type: "post",
+                url: "/Product/CreatedProductFunc",
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                data: formData,
+                beforeSend: function () {
+                    //防止重复添加
+                    $("#add").attr("disabled", true).css("pointer-events", "none");
+                    $('#add').css({ opacity: 0.2 });
+                    $('#loading').modal('show');
+                },
+                success: function (data) {
+                    $('#loading').modal('hide');
+                    if (data.isSucc) {                  
+                        alertSuccess("添加商品成功！");
+                        setTimeout(function () {  //使用  setTimeout（）方法设定定时2000毫秒
+                            window.location.href = "/Product/List";//跳转到商品列表
+                        }, 2000);
+                    } else {
+                        alertError(data.msg);
+                        setTimeout(function () {  //使用  setTimeout（）方法设定定时2000毫秒
+                            window.location.reload();//页面刷新
+                        }, 2000);
+                    }
+                },
+                error: function (data) {           //失败回调
+                    $('#loading').modal('hide');
+                    alertError("上传出错！");
+                    $("#add").attr("disabled", false).css("pointer-events", "auto");
+                    $('#add').css({ opacity: 1 });
+                    fileObj = null;
+                }
+            });
+        });
+
+        //查看商品
+        function ProductList(id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == id) {
+                    parent.$tap.tabChange(id);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/Product/List";
+            parent.$tap.tabAdd("商品列表", url, id); // 新开一个tap页面
+            parent.$tap.tabChange(id);
+            event.stopPropagation();
+        }
+
+    </script>
+}

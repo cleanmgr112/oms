@@ -1,0 +1,319 @@
+﻿
+@{
+    ViewData["Title"] = "添加跨境购退单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">跨境购退单</span>
+                </div>
+                <div class="text-align-reverse">
+                    <div class="form-group vgroup">
+                        <input type="file" id="file" name="myfile" style="display: none" />
+                        <input type="text" id="filename" style="display:none;width:150px;margin-right:30px;">
+
+                        <span class="btn green fileinput-button">
+                            <i class="fa fa-download"></i>
+                            <a href="~/TemplateFile/Order_Import_Excel.xlsx" class="link" style="color:#ffffff">模版下载</a>&nbsp;&nbsp;&nbsp;
+                        </span>
+                        <span class="btn green fileinput-button">
+                            <i class="fa fa-upload"></i>
+                            <span onclick="Upload()">批量导入订单</span>
+                        </span>
+                        &nbsp;
+                        <input class="btn red" type="submit" id="importorder" onclick="UpladFile()" style="margin-right:30px;" value="上传" />
+                        <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                            <i class="layui-icon">&#xe9aa;</i>
+                        </a>
+                        <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                            <i class="layui-icon">&#xe65c;</i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <form id="B2COrderForm" onsubmit="removeDisabled()">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td colspan="4" style="text-align:center"><strong>基本信息</strong></td>
+                            </tr>
+                            <tr>
+                                <td><label class="control-label">订单类型<span class="required"> * </span></label></td>
+                                <td>
+                                    <select name="Type" id="orderTypeSelect" class="form-control" disabled>
+                                        <option value="8" selected>跨境购退单</option>
+                                    </select>
+                                </td>
+                                <td><label class="control-label">平台单号<span class="required"> * </span></label></td>
+                                <td><div class="vgroup"><input class="form-control vinput" name="PSerialNumber" required /></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:15%"><label class="control-label">销售平台<span class="required"> * </span></label></td>
+                                <td style="width:20%"><div class="vgroup">@Html.DropDownList("ShopId", ViewBag.Platform as SelectList, new { @class = "form-control vinput", required = true ,@disabled=true})</div></td>
+                                <td style="width:15%"><label class="control-label">物流方式<span class="required"> * </span></label></td>
+                                <td style="width:20%"><div class="vgroup">@Html.DropDownList("DeliveryTypeId", ViewBag.Delivery as SelectList, "请选择", new { @class = "form-control vinput", required = true })</div></td>
+                            </tr>
+                            <tr>
+                                <td>订单备注</td>
+                                <td><textarea id="AdminMark" name="AdminMark" class="form-control"></textarea></td>
+                                <td><label class="control-label">支付方式<span class="required"> * </span></label></td>
+                                <td><div class="vgroup">@Html.DropDownList("PayTypeId", ViewBag.PayType as SelectList, "请选择", new { @class = "form-control vinput", required = true })</div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center"><strong>收货人信息</strong></td>
+                            </tr>
+                            <tr>
+                                <td><label class="control-label">省市区<span class="required"> * </span></label></td>
+                                <td>
+                                    <div class="vgroup">
+                                        <input id="ssq" type="text" name="District" value="" hidden />
+                                        <div class="btn-group" id="Shengshiqu" data-toggle="distpicker">
+                                            <select class="btn btn-default"></select>
+                                            <select class="btn btn-default"></select>
+                                            <select class="btn btn-default vinput" required></select>
+                                        </div>
+                                    </div>
+
+                                </td>
+                                <td><label class="control-label">详细地址<span class="required"> * </span></label></td>
+                                <td><div class="vgroup"><input class="form-control vinput" type="text" name="AddressDetail" required /></div></td>
+                            </tr>
+                            <tr>
+                                <td><label class="control-label">收货人姓名<span class="required"> * </span></label></td>
+                                <td><div class="vgroup"><input class="form-control vinput" type="text" name="CustomerName" required /></div></td>
+                                <td><label class="control-label">手机号码<span class="required"> * </span></label></td>
+                                <td><div class="vgroup"><input class="form-control vinput" type="tel" name="CustomerPhone" required /></div></td>
+                            </tr>
+                            <tr>
+                                <td><label class="control-label">购买人账户<span class="required"> * </span></label></td>
+                                <td><div class="vgroup"><input class="form-control vinput" type="text" name="UserName" required /></div></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center">
+                                    <input class="btn btn-primary" id="save-btn" type="button" name="name" value="保存订单信息" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- loading -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+
+    <div class="modal-dialog modal-sm">
+        <div class="loader">
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <div id="loaderText">
+            正在加载中请稍后......
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/distpicker/distpicker.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+    <script type="text/javascript">
+        function removeDisabled() {
+            $('select[name="Type"]').removeAttr("disabled");
+
+        }
+
+        var selectdFile = null;
+        function UpladFile() {
+            isContinue(function () {
+                var form = new FormData(); // FormData 对象
+                form.append("file", selectdFile); // 文件对象
+                $.ajax({
+                    url: '/B2COrder/KJRefundOrdersImport',                      //url地址
+                    type: 'POST',                 //上传方式
+                    data: form,                   // 上传formdata封装的数据
+                    dataType: 'JSON',
+                    cache: false,                  // 不缓存
+                    processData: false,        // jQuery不要去处理发送的数据
+                    contentType: false,         // jQuery不要去设置Content-Type请求头
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#importorder").attr("disabled", true).css("pointer-events", "none");
+                        $('#importorder').css({ opacity: 0.2 });
+                        $('#loading').modal('show');
+                    },
+                    success: function (data) {           //成功回调
+                        $('#loading').modal('hide');
+
+                        $("#filename").css("display", "none");
+                        $("#filename").val('');
+                        $("#importorder").attr("disabled", false).css("pointer-events", "auto");
+                        $('#importorder').css({ opacity: 1 });
+                        selectdFile = null;
+                        if (data.isSucc) {
+                            alertSuccess(data.data);
+                        }
+                        else {
+                            alertError(data.msg);
+
+                            selectdFile = null;
+                        }
+                    },
+                    error: function (data) {           //失败回调
+                        $("#filename").css("display", "none");
+                        $("#filename").val('');
+                        $('#loading').modal('hide');
+                        alertError("上传出错！");
+                        $("#importorder").attr("disabled", false).css("pointer-events", "auto");
+                        $('#importorder').css({ opacity: 1 });
+                        selectdFile = null;
+                    }
+                });
+            }, null, "确定导入订单吗？")
+        }
+        function Upload() {
+            $("#file").click();
+            $('#file').change(function (e) {
+                var fileName = e.target.files[0];//js 获取文件对象
+                if (fileName !== undefined) {
+                    var file_typename = fileName.name.substring(fileName.name.lastIndexOf('.'));
+                    if (file_typename === '.xlsx' || file_typename === '.xls') {
+                        $("#filename").css("display", "inline");
+                        $("#filename").val(fileName.name);
+                        //UpladFile(fileName);
+                        selectdFile = fileName;
+                    } else {
+                        selectdFile = null;
+                        alertError("请选择正确的文件类型！");
+                    }
+                } else {
+                    selectdFile = null;
+                    alertError("请选择正确的文件！");
+                }
+            })
+        }
+
+        $(function () {
+            $('tr').each(function () {
+                $(this).children("td:even").attr("class", "text-align-reverse");
+            });
+            $("#save-btn").on("click", function () {
+
+                var orderType = $("#orderTypeSelect option:selected").val();
+                var pSerialNumber = $("input[name='PSerialNumber']").val();
+                if (pSerialNumber == null || pSerialNumber == "") {
+                    alertError("平台单号必填");
+                    return false;
+                }
+                var shopId = $("#ShopId option:selected").val();
+                if (shopId == null || shopId == "") {
+                    alertError("请选择销售平台");
+                    return false;
+                }
+                var deliveryTypeId = $("#DeliveryTypeId option:selected").val();
+                if (deliveryTypeId == null || deliveryTypeId == "") {
+                    alertError("请选择物流方式");
+                    return false;
+                }
+                var payTypeId = $("#PayTypeId option:selected").val();
+                if (payTypeId == null || payTypeId == "") {
+                    alertError("请选择支付方式");
+                    return false;
+                }
+                var mark = $("#AdminMark").val();
+
+                var shengshiqu = ""
+                $("#Shengshiqu").children("select").each(function () {
+                    var placeVal = $(this).val();
+                    if (placeVal == null || placeVal == "") {
+                        alertError("省市区必填");
+                        return false;
+                    }
+                    else {
+                        shengshiqu += placeVal + " ";
+                    }
+                })
+                $("#ssq").val(shengshiqu);
+
+                var addressDetail = $("input[name='AddressDetail']").val();
+                if (addressDetail == null || addressDetail == "") {
+                    alertError("详细地址必填")
+                    return false;
+                }
+                var customerName = $("input[name='CustomerName']").val();
+                if (customerName == null || customerName == "") {
+                    alertError("收货人姓名必填")
+                    return false;
+                }
+                var customerPhone = $("input[name='CustomerPhone']").val();
+                if (customerPhone == null || customerPhone == "") {
+                    alertError("手机号码必填")
+                    return false;
+                }
+                var userName = $("input[name='UserName']").val();
+                if (userName == null || userName == "") {
+                    alertError("购买者账户必填")
+                    return false;
+                }
+                var order = {
+                    Type: orderType,
+                    PSerialNumber: pSerialNumber,
+                    ShopId: shopId,
+                    DeliveryTypeId: deliveryTypeId,
+                    PayType: payTypeId,
+                    AdminMark: mark,
+                    AddressDetail: shengshiqu + "" + addressDetail,
+                    CustomerName: customerName,
+                    CustomerPhone: customerPhone,
+                    UserName: userName
+                };
+                $.ajax({
+                    type: 'post',
+                    url: '/B2COrder/CreatedKJRefundOrder',
+                    data: { order: order },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            alertSuccess("创建订单成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                            B2COrderDetail(res.orderSerialNumber,res.orderId);
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            })
+        })
+
+        //查看订单详情
+        function B2COrderDetail(orderSerialNumber, id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == orderSerialNumber) {
+                    parent.$tap.tabChange(orderSerialNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/B2COrder/KJRefundOrderDetail?id=" + id;
+            parent.$tap.tabAdd(orderSerialNumber, url, orderSerialNumber); // 新开一个tap页面
+            parent.$tap.tabChange(orderSerialNumber);
+            event.stopPropagation();
+        }
+    </script>
+}
+

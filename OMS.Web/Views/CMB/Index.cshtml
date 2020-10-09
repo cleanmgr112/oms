@@ -1,0 +1,203 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "招行订单接口信息";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+<div class="row container-fluid">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">招行订单对接</font></font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-6 col-sm-12">
+                        <div class="row margin-bottom-15">
+                            <div class="col-md-6 col-sm-12">
+                                <div class="input-group">
+                                    <span class="input-group-addon">关键词</span>
+                                    <input type="text" id="searchStr" name="searchStr" class="form-control" value="" placeholder="请输入关键词" />
+                                    <div class="input-group-btn">
+                                        <input type="button" class="btn btn-default red" id="searchBtn" name="searchBtn" value="搜&nbsp;&nbsp;索" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 col-sm-12">
+                                <table id="orderTB" class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:20%;">招行商城订单号</th>
+                                            <th>同步信息</th>
+                                            <th style="width:18%;">同步时间</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <!--跳转页面-->
+                                <div id="gotoPage" class=" pagination" style="float:right;width:186px;">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-addon" style="line-height:21px;background-color:white;">跳转到</span>
+                                        <input type="text" id="redirect" name="redirect" class="form-control" style="width:50px;height:33px;" value="" />
+                                        <span class="input-group-addon goto-page" style="line-height:21px;background-color:white;">页</span>
+                                        <div class="input-group-btn goto-page">
+                                            <button class="btn btn-default" id="gotoBtn" style="height:33px;">确定</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--用于列表页确定当前分页的index-->
+                                <input type="number" id="pageNumber" value="1" hidden />
+                                <ul id="pageLimit" style="float:right"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <div class="row margin-bottom-15">
+                            <div class="col-md-12 col-sm-12">
+                                <h3 class="font-green-haze bold"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">手动同步订单到OMS</font></font></h3>
+                            </div>
+                        </div>
+                        <div class="row margin-bottom-15">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <label class="input-group-addon">开始时间</label>
+                                    <input type="datetime" class="form_datetime form-control" id="startTime" name="startTime" value="@DateTime.Now.AddDays(-15).ToString("yyyy-MM-dd")" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <label class="input-group-addon">结束时间</label>
+                                    <input type="datetime" class="form_datetime form-control" id="endTime" name="endTime" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                    <div class="input-group-btn">
+                                        <input type="button" id="syncOrderBtn" name="syncOrderBtn" class="btn btn-default red" value="开始同步" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Modal Start-->
+            <!-- loading Modal -->
+            <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+                <div class="modal-dialog modal-sm" style="top:40%;">
+                    <div class="loader">
+                        <svg class="circular" viewBox="25 25 50 50">
+                            <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+                        </svg>
+                    </div>
+                    <div id="loaderText">
+                        正在加载请稍后......
+                    </div>
+                </div>
+            </div>
+            <!--Modal End-->
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            showOrders();
+            $("#searchBtn").click(() => {
+                $("#pageNumber").val(1);
+                showOrders();
+            });
+            //跳转页面
+            $("#gotoBtn").click(() => {
+                var maxPage = 0;
+                $("#pageLimit").children("li").children("a").each(function () {
+                    if (!isNaN($(this).html()) && parseInt($(this).html()) >= maxPage) {
+                        maxPage = $(this).html();
+                    }
+                })
+                if ($("#redirect").val() > 0 && parseInt($("#redirect").val()) <= maxPage) {
+                    $("#pageNumber").val($("#redirect").val());
+                    showCustomers();
+                } else {
+                    alertError("请输入正确页数！")
+                }
+            });
+
+            //手动同步订单
+            $("#syncOrderBtn").click(function () {
+                var startTime = $("#startTime").val();
+                var endTime = $("#endTime").val();
+                if (startTime == "" || endTime == "") {
+                    alertError("请输入正确时间！");
+                    return false;
+                }
+                if (startTime >= endTime) {
+                    alertError("开始时间大于结束时间！");
+                    return false;
+                }
+                $("#loading").modal();
+                $("#syncOrderBtn").attr("disabled", true);
+                $.ajax({
+                    url: "/CMB/SyncOrderFromCMB",
+                    data: { startTime: startTime, endTime: endTime },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("同步成功！");
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            alertError(data.msg);
+                            $("#syncOrderBtn").attr("disabled", false);
+                            $("#loading").modal("hide");
+                        }
+                    },
+                    error: function (data) {
+                        alertError("同步过程发生错误！");
+                        $("#loading").modal("hide");
+                        $("#syncOrderBtn").attr("disabled", false);
+                    }
+                });
+            });
+        });
+        var showOrders = function () {
+            var searchStr = $("#searchStr").val().trim();
+            if ($("#pageNumber").val() == 1) {
+                $("#redirect").val(1)
+            }
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                gotoPage: "gotoPage",
+                url: "/CMB/ShowCMBOrderDetail",
+                type: "post",
+                data: { pageIndex: $("#pageNumber").val(), pageSize: 10, searchStr: searchStr },
+                success: function (data) {
+                    html = "";
+                    for (var i = 0; i < data.length; i++) {
+                        html += "<tr>" +
+                            "<td>" + (data[i].orderNum) + "</td>" +
+                            "<td>" + (data[i].message) + "</td>" +
+                            "<td>" + (data[i].createdTime) + "</td>" +
+                            "</tr>";
+                    }
+                    $("#orderTB tbody").html(html);
+                }
+            })
+        };
+    </script>
+
+}

@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="aliyun-net-sdk-core" Version="1.5.8" />
+    <PackageReference Include="aliyun-net-sdk-dm" Version="1.0.0" />
+    <PackageReference Include="AutoMapper" Version="6.2.2" />
+    <PackageReference Include="EPPlus" Version="4.5.2.1" />
+    <PackageReference Include="LitJson" Version="0.13.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.0.2" />
+    <PackageReference Include="sqlSugarCore" Version="5.0.0.15" />
+    <PackageReference Include="StackExchange.Redis" Version="2.1.58" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OMS.Core\OMS.Core.csproj" />
+    <ProjectReference Include="..\OMS.Data\OMS.Data.csproj" />
+    <ProjectReference Include="..\OMS.Model\OMS.Model.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="CMB\Model\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="aliyun-net-sdk-core">
+      <HintPath>..\OMS.Services\lib\alicom-mns-receive\aliyun-net-sdk-core.dll</HintPath>
+    </Reference>
+    <Reference Include="aliyun-net-sdk-dm">
+      <HintPath>..\OMS.Services\lib\alicom-mns-receive\aliyun-net-sdk-dm.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

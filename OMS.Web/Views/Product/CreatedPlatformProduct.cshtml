@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "添加平台商品";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bag font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">添加平台商品</font></font></span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                @using (Html.BeginForm("CreatedPlatformProduct", "Product", FormMethod.Post, new { id = "CreatedPlantformProduct-form", @class = "form-horizontal" }))
+                {
+                    <div class="form-body">
+                        <div class="alert alert-danger display-hide">
+                            <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                        </div>
+                        <div class="alert alert-success display-hide">
+                            <button class="close" data-close="alert"></button> Your form validation is successful!
+                        </div>
+                        <div class="form-group  margin-top-20 vgroup">
+                            <label class="control-label col-md-3">
+                                销售商品名
+                                <span class="required"> * </span>
+                            </label>
+                            <div class="col-md-6">
+                                <div class="input-icon right">
+                                    <select id="SaleProductId" name="SaleProductId" class="form-control select2" tabindex="-1" aria-hidden="true" required>
+                                                <option></option>
+                                                @foreach (var item in Model)
+                {
+                                        <option value="@item.Id">@item.Name [@item.Value]</option>
+        }
+                                            </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="control-label col-md-3">
+                                销售平台
+                                <span class="required"> * </span>
+                            </label>
+                            <div class="col-md-6">
+                                <div class="input-icon right">
+                                    <i class="fa"></i>
+                                    @Html.DropDownList("Platform", ViewBag.Platform as SelectList, "请选择", new { @class = "form-control  vinput", required = true })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="control-label col-md-3">
+                                平台商品编码
+                            </label>
+                            <div class="col-md-6">
+                                <input class="form-control vinput" type="type" id="PlatFormProductCode" name="PlatFormProductCode" value="" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="control-label col-md-3">
+
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-icon right">
+                                    <input class="btn green" type="submit" name="name" value="添加" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                }
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-selectsplitter/bootstrap-selectsplitter.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#CreatedPlantformProduct-form").$validate();
+            $('select[data-selectsplitter-selector]').selectsplitter();
+        })
+    </script>
+}

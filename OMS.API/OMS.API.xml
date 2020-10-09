@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>OMS.API</name>
+    </assembly>
+    <members>
+        <member name="M:OMS.API.Controllers.K3WiseController.GetCustomersInfo">
+            <summary>
+            从K3服务器获取客户信息
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.K3WiseController.GetNeedToSendOrders">
+            <summary>
+            给OMS服务器获取所有需要上传的订单信息
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.K3WiseController.OrderResult(System.Object)">
+            <summary>
+            接收订单上传状态
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.K3WiseController.InitCustomersInfo">
+            <summary>
+            更新客户信息
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.GetB2BOrders(System.String,System.String,System.Int32,System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            获取B2B订单列表
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.GetOrderInfo(System.String,System.String)">
+            <summary>
+            根据平台单号获取订单信息
+            </summary>
+            <param name="pSerialNumber">平台单号</param>
+            <param name="sign">验证部分</param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.GetOMSOrderState(System.String)">
+            <summary>
+            通过订单号获取订单当前状态
+            </summary>
+            <param name="serialNumber"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.SyncRefundOrderStateToOMS">
+            <summary>
+            WMS同步B2C/B2B退单状态到OMS，状态改为已入库
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.SyncStockInOrderStateToOMS">
+            <summary>
+            WMS同步采购订单状态到OMS，OMS采购订单状态由已上传改为已入库
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.SyncOrderInvoiceInfoToOMS">
+            <summary>
+            同步发票信息
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.CreateOrderToOMS">
+            <summary>
+            创建订单
+            </summary>
+            <param name="orders"></param>
+            <param name="sign"></param>
+            <param name="orderType"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.OffLineCancelOrder">
+            <summary>
+            线下店退单接口
+            </summary>
+            <param name="pSerialNumber"></param>
+            <param name="sign"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.OrderController.VerifySignature(System.String,System.String)">
+            <summary>
+            AES验证部分
+            </summary>
+            <param name="sign"></param>
+            <param name="key"></param>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncAllSaleProductStock(System.Collections.Generic.List{OMS.Model.SaleProductWareHouseStockSyncModel})">
+            <summary>
+            OMS所有商品库存同步
+            </summary>
+            <param name="saleProductWareHouseStocks"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncSingleSaleProductStock(System.Collections.Generic.List{OMS.Model.SaleProductWareHouseStockSyncModel})">
+            <summary>
+            OMS单个商品库存同步
+            </summary>
+            <param name="saleProductWareHouseStocks"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncOrderState(System.Collections.Generic.List{OMS.Model.Order.SyncOrderStateModel})">
+            <summary>
+            WMS到OMS订单状态同步(暂时只同步已发货状态)
+            </summary>
+            <param name="models"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncOrderDeliveryState(OMS.Model.OrderDeliveryInfo)">
+            <summary>
+            WMS到OMS订单快递信息同步
+            </summary>
+            <param name="orderDeliveryInfo"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncOrderDeliveryToAssist(System.Collections.Generic.List{OMS.Data.Domain.Order})">
+            <summary>
+            推送订单物流信息到订单辅助系统
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncProductStock(OMS.Model.JsonModel.ProductStockFeedData)">
+            <summary>
+            WMS到OMS库存变更同步
+            </summary>
+            <param name="productStockFeedData"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncProductStockToAssist(System.Int32,System.String,System.Int32)">
+            <summary>
+            推送商品库存变更信息到订单辅助系统
+            </summary>
+            <param name="shopid"></param>
+            <param name="code"></param>
+            <param name="quantity"></param>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncRefundPurchasingOrderState">
+            <summary>
+            WMS到OMS同步更新采购退单状态为完成
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncListProductsStock(System.Collections.Generic.List{OMS.Model.JsonModel.ProductStockFeedData})">
+            <summary>
+            多个商品同步库存
+            </summary>
+            <param name="productStockFeedDatas"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.SyncProductWareHouseStockToOMS(System.Collections.Generic.List{OMS.Model.JsonModel.WmsToOmsWareHouseStockModel})">
+            <summary>
+            
+            </summary>
+            <param name="wmsToOmsWareHouseStockModels"></param>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.TestUpdateStock(System.Int32)">
+            <summary>
+            测试接口
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:OMS.API.Controllers.ProductController.UpdateOMSToShopProductsStocks">
+            <summary>
+            更新所有商品库存到商城
+            </summary>
+        </member>
+    </members>
+</doc>

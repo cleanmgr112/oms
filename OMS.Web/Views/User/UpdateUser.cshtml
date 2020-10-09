@@ -1,0 +1,83 @@
+﻿@model OMS.Data.Domain.User
+@{
+    ViewData["Title"] = "修改密码";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-user font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">修改密码</font></font></span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label">用户名</label>
+                                <div class="col-md-2">@Model.UserName</div>
+                                <span id="userId" hidden>@Model.Id</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label">密码</label>
+                                <div class="col-sm-2">
+                                    <input type="password" id="UserPwd1" name="UserPwd1" class="form-control" value="" placeholder="输入新密码" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-1 control-label">确认密码</label>
+                                <div class="col-sm-2">
+                                    <input type="password" id="UserPwd2" name="UserPwd2" class="form-control" value="" placeholder="输入新密码" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-1"></div>
+                                <div class="col-sm-2">
+                                    <button type="button" class="btn btn-default btn-circle blue">修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{ 
+<script type="text/javascript">
+    $(function () {
+        var userId = $("#userId").html();
+        $("button").click(function () {
+            var pw1 = $("#UserPwd1").val();
+            var pw2 = $("#UserPwd2").val();
+            if (pw1 == "" || pw2 == "") {
+                alertError("请输入密码！");
+            }
+            if (pw1 != "" && pw2 != "" && pw1 != pw2) {
+                alertError("请输入相同密码！");
+            } else {
+                $oms.ajax({
+                    url: "/User/UpdateCurrentUser",
+                    data: { Id: userId, UserPwd:pw1 },
+                    type: "post",
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("修改成功！");
+
+                        } else {
+                            alertError(data.msg);
+
+                        }
+                    }
+                })
+
+            }
+        })
+    })
+    </script>
+}

@@ -1,0 +1,411 @@
+﻿
+@{
+    ViewData["Title"] = "商店退货分析";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <style type="text/css">
+        .pagehead { margin-bottom: 10px; padding: 10px 0 10px 0; }
+    </style>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">商店退货分析</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportExcel" style="float:right;margin-right:20px;">导出EXCEL</a>
+                    <iframe id="ifile" style="display:none"></iframe>
+                </div>
+
+
+                <div class="portlet-body">
+                    <div class="row pagehead ">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">日期</span>
+                                <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="" autocomplete="off" />
+                                <span class="input-group-addon">~</span>
+                                <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="" autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">店铺</span>
+                                @Html.DropDownList("platforms", ViewBag.Platforms as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">仓库</span>
+                                @Html.DropDownList("wareHouse", ViewBag.WareHouses as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">关键词</span>
+                                <input type="text" class="form-control" id="SearchStr" value="" placeholder="商品货号，退货人" />
+                                <div class="input-group-btn">
+                                    <input type="button" class="btn btn-default red" name="BtnSearchStr" onclick="ShowDataByType()" value="搜索" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row pagehead">
+                        <div class="col-md-12">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" id="fenxiCheckbox" value="1"> 分析
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="typeRadio" id="dianpuRadio" value="1" checked> 店铺
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="typeRadio" id="shangpinRadio" value="2"> 商品
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row pagehead">
+                        <div class="col-md-12" style="color:#333;font:15px;font-weight:bold;">
+                            <span id="productCount"></span>
+                            <span id="jine"></span>
+                        </div>
+                    </div>
+                    <!--DataTable Begin-->
+                    <div class="dataTable" style=" white-space:nowrap;overflow:scroll;">
+                        <table id="OrderTable" class="table table-striped table-bordered">
+                            <thead>
+                                @*<tr>
+                                    <th>店铺</th>
+                                    <th>数量</th>
+                                    <th>日期</th>
+                                    <th>货号</th>
+                                    <th>商品名称</th>
+                                    <th>结算金额</th>
+                                    <th>备注</th>
+                                    <th>退单号</th>
+                                    <th>退货人</th>
+                                    <th>地址</th>
+                                    <th>手机</th>
+                                    <th>原单号</th>
+                                    <th>退货原因</th>
+                                    <th>物流单号</th>
+                                    <th>退货物流单号</th>
+                                    <th>退单运费金额</th>
+                                    <th>退单调节金额</th>
+                                    <th>赔付金额</th>
+                                    <th>订单交易号</th>
+                                    <th>仓库</th>
+                                    <th>昵称</th>
+                                    <th>金额</th>
+                                    <th>成本价</th>
+                                    <th>市场价</th>
+                                    <th>验收</th>
+                                    <th>作废</th>
+                                </tr>*@
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <ul id="pageLimit" style="float:right"></ul>
+                    </div>
+                    <!--DataTable End-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            if ($("#fenxiCheckbox").is(":checked")) {
+                $("#dianpuRadio,#shangpinRadio").attr("disabled", "false");
+            }
+            else {
+                $("#dianpuRadio,#shangpinRadio").attr("disabled", "true");
+            }
+
+            $("#fenxiCheckbox").click(function () { 
+                if ($("#fenxiCheckbox").is(":checked")) {
+                    document.getElementById("dianpuRadio").checked = true
+                    document.getElementById("shangpinRadio").checked = false;
+
+                    document.getElementById("dianpuRadio").disabled = false;
+                    document.getElementById("shangpinRadio").disabled = false;
+
+                    ShowDataByDianPu();
+                }
+                else {
+                    document.getElementById("dianpuRadio").disabled = true;
+                    document.getElementById("shangpinRadio").disabled = true;
+                    ShowData();
+
+                }
+            })
+
+            $("#dianpuRadio").click(function () {
+                if ($("#fenxiCheckbox").is(":checked")) {
+                    ShowDataByDianPu();
+                }
+                else {
+                    return false;
+                }
+            });
+
+            $("#shangpinRadio").click(function () {
+                if ($("#fenxiCheckbox").is(":checked")) {
+                    ShowDataByShangPin();
+                }
+                else {
+                    return false;
+                }
+            });
+
+            ShowData();
+
+        });
+
+        var ShowDataByType = function () {
+            if ($("#fenxiCheckbox").is(":checked")) {
+                if ($("#dianpuRadio")[0].checked) {
+                    ShowDataByDianPu();
+                }
+                else if ($("#shangpinRadio")[0].checked) {
+                    ShowDataByShangPin();
+                }
+                else {
+                    ShowData();
+                }
+            }
+            else {
+                ShowData();
+            }
+        }
+
+        var ShowData = function () {
+            var data = $("#SearchStr").val();
+            var shopId = $("#platforms option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if (endTime != "") {
+                endTime = new Date(endTime);
+                endTime = (endTime.setDate(endTime.getDate() + 1));
+                endTime = new Date(endTime);
+                var year = endTime.getFullYear();
+                var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                endTime = year + "-" + month + "-" + date;
+            }
+
+
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/DataStatistics/GetShopRefundOrderStatisticsData",
+                data: { search: data, pageSize: pageSize, shopId: shopId, wareHouseId: wareHouse, startTime: startTime, endTime: endTime },
+                success: function (data) {
+                    html = "";
+                    var theadHtml = "<tr><th>店铺</th><th>数量</th><th>日期</th><th>货号</th><th>商品名称</th><th>结算金额</th><th>备注</th><th>退单号</th><th>退货人</th><th>地址</th><th>手机</th><th>原单号</th>"
+                        + "<th>退货原因</th><th>物流单号</th><th>退货物流单号</th><th>订单交易号</th><th>仓库</th><th>昵称</th>"
+                        + "<th>金额</th><th>验收</th><th>作废</th>";
+                    $("#OrderTable").find('thead').html(theadHtml);
+                    if (data.result.length > 0) {
+                        for (var i = 0; i < data.result.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data.result[i].shopName + "</td>" +
+                                "<td>" + data.result[i].quantity + "</td>" +
+                                "<td>" + data.result[i].date + "</td>" +
+                                "<td>" + data.result[i].productCode + "</td>" +
+                                "<td>" + data.result[i].productName + "</td>" +
+                                "<td>" + data.result[i].settlementaAmount + "</td>" +
+                                "<td>" + data.result[i].mark + "</td>" +
+                                "<td>" + data.result[i].refundOrderSerialNumber + "</td>" +
+                                "<td>" + data.result[i].refundUserName + "</td>" +
+                                "<td>" + data.result[i].address + "</td>" +
+                                "<td>" + data.result[i].phone + "</td>" +
+                                "<td>" + data.result[i].originalOrderSerialNumber + "</td>" +
+                                "<td>" + data.result[i].refundReason + "</td>" +
+                                "<td>" + data.result[i].deliveryNo + "</td>" +
+                                "<td>" + data.result[i].refundDeliveryNo + "</td>" +
+                                "<td>" + data.result[i].orderExchangeNo + "</td>" +
+                                "<td>" + data.result[i].wareHouseName + "</td>" +
+                                "<td>" + data.result[i].nickName + "</td>" +
+                                "<td>" + data.result[i].price + "</td>" +
+                                "<td>" + data.result[i].isCheck + "</td>" +
+                                "<td>" + data.result[i].isInvalid + "</td>" +
+                            "</tr>"
+                        }
+                        $("#OrderTable").find('tbody').html(html);
+
+                        $("#productCount").text("合计--数量：" + data.productCount + "  ");
+                        $("#jine").text("金额：" + data.price + "  ");
+                    } else {
+                        $("#OrderTable").find('tbody').html(html);
+                    }
+
+                }
+            });
+        }
+
+        var ShowDataByDianPu = function () {
+
+            var data = $("#SearchStr").val();
+            var shopId = $("#platforms option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if (endTime != "") {
+                endTime = new Date(endTime);
+                endTime = (endTime.setDate(endTime.getDate() + 1));
+                endTime = new Date(endTime);
+                var year = endTime.getFullYear();
+                var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                endTime = year + "-" + month + "-" + date;
+            }
+
+
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/DataStatistics/GetShopRefundOrderStatisticsDataByShop",
+                data: { search: data, pageSize: pageSize, shopId: shopId, wareHouseId: wareHouse, startTime: startTime, endTime: endTime },
+                success: function (data) {
+
+                    var theadHtml = "<tr><th>店铺</th><th>数量</th><th>金额</th>";
+
+                    $("#OrderTable").find('thead').html(theadHtml);
+
+                    html = "";
+                    if (data.result.length > 0) {
+                        for (var i = 0; i < data.result.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data.result[i].shopName + "</td>" +
+                                "<td>" + data.result[i].quantity + "</td>" +
+                                "<td>" + data.result[i].price + "</td>" +
+                                "</tr>"
+                        }
+                        $("#OrderTable").find('tbody').html(html);
+
+                        $("#productCount").text("合计--数量：" + data.productCount + "  ");
+                        $("#jine").text("金额：" + data.price + "  ");
+                    } else {
+                        $("#OrderTable").find('tbody').html(html);
+                    }
+
+                }
+            });
+        }
+
+        var ShowDataByShangPin = function () {
+
+            var data = $("#SearchStr").val();
+            var shopId = $("#platforms option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if (endTime != "") {
+                endTime = new Date(endTime);
+                endTime = (endTime.setDate(endTime.getDate() + 1));
+                endTime = new Date(endTime);
+                var year = endTime.getFullYear();
+                var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                endTime = year + "-" + month + "-" + date;
+            }
+
+
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/DataStatistics/GetShopRefundOrderStatisticsDataByProduct",
+                data: { search: data, pageSize: pageSize, shopId: shopId, wareHouseId: wareHouse, startTime: startTime, endTime: endTime },
+                success: function (data) {
+
+                    var theadHtml = "<tr><th>商品名称</th><th>数量</th><th>金额</th>";
+
+                    $("#OrderTable").find('thead').html(theadHtml);
+
+                    html = "";
+                    if (data.result.length > 0) {
+                        for (var i = 0; i < data.result.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data.result[i].productName + "</td>" +
+                                "<td>" + data.result[i].quantity + "</td>" +
+                                "<td>" + data.result[i].price + "</td>" +
+                                "</tr>"
+                        }
+                        $("#OrderTable").find('tbody').html(html);
+
+                        $("#productCount").text("合计--数量：" + data.productCount + "  ");
+                        $("#jine").text("金额：" + data.price + "  ");
+                    } else {
+                        $("#OrderTable").find('tbody').html(html);
+                    }
+
+                }
+            });
+        }
+
+        $('#exportExcel').click(function () {
+
+            var data = $("#SearchStr").val();
+            var shopId = $("#platforms option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if (endTime != "") {
+                endTime = new Date(endTime);
+                endTime = (endTime.setDate(endTime.getDate() + 1));
+                endTime = new Date(endTime);
+                var year = endTime.getFullYear();
+                var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                endTime = year + "-" + month + "-" + date;
+            }
+
+            var valueStr = "?" + "startTime=" + startTime + "&endTime=" + endTime + "&shopId=" + shopId +  "&wareHouseId=" + wareHouse + "&search=" + data;
+
+            var dom = document.getElementById('ifile');
+
+            var actionStr = "ExportShopRefundOrderStatistics";
+            if ($("#fenxiCheckbox").is(":checked")) {
+                if ($("#dianpuRadio")[0].checked) {
+                    actionStr = "ExportShopRefundOrderStatisticsByShop";
+                }
+                else if ($("#shangpinRadio")[0].checked) {
+                    actionStr = "ExportShopRefundOrderStatisticsByProduct";
+                }
+                else
+                    actionStr = "ExportShopRefundOrderStatistics";
+            }
+
+            dom.src = "/DataStatistics/" + actionStr + valueStr;
+        })
+
+    </script>
+}

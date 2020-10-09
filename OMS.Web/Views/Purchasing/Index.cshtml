@@ -1,0 +1,427 @@
+﻿@{
+    ViewData["Title"] = "采购订单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/bootstrap-select/css/bootstrap-select.css" rel="stylesheet" />
+    <style type="text/css">
+        .pagehead {
+            margin-bottom: 10px;
+            padding: 20px 0 30px 0;
+        }
+    </style>
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bag font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;">采购订单</font></span>
+                </div>
+                <div class="text-align-reverse">
+                    <div class="form-group vgroup">
+                        <input type="file" id="file" name="myfile" style="display: none" />
+                        <input type="text" id="filename" style="display:none;width:150px;margin-right:30px;">
+
+                        <span class="btn green fileinput-button">
+                            <i class="fa fa-download"></i>
+                            <a href="~/TemplateFile/Purchasing_Order.xlsx" class="link" style="color:#ffffff">模版下载</a>&nbsp;&nbsp;&nbsp;
+                        </span>
+                        <span class="btn green fileinput-button">
+                            <i class="fa fa-plus"></i>
+                            <a onclick="AddPurchasingOrder()" class="link" style="color:#ffffff">添加订单</a>
+                        </span>
+                        <span class="btn green fileinput-button">
+                            <i class="fa fa-upload"></i>
+                            <span onclick="Upload()">Excel导入订单</span>
+                        </span>
+                        &nbsp;
+                        <input class="btn red" type="submit" id="importorder" onclick="UpladFile()" style="margin-right:30px;" value="上传" />
+                        <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                            <i class="layui-icon">&#xe9aa;</i>
+                        </a>
+                        <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportPurchaseOrderDetail" style="float:right;margin-right:50px;">导出订单明细</a>
+                        <iframe id="ifile" style="display:none"></iframe>
+                        <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportPurchaseOrder" style="float:right;margin-right:20px;">导出订单</a>
+                        <div class="input-group" style="width:200px;margin-right:20px;float:right;">
+                            <span class="input-group-addon">导出格式</span>
+                            <select id="exportType" name="exportType" class="form-control">
+                                @*<option value="">请选择</option>*@
+                                <option value=".xls">.xls</option>
+                                <option value=".csv">.csv</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="row pagehead ">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">仓库</span>
+                                    @Html.DropDownList("wareHouse", ViewBag.WareHouse as SelectList, "请选择", new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">供应商</span>
+                                    @Html.DropDownList("supplierName", ViewBag.Suppliers as SelectList, "请选择", new { @class = "form-control select2" })
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">下单时间</span>
+                                    <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="" autocomplete="off" />
+                                    <span class="input-group-addon">~</span>
+                                    <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="" autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">关键词</span>
+                                    <input type="text" class="form-control" id="SearchStr" value="" />
+                                    <div class="input-group-btn">
+                                        <input type="button" class="btn btn-default red" name="BtnSearchStr" value="搜索" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dataTable">
+                            <table class="table  table-striped table-hover table-bordered" @*id="PurchasingDatatable" *@>
+                                <thead>
+                                    <tr>
+                                        <th style="width:10%">单据编号</th>
+                                        <th style="width:10%">原单号</th>
+                                        <th style="width:10%">采购计划单</th>
+                                        <th style="width:10%">仓库</th>
+                                        <th style="width:15%">供应商</th>
+                                        <th style="width:6%">总价</th>
+                                        <th style="width:7%">数量</th>
+                                        <th style="width:7%">完成数</th>
+                                        <th style="width:5%">差异数</th>
+                                        <th style="width:5%">状态</th>
+                                        <th style="width:10%">创建时间</th>
+                                        <th style="width:5%">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody"></tbody>
+                            </table>
+                            <!--跳转页面-->
+                            <div id="gotoPage" class=" pagination" style="float:right;width:186px;">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-addon" style="line-height:21px;background-color:white;">跳转到</span>
+                                    <input type="text" id="redirect" name="redirect" class="form-control" style="width:50px;height:33px;" value="" />
+                                    <span class="input-group-addon goto-page" style="line-height:21px;background-color:white;">页</span>
+                                    <div class="input-group-btn goto-page">
+                                        <button class="btn btn-default" id="gotoBtn" style="height:33px;">确定</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <ul id="pageLimit" style="float:right"></ul>
+                        </div>
+                        <!--用于列表页确定当前分页的index-->
+                        <input type="number" id="pageNumber" value="1" hidden />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- loading -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+
+    <div class="modal-dialog modal-sm">
+        <div class="loader">
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <div id="loaderText">
+            正在导入中请稍后......
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-select/js/bootstrap-select.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            ShowPurchasingOrders();
+
+            $("input[name='BtnSearchStr']").click(function () {
+                $("#pageNumber").val(1);
+                ShowPurchasingOrders();
+            });
+            //跳转页面
+            $("#gotoBtn").click(() => {
+                var maxPage = 0;
+                $("#pageLimit").children("li").children("a").each(function () {
+                    if (!isNaN($(this).html()) && parseInt($(this).html()) >= maxPage) {
+                        maxPage = $(this).html();
+                    }
+                })
+                if ($("#redirect").val() > 0 && parseInt($("#redirect").val()) <= maxPage) {
+                    $("#pageNumber").val($("#redirect").val());
+                    ShowPurchasingOrders();
+                } else {
+                    alertError("请输入正确页数！")
+                }
+            })
+            //导出订单信息
+
+            $('#exportPurchaseOrder,#exportPurchaseOrderDetail').click(function () {
+                var clickButtonId = this.id;
+
+                var exportType = $('#exportType option:selected').val();
+                if (exportType == null || exportType == '') {
+                    alertError("请选择导出格式！");
+                    return false;
+                }
+                var data = $("#SearchStr").val().trim();
+                var supplierName = $("#supplierName option:selected").val();
+                var wareHouse = $("#wareHouse option:selected").val();
+                var startTime = $("#StartTime").val();
+                var endTime = $("#EndTime").val();
+
+                var isDetail = false;
+                //导出订单详情
+                if (clickButtonId == 'exportPurchaseOrderDetail') {
+                    isDetail = true;
+                }
+                if ((endTime != "") && startTime > endTime) {
+                    alertError("请重新选择时间");
+                }
+                if (endTime != "") {
+                    endTime = new Date(endTime);
+                    endTime = (endTime.setDate(endTime.getDate() + 1));
+                    endTime = new Date(endTime);
+                    var year = endTime.getFullYear();
+                    var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                    var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                    endTime = year + "-" + month + "-" + date;
+                }
+                var SearchPurchaseOrderModel = {
+                    WareHouse: wareHouse,
+                    SupplierName: supplierName,
+                    StartTime: startTime,
+                    EndTime: endTime,
+                    StartWith: "JR",
+                    ExportType: exportType,
+                    Search: data,
+                    IsDetail: isDetail
+                }
+                var dom = document.getElementById('ifile');
+
+                var valueStr = "?" + "searchPurchaseOrderModelStr=" + JSON.stringify(SearchPurchaseOrderModel);
+
+                dom.src = "/Purchasing/ExportPurchaseOrder" + valueStr;
+            });
+        });
+
+
+
+        function ShowPurchasingOrders() {
+            var data = $("#SearchStr").val().trim();
+            var supplierName = $("#supplierName option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+            }
+            if (endTime != "") {
+                endTime = new Date(endTime);
+                endTime = (endTime.setDate(endTime.getDate() + 1));
+                endTime = new Date(endTime);
+                var year = endTime.getFullYear();
+                var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+                var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+                endTime = year + "-" + month + "-" + date;
+            }
+            if ($("#pageNumber").val() == 1) {
+                $("#redirect").val(1)
+            }
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                gotoPage: "gotoPage",
+                url: "/Purchasing/GetPurchasingOrders",
+                data: { pageIndex: $("#pageNumber").val(), search: data, pageSize: pageSize, wareHouse: wareHouse, supplierName: supplierName, startTime: startTime, endTime: endTime },
+                success: function (data) {
+                    html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td><a onclick='PurchasingOrderDetail(\"" + data[i].purchasingNumber + "\"," + data[i].id + ")'>" + data[i].purchasingNumber + "</td>" +
+                                "<td>" + (data[i].orgionSerialNumber == null ? "" : data[i].orgionSerialNumber) + "</td>" +
+                                "<td>" + (data[i].purchasingOrderNumber == null ? "" : data[i].purchasingOrderNumber) + "</td>" +
+                                "<td>" + data[i].wareHouseName + "</td>" +
+                                "<td>" + data[i].supplierName + "</td>" +
+                                "<td>" + data[i].orderSumPrice + "</td>" +
+                                "<td>" + data[i].sumQuantity + "</td>" +
+                                "<td>" + data[i].sumReceviedNum + "</td>" +
+                                "<td>" + (data[i].sumQuantity - data[i].sumReceviedNum) + "</td>" +
+                                "<td><span " + (data[i].stateStr.indexOf("无效") == 0 ? "class= \"label label-danger circle\" " : " class= \"label label-info circle\"") + ">" + data[i].stateStr + "</span></td>" +
+                                "<td>" + data[i].createdTime + "</td>" +
+                                "<td><button type=\"button\" onclick=\"DelOrder(" + data[i].id + ",'" + data[i].stateStr + "')\" class=\"btn btn-danger btn-sm active deleteBtn\">删除</button></td>" +
+                                "</tr>";
+                        }
+                        $("#tbody").html(html);
+                    } else {
+                        $("#tbody").html(html);
+                    }
+
+                }
+            });
+
+        };
+        //防止多次重复点击触发事件
+        var isclick = true;
+        //查看采购订单详情
+        function PurchasingOrderDetail(purchasingNumber, id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == purchasingNumber) {
+                    parent.$tap.tabChange(purchasingNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/Purchasing/PurchasingOrderDetail?id=" + id;
+            parent.$tap.tabAdd(purchasingNumber, url, purchasingNumber); // 新开一个tap页面
+            parent.$tap.tabChange(purchasingNumber);
+            event.stopPropagation();
+        };
+
+        //新增采购订单
+        function AddPurchasingOrder() {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == "pur1") {
+                    parent.$tap.tabChange("pur1");
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/Purchasing/AddPurchasingOrder";
+            parent.$tap.tabAdd("新增采购订单", url, "pur1"); // 新开一个tap页面
+            parent.$tap.tabChange("pur1");
+            event.stopPropagation();
+        };
+
+        //删除采购订单
+        function DelOrder(id, stateStr) {
+            if (isclick) {
+                isclick = false;
+                if (stateStr.indexOf("无效") == -1 && stateStr.indexOf("初始") == -1) {
+                    alertError("订单已经处理中不能删除！");
+                    return false;
+                }
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Purchasing/DelOrder",
+                        data: { orderId: id },
+                        type: "post",
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("删除成功！");
+                                setTimeout(function () { window.location.reload() }, 800)
+
+                            } else {
+                                alertError(data.msg);
+
+                            }
+
+                        }
+                    })
+                });
+
+                //定时器
+                setTimeout(function () {
+                    isclick = true;
+                }, 500);
+            }
+
+        }
+        var selectdFile = null;
+        function UpladFile() {
+            isContinue(function () {
+                var form = new FormData(); // FormData 对象
+                form.append("formFile", selectdFile); // 文件对象
+                $.ajax({
+                    url: '/Purchasing/ImportPuchasingOrderFromExcel',                      //url地址
+                    type: 'POST',                 //上传方式
+                    data: form,                   // 上传formdata封装的数据
+                    dataType: 'JSON',
+                    cache: false,                  // 不缓存
+                    processData: false,        // jQuery不要去处理发送的数据
+                    contentType: false,         // jQuery不要去设置Content-Type请求头
+                    beforeSend: function () {
+                        //防止重复提交
+                        $("#importorder").attr("disabled", true).css("pointer-events", "none");
+                        $('#importorder').css({ opacity: 0.2 });
+                        $('#loading').modal('show');
+                    },
+                    success: function (data) {           //成功回调
+                        $('#loading').modal('hide');
+
+                        $("#filename").css("display", "none");
+                        $("#filename").val('');
+                        $("#importorder").attr("disabled", false).css("pointer-events", "auto");
+                        $('#importorder').css({ opacity: 1 });
+                        selectdFile = null;
+                        if (data.isSucc) {
+                            alertSuccess(data.msg);
+                            window.location.reload();
+                        }
+                        else {
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {           //失败回调
+                        $("#filename").css("display", "none");
+                        $("#filename").val('');
+                        $('#loading').modal('hide');
+                        alertError("上传出错！");
+                        $("#importorder").attr("disabled", false).css("pointer-events", "auto");
+                        $('#importorder').css({ opacity: 1 });
+                        selectdFile = null;
+                    }
+                });
+            }, null, "确定导入订单吗？")
+        }
+        function Upload() {
+            $("#file").click();
+            $('#file').change(function (e) {
+                var fileName = e.target.files[0];//js 获取文件对象
+                if (fileName !== undefined) {
+                    var file_typename = fileName.name.substring(fileName.name.lastIndexOf('.'));
+                    if (file_typename === '.xlsx' || file_typename === '.xls') {
+                        $("#filename").css("display", "inline");
+                        $("#filename").val(fileName.name);
+                        //UpladFile(fileName);
+                        selectdFile = fileName;
+                    } else {
+                        selectdFile = null;
+                        alertError("请选择正确的文件类型！");
+                    }
+                } else {
+                    selectdFile = null;
+                    alertError("请选择正确的文件！");
+                }
+            })
+        }
+
+
+
+
+    </script>
+}

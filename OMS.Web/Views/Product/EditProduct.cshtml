@@ -1,0 +1,303 @@
+﻿@model OMS.Data.Domain.Product
+@{
+    ViewData["Title"] = "EditProduct";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">商品详情</span>
+                </div>
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                    <i class="layui-icon">&#xe65c;</i>
+                </a>
+            </div>
+            <div class="portlet-body">
+                <div class="col-lg-8">
+                    @using (Html.BeginForm("", "", FormMethod.Post, new { id = "ProductForm", @class = "form-horizontal", enctype = "multipart/form-data" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="form-body">
+                            <div class="alert alert-danger display-hide">
+                                <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                            </div>
+                            <div class="alert alert-success display-hide">
+                                <button class="close" data-close="alert"></button> Your form validation is successful!
+                            </div>
+                            <div class="form-group  margin-top-20 vgroup">
+                                <label class="control-label col-md-4">
+                                    中文名
+                                    <span class="required"> * </span>
+                                </label>
+                                <div class="col-md-6">
+                                    <div class="input-icon right">
+                                        @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control vinput", required = true } })
+                                        @Html.EditorFor(model => model.Id, new { htmlAttributes = new { style = "display:none" } })
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    英文名
+                                </label>
+                                <div class="col-md-6">
+                                    <div class="input-icon right">
+                                        <i class="fa"></i>
+                                        @Html.EditorFor(model => model.NameEn, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    商品编码
+                                    <span class="required"> * </span>
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control vinput", required = true } })
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    商品副条码
+                                    <span class="required"> * </span>
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.EditorFor(model => model.DeputyBarcode, new { htmlAttributes = new { @class = "form-control vinput", required = true } })
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    商品类型
+                                    <span class="required"> * </span>
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.DropDownList("Type", ViewBag.Types as SelectList, "请选择", new { @class = "form-control vinput", required = true })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    葡萄品种
+                                </label>
+                                <div class="col-md-6">
+                                    <select name="ArrayGrapes" class="form-control selectpicker" data-live-seach="true" title="" multiple>
+                                        @foreach (var item in ViewBag.Grapes)
+                                        {
+                                            <option value="@item.Text">@item.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    商品封面图
+                                </label>
+                                @*<div class="col-md-6">
+                                        <span class="btn green fileinput-button">
+                                            <i class="fa fa-plus"></i>
+                                            <span>添加文件</span>
+                                            <input type="file" id="files" name="files" />
+                                        </span>
+                                    </div>*@
+                                <div class="col-md-7">
+                                    <input id="files" class="file" type="file" name="files" multiple data-min-file-count="1">
+                                </div>
+
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    商品系列
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.DropDownList("CategoryId", ViewBag.Category as SelectList, "请选择", new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    国家
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.DropDownList("Country", ViewBag.Country as SelectList, "请选择", new { @class = "form-control vinput" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    产区
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.DropDownList("Area", ViewBag.Area as SelectList, "请选择", new { @class = "form-control vinput" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    容量
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.DropDownList("Capacity", ViewBag.Capacity as SelectList, "请选择", new { @class = "form-control vinput" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    包装方式
+                                </label>
+                                <div class="col-md-6">
+                                    @Html.DropDownList("Packing", ViewBag.Packing as SelectList, "请选择", new { @class = "form-control vinput" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    年份
+                                </label>
+                                <div class="col-md-6">
+                                    <div class="input-icon right">
+                                        <i class="fa"></i>
+                                        @Html.DropDownList("year", ViewBag.Year as SelectList, "请选择", new { @class = "form-control select2" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-4 col-md-9">
+                                    <button type="button" id="update" class="btn green">&nbsp;更&nbsp;改&nbsp;</button>
+                                    @*&nbsp;
+                                        <a id="delProduct" class="btn red">删除</a>*@
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="col-lg-4">
+                    <br />
+                    <img src="@((Model.Cover== null || Model.Cover=="")?"/Image/default-pic.jpg":"https://wineshoptest.oss-cn-hangzhou.aliyuncs.com/"+Model.Cover+"?x-oss-process=image/resize,m_mfit,l_450")" id="Cover" class="img-thumbnail img-responsive" style="width:400px;height:400px" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- loading -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+
+    <div class="modal-dialog modal-sm" style="top:40%">
+        <div class="loader">
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <div id="loaderText">
+            正在导入中请稍后......
+        </div>
+    </div>
+</div>
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/bootstrap-select/css/bootstrap-select.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/fileinput/css/fileinput.css" rel="stylesheet" />
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-select/js/bootstrap-select.js"></script>
+    <script src="~/Metronic/assets/fileinput/JS/fileinput.js"></script>
+    <script src="~/Metronic/assets/fileinput/JS/fileinput_locale_zh.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#ProductForm").$validate();
+            if ($('#productimg').attr("src") == null) {
+                $('#productimg').attr("src", "/Image/default-image-75.jpg");
+            }
+            $("#delProduct").click(function () {
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Product/DelProduct?id=@Model.Id",
+                        success: function () {
+                            alertSuccess("删除成功！");
+                            setTimeout(function () {
+                                window.location.href = "/Product/List";
+                            }, 2000)
+                        },
+                        error: function (e) {
+                            alertError("删除失败！(请查看是否有关联销售商品)");
+                        }
+                    })
+                }, null, "是否删除？")
+            });
+            $(".selectpicker").selectpicker();
+            $(".selectpicker").selectpicker("val",@Html.Raw(ViewBag.SelectedGrapes));
+        });
+
+        $("#files").fileinput({
+            'allowedFileExtensions': ['jpg', 'png', 'gif'],
+        });
+        var fileObj = null;
+        $("#files").on("filebatchselected", function (event, files) {
+            fileObj = files[0];
+        });
+
+
+        //修改商品
+        $("#update").click(function () {
+            var formData = new FormData();
+            formData.append("files", fileObj);
+            if (!$.trim($("#Name").val()) || !$.trim($("#Code").val()) || !$("#DeputyBarcode").val() || !$("#Type").val()) {
+                alertInfo("请填写必要字段！");
+                return false;
+            }
+            var id = (parseInt($("#Id").val()) == null || isNaN(parseInt($("#Id").val())) || typeof (parseInt($("#Id").val())) == "undefined") ? 0 : parseInt($("#Id").val());
+
+            var type = (parseInt($("#Type").val()) == null || isNaN(parseInt($("#Type").val())) || typeof (parseInt($("#Type").val())) == "undefined") ? 0 : parseInt($("#Type").val());
+            var categoryId = (parseInt($("#CategoryId").val()) == null || isNaN(parseInt($("#CategoryId").val())) || typeof (parseInt($("#CategoryId").val())) == "undefined") ? 0 : parseInt($("#CategoryId").val());
+            var country = (parseInt($("#Country").val()) == null || isNaN(parseInt($("#Country").val())) || typeof (parseInt($("#Country").val())) == "undefined") ? 0 : parseInt($("#Country").val());
+            var area = (parseInt($("#Area").val()) == null || isNaN(parseInt($("#Area").val())) || typeof (parseInt($("#Area").val())) == "undefined") ? 0 : parseInt($("#Area").val());
+            var capacity = (parseInt($("#Capacity").val()) == null || isNaN(parseInt($("#Capacity").val())) || typeof (parseInt($("#Capacity").val())) == "undefined") ? 0 : parseInt($("#Capacity").val());
+            var packing = (parseInt($("#Packing").val()) == null || isNaN(parseInt($("#Packing").val())) || typeof (parseInt($("#Packing").val())) == "undefined") ? 0 : parseInt($("#Packing").val());
+
+            var model = JSON.stringify({
+                Id: id, Name: $.trim($("#Name").val()), NameEn: $.trim($("#NameEn").val()), Code: $.trim($("#Code").val()), DeputyBarcode: $.trim($("#DeputyBarcode").val()), Type: type, ArrayGrapes: $("#ArrayGrapes").val(), CategoryId: categoryId, Country: country, Area: area, Capacity: capacity, Packing: packing, Year: $.trim($("#year").val())
+            });
+            formData.append("modelstring", model);
+            $.ajax({
+                cache: false,
+                type: "post",
+                url: "/Product/EditProductFunc",
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                data: formData,
+                beforeSend: function () {
+                    //防止重复添加
+                    $("#update").attr("disabled", true).css("pointer-events", "none");
+                    $('#update').css({ opacity: 0.2 });
+                    $('#loading').modal('show');
+                },
+                success: function (data) {
+                    $('#loading').modal('hide');
+                    if (data.isSucc) {
+                        alertSuccess("商品修改成功！");
+                        setTimeout(function () {  //使用  setTimeout（）方法设定定时2000毫秒
+                            window.location.href = "/Product/List";//跳转到商品列表
+                        }, 2000);
+                    } else {
+                        alertError(data.msg);
+                        setTimeout(function () {  //使用  setTimeout（）方法设定定时2000毫秒
+                            window.location.reload();//页面刷新
+                        }, 2000);
+                    }
+                },
+                error: function (data) {           //失败回调
+                    $('#loading').modal('hide');
+                    alertError("上传出错！");
+                    $("#add").attr("disabled", false).css("pointer-events", "auto");
+                    $('#add').css({ opacity: 1 });
+                    fileObj = null;
+                }
+            });
+        });
+    </script>
+}

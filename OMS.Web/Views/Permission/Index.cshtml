@@ -1,0 +1,278 @@
+﻿@using OMS.Model.Menu;
+@{
+    ViewData["Title"] = "权限管理";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+    var categorys = ViewBag.Categorys as List<SelectItemModel>;
+}
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/media/css/jquery.dataTables.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Buttons/css/buttons.bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Select/css/select.bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Editor-1.7.2/css/editor.bootstrap.min.css" rel="stylesheet" />
+}
+@section Scripts{
+    <script src="~/Metronic//assets//global/plugins/DataTables-1.10.15/media/js/jquery.dataTables.min.js"></script>
+    <script src="~/Metronic//assets//global/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Buttons/js/dataTables.buttons.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Buttons/js/buttons.bootstrap.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/Select/js/dataTables.select.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/editor/js/dataTables.editor.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/extensions/editor//js/editor.bootstrap.min.js"></script>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the permission-tables
+
+        $(document).ready(function () {
+            editor = new $.fn.dataTable.Editor({
+                ajax: {
+                    create: {
+                        type: 'POST',
+                        url: '/Permission/AddPermission'
+                    },
+                    edit: {
+                        type: 'POST',
+                        url: '/Permission/UpdatePermission'
+                    },
+                    remove: {
+                        type: 'POST',
+                        url: '/Permission/DeletePermission'
+                    }
+                },
+                table: "#permission-table",
+                idSrc: 'id',
+                fields: [{
+                    label: "名称:",
+                    name: "name",
+                    multiEditable: false
+                }, {
+                    label: "英文控制码:",
+                    name: "systemName",
+                    multiEditable: false
+                }, {
+                    type: "select",
+                    label: "类型",
+                    name: "category",
+                    multiEditable: false,
+                    options: [
+
+                    ]
+                }, {
+                    type: "radio",
+                    label: "状态:",
+                    name: "state",
+                    multiEditable: false,
+                    options: [
+                        { label: "启用", value: true },
+                        { label: "停用", value: false }
+                    ],
+                    def: 1
+                }, {
+                    label: "备注:",
+                    name: "remark",
+                    type: "textarea",
+                    multiEditable: false
+                }],
+                i18n: {
+                    create: {
+                        button: "创建",
+                        title: "创建新权限",
+                        submit: "创建"
+                    },
+                    edit: {
+                        button: "编辑",
+                        title: "编辑权限信息",
+                        submit: "更新"
+                    },
+                    remove: {
+                        button: "删除",
+                        title: "删除权限",
+                        submit: "删除",
+                        confirm: {
+                            _: "是否删除被选中的 %d 个角色?",
+                            1: "是否删除被选中的 1 个角色?"
+                        }
+                    },
+                    error: {
+                        system: "发生错误，操作失败了！"
+                    },
+                    datetime: {
+                        months: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+                        weekdays: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期天']
+                    }
+                }
+            });
+
+            editor.on('open', function () {
+                //获取浏览器本地存储的类型列表
+                var localCategorys = window.localStorage ? localStorage.getItem("categorys") : Cookie.read("categorys");
+
+                if (localCategorys != null) {
+                    editor.field('category').update(JSON.parse(localCategorys));
+
+                } else {
+                    $oms.ajax({
+                        url: '/Permission/GetCategorys',
+                        type: 'POST',
+                        success: function (res) {
+                            if (res.isSucc) {
+                                var jsonCategory = JSON.stringify(res.data);
+                                if (window.localStorage) {
+                                    localStorage.setItem("categorys", jsonCategory);
+                                } else {
+                                    Cookie.write("categorys", res.data);
+                                }
+                                editor.field('category').update(res.data);
+                            }
+                        }
+                    });
+                }
+            });
+
+            //表单验证
+            editor.on('preSubmit', function (e, o, action) {
+                if (action !== 'remove') {
+                    var Name = this.field('name');
+
+                    if (!Name.isMultiValue()) {
+                        if (!Name.val()) {
+                            Name.error('* 权限的名称是必须的');
+                        }
+                        if (Name.val().length >= 100) {
+                            Name.error('* 请保持在100个字符以下');
+                        }
+                    }
+                    var Code = this.field('systemName');
+                    if (!Code.isMultiValue()) {
+                        if (!Code.val()) {
+                            Code.error("* 权限英文控制码是必须的");
+                        }
+                        if (Code.val().length > 100) {
+                            Code.error("* 请保持在100个字符以下");
+                        }
+                    }
+                    var Category = this.field('category');
+                    if (!Category.isMultiValue()) {
+                        if (!Category.val()) {
+                            Category.error("* 请选择一个权限所属类型");
+                        }
+                        if (Category.val().length > 100) {
+                            Category.error("* 请保持在100个字符以下");
+                        }
+                    }
+                    if (this.inError()) {
+                        return false;
+                    }
+                }
+            });
+
+            var table = $('#permission-table').DataTable({
+                "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
+                dom: "Bfrtip",
+                "processing": true,
+                "serverSide": true,
+                ajax: {
+                    "url": "/Permission/GetPermissionByPage",
+                    "type": "POST",
+                    "dataSrc": "data",
+                    //"data": { pageIndex: 1, pageSize: 10 }
+                },
+                columns: [
+                    {
+                        data: null,
+                        defaultContent: '',
+                        className: 'select-checkbox',
+                        orderable: false
+                    },
+                    { data: "name" },
+                    { data: "systemName" },
+                    { data: "category" },
+                    {
+                        data: function (val) {
+                            if (val.state == true) {
+                                return "正常";
+                            } else {
+                                return "停用";
+                            }
+                        }
+                    },
+                    { data: "createdTime" },
+                    { data: "remark" }
+                    //{
+                    //    "data": null,
+                    //    "defaultContent": "<a>编辑权限</a>"
+                    //}
+                ],
+                oLanguage: {//语言设置
+                    "sLengthMenu": "每页显示 _MENU_ 条记录",
+                    "sZeroRecords": "没有检索到数据",
+                    "sInfo": "当前显示 _START_ 到 _END_ 条，共 _TOTAL_ 条记录",
+                    "sInfoEmtpy": "没有数据",
+                    "sProcessing": '<i class="fa fa-coffee"></i> 正在加载数据...',
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "前一页",
+                        "sNext": "后一页",
+                        "sLast": "尾页"
+                    }
+                },
+                select: true,
+                buttons: [
+                    { extend: "create", editor: editor },
+                    { extend: "edit", editor: editor },
+                    { extend: "remove", editor: editor }
+                ]
+            });
+
+            //$('#permission-table tbody').on('click', 'a', function () {
+            //    var data = table.row($(this).parents('tr')).data();
+            //    //权限增删改查
+            //    window.location.href = "/Role/Permission/" + data.id
+            //    //$('#RoleModal').modal();
+            //    console.log(data.id);
+            //});
+
+        });
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light form-fit bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-social-dribbble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">权限管理</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <table id="permission-table" class="display" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>名称</th>
+                            <th>控制码</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th></th>
+                            <th>名称</th>
+                            <th>控制码</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>备注</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <!-- END PORTLET-->
+    </div>
+</div>
+
+

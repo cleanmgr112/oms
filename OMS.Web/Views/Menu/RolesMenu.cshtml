@@ -1,0 +1,143 @@
+﻿
+@{
+    ViewData["Title"] = "角色菜单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <span class="caption-subject bold uppercase">角色菜单</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption font-blue">
+                                    <i class="icon-settings font-blue"></i>
+                                    <span class="caption-subject bold uppercase">菜单列表</span>
+                                </div>
+                                <div class="x-nav">
+                                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                                        <i class="layui-icon">&#xe9aa;</i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <div id="jstree">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption font-blue">
+                                    <i class="icon-settings font-blue"></i>
+                                    <span class="caption-subject bold uppercase">角色列表</span>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <ul class="list-unstyled">
+                                    @foreach (var r in ViewBag.Roles)
+                                    {
+                                        <li>
+                                            <label class="radio" style="padding-left:3%">
+                                                <input type="radio" name="Role" value="@r.Id" />
+                                                @r.Name
+                                            </label>
+                                        </li>
+                                    }
+                                </ul>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <input class="btn btn-circle blue" type="button" name="SubmitRoleMenu" value="&nbsp;提&nbsp;交&nbsp;" />
+                                        <input type="text" name="MenuId" hidden/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/jstree/dist/themes/default/style.css" rel="stylesheet" />
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/jstree/dist/jstree.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-tagsinput/bootstrap-tagsinput.js"></script>
+    <script>
+        $(function () {
+            $("#jstree").jstree({
+                'core': {
+                    'data': {
+                        "url": "/Menu/GetJsonMenus",
+                        "dataType": "json",// needed only if you do not supply JSON headers
+                        "type": "POST"
+                    }
+                },
+                'plugins': ['checkbox'],
+                "checkbox": {
+                    "three_state": false,
+
+                }
+            });
+            //点击不同角色，获取该角色已经拥有的菜单
+            $('input[name="Role"]').change(function () {
+                var rolejstree = $("#jstree").jstree(true);
+                var roleId = $(this).val();
+                $.ajax({
+                    url: "/Menu/GetRoleMenus?roleId=" + roleId,
+                    success: function (data) {
+                        rolejstree.deselect_all();
+                        rolejstree.select_node(data.data);
+                    }
+                })
+                
+            });
+            $("#jstree").on('changed.jstree', function (e, data) {
+                //alert(data.instance.get_node(data.selected))
+                $("input[name='MenuId']").val(data.selected);
+            });
+            $("input[name='SubmitRoleMenu']").click(function () {
+                var roleId = $("input[name='Role']:checked").val();
+                var menuId = $("input[name='MenuId']").val();
+                var data = {
+                    roleId: parseInt(roleId),
+                    menuId: menuId
+                }
+                if (roleId == null) {
+                    alertError("请选择角色！")
+                } else {
+                    isContinue(function () {
+                        $.ajax({
+                            url: "/Menu/AddRoleMenu",
+                            type:"post",
+                            data: data,
+                            success: function (data) {
+                                if (data.code == "200") {
+                                    alertSuccess("修改成功！")
+                                } else if (data.code == "500") {
+                                    alertError("修改失败，请确认是否选中菜单项！")
+                                }
+                            }
+                        })
+                     }, null,"请确认是否提交修改！")
+                }
+            })
+        })
+    </script>
+}

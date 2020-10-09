@@ -1,0 +1,175 @@
+﻿@using OMS.Data.Domain.Permissions
+@{
+    ViewData["Title"] = "菜单管理";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/jstree/dist/themes/default/style.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/bootstrap-tagsinput/bootstrap-tagsinput.css" rel="stylesheet" />
+    <style>
+        .help-block {
+            text-align: center;
+        }
+        .menu-manage {
+            margin-top: 25px;
+            padding: 20px 10px;
+            border: 1px solid #e7ecf1;
+        }
+
+        .iconModal {
+            width: 1024px;
+        }
+        .bootstrap-tagsinput {
+            width: 100%;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/jstree/dist/jstree.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-tagsinput/bootstrap-tagsinput.js"></script>
+    <script src="~/Script/menuManage.js"></script>
+}
+<div class="row menu-manage">
+    <!--JSTree容器-->
+    <div class="col-md-6">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption font-blue">
+                    <i class="icon-settings font-blue"></i>
+                    <span class="caption-subject bold uppercase"> 选择菜单</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                </div>
+
+            </div>
+            <div class="portlet-body">
+                <div class="menu-tree" id="container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 menu-setting">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption font-red-sunglo">
+                    <i class="icon-settings font-red-sunglo"></i>
+                    <span class="caption-subject bold uppercase"> 设置菜单</span>
+                </div>
+                <div class="actions">
+                    <div class="btn-group btn-group-devided" data-toggle="buttons" id="addMenu">
+                        <label class="btn btn-transparent dark btn-outline btn-circle btn-sm">
+                            新增菜单
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body form">
+                <form class="form-horizontal menu-from" id="menuFrom">
+                    <input type="hidden" id="menuId">
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">菜单名：</label>
+                            <div class="col-md-9">
+                                <input type="text" id="menuName" class="form-control" name="menuname" placeholder="Name" maxlength="15" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">父级菜单名：</label>
+                            <div class="col-md-9">
+                                <select class="form-control" id="parentModule">
+                                    <option data-menuid="">无（根菜单）</option>
+                                    @{
+                                        var menus = ViewBag.BaseMenus as List<Menu>;
+                                        foreach (var menu in menus)
+                                        {
+                                            <option data-menuid="@menu.Id">@menu.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">控制码：</label>
+                            <div class="col-md-9">
+                                <input type="text" id="sysCode" class="form-control" name="" placeholder="Code" maxlength="30" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">URL：</label>
+                            <div class="col-md-9">
+                                <input type="text" id="menuUrl" class="form-control" name="" placeholder="/Controller/Mathod" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">子URL：</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control input-large tags-input" id="tags-input" value="" data-role="tagsinput" style="display: none;" placeholder="按逗号输入多个子URL" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">排序：</label>
+                            <div class="col-md-9">
+                                <input type="number" class="form-control" id="sort-input" value="" placeholder="菜单顺序从大到小排序" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">图标：</label>
+                            <div class="col-md-9">
+                                <input type="text" id="Icon-hover" class="form-control" name="" value="" placeholder="Icon" readonly required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">是否启用</label>
+                            <div class="col-md-9 mt-radio-inline" id="isNomal">
+                                <label class="mt-radio">
+                                    是
+                                    <input type="radio" id="stateTrue" value="true" name="state" checked />
+                                    <span></span>
+                                </label>
+                                <label class="mt-radio">
+                                    否
+                                    <input type="radio" id="stateFalse" value="false" name="state" />
+                                    <span></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions" id="menuSetting">
+                        <div class="row">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="button" class="btn green" id="submitMenu">提交</button>
+                                @*<button type="button" class="btn default">Cancel</button>*@
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 模态框（Modal） -->
+            <div class="modal fade" id="IconModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog iconModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title font-red-sunglo" id="myModalLabel">双击进行图标选择</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row fontawesome-icon-list" id="icon-content"></div>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+

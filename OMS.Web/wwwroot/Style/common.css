@@ -1,0 +1,24 @@
+﻿body {
+}
+.span-outline {
+    clear: both;
+    display: inline-block;
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid #3598DC;
+    color: #3598DC;
+    width: 130px;
+    text-align:center;
+}
+
+.table-text-center {
+    vertical-align: middle !important;
+    text-align: center;
+}
+.text-align-left{
+    text-align:left;
+}
+.text-align-right{
+    text-align:right;
+}
+button{margin:2px 0;}

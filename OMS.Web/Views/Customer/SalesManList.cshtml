@@ -1,0 +1,243 @@
+﻿@using OMS.Data.Domain;
+@{
+    ViewData["Title"] = "业务员列表";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Style/b2b.css" rel="stylesheet" />
+}
+    <div class="portlet light bordered " style="height:600px; padding-bottom:30px;">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="icon-equalizer font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">业务员列表</font></font></span>
+            </div>
+
+            <div class="text-align-reverse">
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a href="#" class="btn green" style="margin-right:50px;" id="addSaleMan">添加业务员 <i class="fa fa-plus"></i></a>
+            </div>
+        </div>
+            <div class="row padding-tb-20" style="background-color:#fff;">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关键词</font></font></label>
+                        <div class="col-md-8">
+                            <input id="keyword" class="form-control  class-edit" value="" placeholder="姓名、编号" autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <div class="btn-group open">
+                            <button class="btn green-haze btn-outline btn-circle btn-sm" id="BtnSearchStr" style="margin-left:15px;">
+                                搜&nbsp;索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="background-color:#fff;">
+                <div class="portlet-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th> 名称 </th>
+                                <th> 编号 </th>
+                                <th> 部门 </th>
+                                <th> 操作 </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                    <ul id="pageLimit" style="float:right"></ul>
+                </div>
+            </div>
+        <!--用于列表页确定当前分页的index-->
+        <input type="number" id="pageNumber" value="1" hidden />
+
+        <!-- 模态框（Modal） -->
+        <div class="modal fade" id="SalesManModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <div class="modal-title">修改/添加业务员</div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row form-group">
+                            <label class="col-md-3 control-label text-align-reverse">名称</label>
+                            <div class="col-md-9">
+                                <input type="text" id="userName" name="userName" class="form-control" value=""  autocomplete="off"/>
+                                <input type="hidden" id="salesManId" name="salesManId" class="form-control" value="" />
+                            </div>
+                        </div>
+
+                        <div class="row form-group">
+                            <label class="col-md-3 control-label text-align-reverse">编号</label>
+                            <div class="col-md-9">
+                                <input type="text" id="code" name="code" class="form-control" value="" autocomplete="off"/>
+                            </div>
+                        </div>
+
+                        <div class="row form-group">
+                            <label class="col-md-3 control-label text-align-reverse">部门</label>
+                            <div class="col-md-9">
+                                @Html.DropDownList("Departments", ViewBag.Departments as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            关闭
+                        </button>
+                        <button type="button" id="SumbitSalesMan" class="btn btn-default blue">
+                            提交
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--End 模态框（Modal） -->
+
+    </div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            showList();
+
+            $("#BtnSearchStr").click(function () {
+                $("#pageNumber").val(1);
+                showList();
+            })
+
+            $("#addSaleMan").click(function () {
+                $("#salesManId").val("");
+                $("#userName").val("");
+                $("#code").val("");
+                $("#Departments").val("");
+                $("#SalesManModal").modal();
+            })
+
+            $("#SumbitSalesMan").click(function () { 
+                var id = $("#salesManId").val();
+                var userName = $("#userName").val();
+                if (userName == null || userName == "") {
+                    alertError("名称不能为空！");
+                    return false;
+                }
+                var code = $("#code").val();
+                var department = $("#Departments option:selected").val();
+                if (department == null || department == "") {
+                    alertError("请选择所属部门");
+                    return false;
+                }
+                if (id == null || id == "") {
+                    $.ajax({
+                        url: "/Customer/AddSalesMan",
+                        type: "POST",
+                        data: { "userName": userName, "code": code, "department": department },
+                        success: function (res) {
+                            if (res.isSucc) {
+                                alertSuccess("添加成功！");
+                                setTimeout(function () { window.location.reload(); }, 1000);
+                            }
+                            else {
+                                alertError(res.msg);
+                            }
+                        }
+                    })
+                }
+                else {
+                    $.ajax({
+                        url: "/Customer/UpdateSalesMan",
+                        type: "POST",
+                        data: { "id": id,"userName": userName, "code": code, "department": department },
+                        success: function (res) {
+                            if (res.isSucc) {
+                                alertSuccess("修改成功！");
+                                setTimeout(function () { window.location.reload(); }, 1000);
+                            }
+                            else {
+                                alertError(res.msg);
+                            }
+                        }
+                    })
+                }
+            })
+        });
+        var showList = function () {
+            var searchStr = $("#keyword").val().trim();
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/Customer/GetSalesManList",
+                data: { pageIndex: $("#pageNumber").val(),searchVal: searchStr },
+                success: function (data) {
+                    var html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td>" + data[i].userName + "</td >" +
+                                "<td>" + data[i].code + "</td>" +
+                                "<td>" + data[i].departmentName + "</td>" +
+                                "<td>" +
+                                "<div class=\"btn-group open\">"+
+                                "<button class=\"btn green-haze btn-outline btn-circle btn-sm\" onclick=\"linkToDetail(" + data[i].id+")\" type=\"button\"> 查看"+
+                                "</button ></div >" +
+                                "<div class=\"btn-group open\">" +
+                                "<button class=\"btn red btn-outline btn-circle btn-sm\" onclick=\"deleteOrder(" + data[i].id + ")\" type=\"button\" style=\"margin-left: 10px;\"> 删除" +
+                                "</button ></div >" +
+                                "</td>" +
+                                "</tr >";
+                        }
+                    }
+                    $("#tbody").html(html);
+                }
+            });
+        }
+        var linkToDetail = function (id) {
+            $.ajax({
+                url: "/Customer/GetSalesManById",
+                type: "POST",
+                data: { "id": id },
+                success: function (res) {
+                    if (res.isSucc) {
+                        $("#userName").val(res.data.userName);
+                        $("#code").val(res.data.code);
+                        $("#Departments").val(res.data.department);
+                        $("#salesManId").val(res.data.id);
+                        $("#SalesManModal").modal();
+                    }
+                    else {
+                        alertError("查看失败！");
+                    }
+                }
+            })
+        }
+        var deleteOrder = function (id)
+        {
+            isContinue(function () {
+                $oms.ajax({
+                    url: "/Customer/DeleteSalesMan",
+                    data: { id: id },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("删除成功");
+                            showList();
+                        }
+                        else {
+                            alertError(data.msg);
+                        }
+                    }
+
+                })
+            });
+
+        }
+    </script>
+}

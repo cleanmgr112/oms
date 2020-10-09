@@ -1,0 +1,239 @@
+﻿@using OMS.Model.Role;
+@using OMS.Model.Account;
+@using OMS.Model.Permission;
+@{
+    ViewData["Title"] = "用户权限管理";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+
+    var selected = "";
+    var user = ViewBag.UserInfo as UserViewModel;
+    var roles = ViewBag.Roles as List<RoleModel>;
+    var permissions = ViewBag.Permissions as List<PermissionMultiSelectModel>;
+}
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/jquery-multi-select/css/multi-select.css" rel="stylesheet" />
+    <style>
+        .selected-option {
+            color: #32c5d2 !important;
+        }
+
+        .ms-container .ms-optgroup-label {
+            font-weight: bold;
+        }
+
+        .ms-container {
+            width: 600px;
+        }
+
+            .ms-container .ms-selectable li.ms-elem-selectable, .ms-container .ms-selection li.ms-elem-selection {
+                padding: 2px 20px !important;
+            }
+
+        .note {
+            color: #666 !important;
+        }
+
+        .note-select-color {
+            /*color: #8bb4e7;*/
+        }
+
+        .setting-permission {
+            float: right;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .ms-container .ms-list {
+            height: 400px !important;
+        }
+    </style>
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/jquery-multi-select/js/jquery.multi-select.js"></script>
+    <script type="text/javascript">
+
+
+        $(document).ready(function () {
+
+            $('#authorizeSelect').multiSelect({
+                selectableOptgroup: true,
+                afterSelect: function (values) {
+                    GetPermissionsInfo('add', values);
+                    SettingSelected('add', values);
+                },
+                afterDeselect: function (values) {
+                    GetPermissionsInfo("delete", values);
+                    SettingSelected('delete', values);
+                }
+            });
+
+            $('#select_all').click(function () {
+                $('#authorizeSelect').multiSelect('select_all');
+                return false;
+            });
+            $('#deselect_all').click(function () {
+                $('#authorizeSelect').multiSelect('deselect_all');
+                return false;
+            });
+
+            $('#refresh-from').click(function () {
+                location.reload();
+            });
+
+            function SettingSelected(action, values) {
+                var selected = $('#selected').val();
+                var delStr = $('#deleteSelect').val();
+                if (action == "add") {
+                    for (var i = 0; i < values.length; i++) {
+                        if (selected.indexOf(values[i]) != -1) {
+                            //删除的是已存在的权限
+                            delStr = delStr.replace(';' + values[i], "");
+                        }
+                    }
+                } else if (action == "delete") {
+                    for (var i = 0; i < values.length; i++) {
+                        if (selected.indexOf(values[i]) != -1) {
+                            //删除的是已存在的权限
+                            delStr = delStr + ';' + values[i];
+                        }
+                    }
+                }
+                $('#deleteSelect').val(delStr)
+
+            }
+
+            //获取权限信息
+            function GetPermissionsInfo(action,values) {
+                $oms.ajax({
+                    url: '/User/GetPermissionsInfo',
+                    type: 'POST',
+                    data: { id:@user.Id, data: values },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            SettingNote(action, res.data);
+                        }
+                    }
+                });
+            }
+
+            function SettingNote(action,data) {
+                var temple = `<li class="note{0}">{1} / {2}</li>`;
+                for (var i = 0; i < data.length; i++) {
+                    var str = temple.format(data[i].id, data[i].category, data[i].name);
+                    var li = ".note" + data[i].id;
+                    if (action == "add") {
+                        $('#deselect-power').find(li).remove();
+                        if (!data[i].selected) {
+                            $('#select-power').append(str);
+                        }
+                    } else if(action == "delete") {
+                        $('#select-power').find(li).remove();
+                        if (data[i].selected) {
+                            $('#deselect-power').append(str);
+                        }
+                    }
+
+                }
+            }
+
+            $('#submit-authorize').click(function () {
+                $oms.ajax({
+                    url: '/Permission/AuthorizeUser',
+                    type: 'POST',
+                    data: $('#form-authorize').serialize(),
+                    success: function (res) {
+                        if (res.isSucc) {
+                            alertSuccess("权限更新成功！");
+                            location.reload();
+                        }
+                    }
+                });
+            });
+        });
+
+
+
+    </script>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light form-fit bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-social-dribbble font-green"></i>对用户
+                    <span class="caption-subject font-green bold "> @user.UserName (@user.Name) </span>分配权限
+                    （该用户具有：
+                    @foreach (var role in roles)
+                    {
+                        <span class="caption-subject font-green bold ">@role.Name</span>
+                    }
+                    角色）：
+                </div>
+                <a class="btn btn-circle  setting-permission" id="setting-permission">返回修改用户角色 <i class="fa fa-mail-forward "></i></a>
+                <div class="actions">
+                    <a class="btn btn-circle green" id="submit-authorize"><i class="fa fa-check"></i> 提交修改</a>
+                    <a class="btn btn-circle grey-salsa btn-outline" id="refresh-from"><i class="fa fa-refresh"></i> 刷新选择</a>
+                    <a class="btn btn-circle btn-primary" id="select_all"><i class="fa fa-check-square-o"></i> 选择所有</a>
+                    <a class="btn btn-circle btn-warning" id="deselect_all"><i class="fa fa-trash-o"></i> 取消选择所有</a>
+                </div>
+            </div>
+            <div class="portlet-body form">
+
+                <!-- BEGIN FORM-->
+                <form class="form-horizontal form-row-seperated" id="form-authorize" action="#">
+                    <div class="form-body">
+                        <div class="form-group last">
+                            <label class="control-label col-md-3">权限分配</label>
+                            <div class="col-md-9">
+                                <select multiple="multiple" class="multi-select" id="authorizeSelect" name="authorizeSelect[]" style="position: absolute; left: -9999px; height:500px">
+                                    @{
+
+                                        foreach (var select in permissions)
+                                        {
+                                            <optgroup label="-- @select.Optgroup ">
+
+                                                @foreach (var per in select.Options)
+                                                {
+                                                    if (per.Selected)
+                                                    {
+                                                        selected = selected + ';' + per.Id;
+
+                                                        <option selected class="selected-option" value="@per.Id">@per.Name (已有权限)</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@per.Id">@per.Name</option>
+                                                    }
+                                                }
+
+                                            </optgroup>
+                                        }
+                                    }
+                                </select>
+                                <input type="text" name="selected" id="selected" value="@selected" />
+                                <input type="text" name="deleteSelect" id="deleteSelect" value="" />
+                                <input type="text" name="userId" value="@user.Id" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="note note-info">
+                                <h4 class="block">您将添加的权限：</h4>
+                                <ul id="select-power"></ul>
+                            </div>
+                            <div class="note note-danger">
+                                <h4 class="block">您将删除的权限：</h4>
+                                <ul id="deselect-power"></ul>
+                            </div>                           
+                        </div>
+                    </div>
+                </form>
+                <!-- END FORM-->
+            </div>
+        </div>
+        <!-- END PORTLET-->
+    </div>
+</div>
+

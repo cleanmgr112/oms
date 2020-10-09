@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "销售商品价格添加";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">销售商品价格</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                @using (Html.BeginForm("CreatedSaleProductsPrice", "Product", FormMethod.Post, new { @class = "form-horizontal", id = "CreatedSaleProductsPriceForm" }))
+                {
+                    <div class="form-group  margin-top-20 vgroup">
+                        <label class="control-label col-md-2">
+                            酒款名
+                            <span class="required"> * </span>
+                        </label>
+                        <div class="col-md-5 ">
+                            <div class="input-icon vinput">
+                                <select id="SaleProductId" name="SaleProductId" class="form-control select2" tabindex="-1" aria-hidden="true" required>
+                                    <option></option>
+                                    @foreach (var item in Model)
+                                    {
+                                        <option value="@item.Id">@item.Name  [@item.Value]</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group vgroup">
+                        <label class="control-label col-md-2">
+                            价格类型
+                            <span class="required"> * </span>
+                        </label>
+                        <div class="col-md-5">
+                            <div class="input-icon vinput">
+                                <select id="CustomerTypeId" name="CustomerTypeId" class="form-control select2 " tabindex="-1" aria-hidden="true" required>
+                                    <option></option>
+                                    @foreach (var pricetype in ViewBag.PriceType)
+                                    {
+                                        <option value="@pricetype.Id">@pricetype.Value</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group vgroup">
+                        <label class="control-label col-md-2">
+                            价格
+                            <span class="required"> * </span>
+                        </label>
+                        <div class="col-md-5">
+                            <input class="form-control vinput" type="number" id="Price" name="Price" min="0" value="" required />
+
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-offset-2 col-md-9">
+                                <button type="submit" class="btn green">提交</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#CreatedSaleProductsPriceForm").$validate();
+        })
+    </script>
+}
+

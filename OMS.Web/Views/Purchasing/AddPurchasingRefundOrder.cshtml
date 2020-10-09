@@ -1,0 +1,126 @@
+﻿@{
+    ViewData["Title"] = "添加采购退单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bag font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;">添加采购退单</font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+
+                    <div class="col-md-8">
+                        <form action="/" method="post" class="form-horizontal">
+                            @*<div class="form-group">
+                                    <label class="col-md-2 control-label">单据编号</label>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="name" value="" />
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">关联原单号</label>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="PurchasingOriginalNumber" value="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">采购计划单</label>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="PurchasingPlanSerialNumber" value="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">供应商</label>
+                                <div class="col-md-5">
+                                    @Html.DropDownList("SupplierId", ViewBag.Suppliers as SelectList, "请选择", new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">仓库</label>
+                                <div class="col-md-5">
+                                    @Html.DropDownList("WareHouseId", ViewBag.WareHouse as SelectList, "请选择", new { @class = "form-control" })
+
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-2 control-label">备注</label>
+                                <div class="col-md-5">
+                                    <textarea name="Mark" class="form-control"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-md-2"></div>
+                                <div class="col-md-5">
+                                    <input type="button" class="btn btn-circle blue" name="Sumbit" value="&nbsp;提&nbsp;交&nbsp;" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+    $(function () {
+        $("input[name='Sumbit']").click(function () {
+            $("input[name='Sumbit']").attr("disabled", true);
+            var purchasingOriginalNumber = $("input[name='PurchasingOriginalNumber']").val();
+            var purchasingPlanSerialNumber = $("input[name='PurchasingPlanSerialNumber']").val();
+            var supplierId = $("select[name='SupplierId'] option:selected").val();
+            var wareHouseId = $("select[name='WareHouseId'] option:selected").val();
+            var mark = $("textarea").val();
+            var data = {
+                PurchasingOriginalNumber: purchasingOriginalNumber,
+                PurchasingPlanSerialNumber: purchasingPlanSerialNumber,
+                SupplierId: supplierId,
+                WareHouseId: wareHouseId,
+                Mark: mark
+            };
+            if (supplierId == "") {
+                alertError("请选择供应商！");
+                return false;
+            }
+            if (wareHouseId == "") {
+                alertError("请选择仓库！");
+                return false;
+            }
+            $.ajax({
+                url: "/Purchasing/AddPurchasingRefundOrder",
+                data: data,
+                type:"post",
+                success: function (data) {
+                    $("input[name='Sumbit']").attr("disabled", false);
+                    if (data.isSucc) {
+                        alertSuccess("添加成功！");
+                        setTimeout(function () {
+                            window.location.href = "/Purchasing/RefundPurchasingOrderDetail?id=" + data.id;
+                        }, 500);
+                    } else {
+                        alertError(data.msg);
+                    }
+                },
+                error: function (data) {
+                    alertError("添加失败！");
+                }
+            })
+
+        })
+
+    })
+    </script>
+}

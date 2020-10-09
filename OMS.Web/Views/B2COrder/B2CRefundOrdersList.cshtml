@@ -1,0 +1,284 @@
+﻿
+@{
+    ViewData["Title"] = "B2C退货订单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <style type="text/css">
+        .pagehead { margin-bottom: 10px; padding: 20px 0 30px 0; }
+
+        th, td { max-width: 400px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bag font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">B2C退单列表</font></font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+
+                    <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportOrderDetail" style="float:right;margin-right:50px;">导出退单明细</a>
+                    <iframe id="ifile" style="display:none"></iframe>
+                    <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportOrder" style="float:right;margin-right:20px;">导出退单</a>
+                    <div class="input-group" style="width:200px;margin-right:20px;float:right;">
+                        <span class="input-group-addon">导出格式</span>
+                        <select id="exportType" name="exportType" class="form-control">
+                            @*<option value="">请选择</option>*@
+                            <option value=".xls">.xls</option>
+                            <option value=".csv">.csv</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row ">
+                    <!--用于列表页确定当前分页的index-->
+                    <input type="number" id="pageNumber" value="1" hidden />
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">店铺</span>
+                                    @Html.DropDownList("shopId", ViewBag.Platforms as SelectList, "请选择", new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">订单状态</span>
+                                    <select id="orderState" class="form-control">
+                                        <option>请选择</option>
+                                        <option value="1">待确认</option>
+                                        <option value="7">已确认</option>
+                                        <option value="11">已上传</option>
+                                        <option value="18">已入库</option>
+                                        <option value="16">已验收</option>
+                                        <option value="12">已完成</option>
+                                        <option value="10">无效</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">创建时间</span>
+                                    <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="" autocomplete="off" />
+                                    <span class="input-group-addon">~</span>
+                                    <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="" autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">关键词</span>
+                                    <input type="text" class="form-control" id="SearchStr" value="" placeholder="单号，收货人，手机，备注" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row pagehead">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-addon">验收时间</span>
+                                    <input type="text" class="form_datetime form-control" id="deliverStartTime" name="deliverStartTime" value="" autocomplete="off" />
+                                    <span class="input-group-addon">~</span>
+                                    <input type="text" class="form_datetime form-control" id="deliverEndTime" name="deliverEndTime" value="" autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="input-group-btn">
+                                    <input type="button" class="btn btn-default red" name="BtnSearchStr" value="搜索" />
+                                </div>
+                            </div>
+                        </div>
+                        <div style="overflow:auto;display:block;">
+                            <table class="table table-bordered table-hover" style=" white-space:nowrap;overflow:scroll;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:10%">退货单号</th>
+                                        <th style="width:10%">退单备注</th>
+                                        <th style="width:10%">创建时间</th>
+                                        <th style="width:10%">验收时间</th>
+                                        <th style="width:10%">店铺</th>
+                                        <th style="width:10%">仓库</th>
+                                        <th style="width:10%">快递类型</th>
+                                        <th style="width:10%">关联订单号</th>
+                                        <th style="width:10%">交易号</th>
+                                        <th style="width:10%">退款金额</th>
+                                        <th style="width:10%">状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody"></tbody>
+                            </table>
+                            </div>
+                            <!--跳转页面-->
+                            <div id="gotoPage" class=" pagination" style="float:right;width:186px;">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-addon" style="line-height:21px;background-color:white;">跳转到</span>
+                                    <input type="text" id="redirect" name="redirect" class="form-control" style="width:50px;height:33px;" value="" />
+                                    <span class="input-group-addon goto-page" style="line-height:21px;background-color:white;">页</span>
+                                    <div class="input-group-btn goto-page">
+                                        <button class="btn btn-default" id="gotoBtn" style="height:33px;">确定</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <ul id="pageLimit" style="float:right"></ul>
+                            <!--用于列表页确定当前分页的index-->
+                            <input type="number" id="pageNumber" value="1" hidden />
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            ShowRefundOrderList();
+
+            $("input[name='BtnSearchStr']").click(function () {
+                $("#pageNumber").val(1);
+                ShowRefundOrderList();
+            });
+            //跳转页面
+            $("#gotoBtn").click(() => {
+                var maxPage = 0;
+                $("#pageLimit").children("li").children("a").each(function () {
+                    if (!isNaN($(this).html()) && parseInt($(this).html()) >= maxPage) {
+                        maxPage = $(this).html();
+                    }
+                })
+                if ($("#redirect").val() > 0 && parseInt($("#redirect").val()) <= maxPage) {
+                    $("#pageNumber").val($("#redirect").val());
+                    ShowRefundOrderList();
+                } else {
+                    alertError("请输入正确页数！")
+                }
+            })
+        });
+        var ShowRefundOrderList = function () {
+            var data = $("#SearchStr").val();
+            var shopId = $("#shopId option:selected").val();
+            var pageSize = 20;
+            var orderState = $("#orderState option:selected").val();
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            var deliverStartTime = $("#deliverStartTime").val();
+            var deliverEndTime = $("#deliverEndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if ((deliverEndTime != "") && deliverStartTime > deliverEndTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if ($("#pageNumber").val() == 1) {
+                $("#redirect").val(1)
+            }
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                gotoPage: "gotoPage",
+                url: "/B2COrder/GetB2CRefundOrdersList",
+                data: { pageIndex: $("#pageNumber").val(), search: data, pageSize: pageSize, shopId: shopId, startTime: startTime, endTime: endTime, deliverStartTime: deliverStartTime, deliverEndTime: deliverEndTime, orderState: orderState },
+                success: function (data) {
+                    html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td><a style='color:blue;' onclick='B2CRefundOrderDetail(\"" + data[i].serialNumber + "\"," + data[i].id + ")'>" + data[i].serialNumber + "</a></td>" +
+                                "<td>" + (data[i].adminMark == null ? "" : data[i].adminMark) + "</td>" +
+                                "<td>" + data[i].createdTime + "</td>" +
+                                "<td>" + (data[i].deliveryDate == null ? "" : data[i].deliveryDate) + "</td>" +
+                                "<td>" + data[i].shopName + "</td>" +
+                                "<td>" + data[i].warehouseName + "</td>" +
+                                "<td>" + data[i].deliveryTypeName + "</td>" +
+                                "<td>" + data[i].orgionSerialNumber + "</td>" +
+                                "<td>" + data[i].pSerialNumber + "</td>" +
+                                "<td>" + data[i].payPrice + "</td>" +
+                                "<td>" + data[i].stateName + "</td>" +
+                                "</tr>"
+                        }
+                        $("#tbody").html(html);
+                    } else {
+                        $("#tbody").html(html);
+                    }
+
+                }
+            });
+        }
+
+        //查看订单详情
+        function B2CRefundOrderDetail(refundSerialNumber, id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == refundSerialNumber) {
+                    parent.$tap.tabChange(refundSerialNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/B2COrder/B2CRefundOrderDetail?id=" + id;
+            parent.$tap.tabAdd(refundSerialNumber, url, refundSerialNumber); // 新开一个tap页面
+            parent.$tap.tabChange(refundSerialNumber);
+            event.stopPropagation();
+        }
+
+        //导出退单信息
+
+        $('#exportOrder,#exportOrderDetail').click(function () {
+            var clickButtonId = this.id;
+
+            var exportType = $('#exportType option:selected').val();
+            if (exportType == null || exportType == '') {
+                alertError("请选择导出格式！");
+                return false;
+            }
+
+            var data = $("#SearchStr").val();
+            var shopId = $("#shopId option:selected").val();
+            //var payState = $("#payState option:selected").val();
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            var deliverStartTime = $("#deliverStartTime").val();
+            var deliverEndTime = $("#deliverEndTime").val();
+            var orderState = $("#orderState option:selected").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if ((deliverEndTime != "") && deliverStartTime > deliverEndTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            var valueStr = "?" + "startTime=" + startTime + "&endTime=" + endTime + "&deliverStartTime=" + deliverStartTime + "&deliverEndTime=" + deliverEndTime + "&shopId=" + shopId + "&orderState=" + orderState + "&search=" + data + "&exportType=" + exportType;
+
+            var dom = document.getElementById('ifile');
+            if (clickButtonId == 'exportOrder') {
+                dom.src = "/B2COrder/ExportOrder" + valueStr + "&isOrderDetail=false&isRefundOrder=true";
+            }
+            else if (clickButtonId == 'exportOrderDetail') {
+                dom.src = "/B2COrder/ExportOrder" + valueStr + "&isOrderDetail=true&isRefundOrder=true";
+            }
+        })
+
+
+
+        //时间显示时分秒
+        $('.form_datetime').datetimepicker({
+            /* minView: "month",  *///选择日期后，不会再跳转去选择时分秒
+            language: 'zh-CN',
+            dateFormat: 'yyyy-mm-dd',//日期显示格式
+            timeFormat: 'HH:mm:ss',//时间显示格式
+            todayBtn: 1,
+            autoclose: 1,
+            minView: 0,  //0表示可以选择小时、分钟   1只可以选择小时
+            minuteStep: 1,//分钟间隔1分钟
+        });
+
+    </script>
+}

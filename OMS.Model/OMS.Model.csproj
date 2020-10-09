@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="StockRemind\**" />
+    <EmbeddedResource Remove="StockRemind\**" />
+    <None Remove="StockRemind\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OMS.Data\OMS.Data.csproj" />
+  </ItemGroup>
+</Project>

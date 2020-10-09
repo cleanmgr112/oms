@@ -1,0 +1,170 @@
+﻿
+@{
+    ViewData["Title"] = "NeedSendOrders";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="col-md-12">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-bubble font-green"></i>
+                        <span class="caption-subject font-green bold uppercase">K3手动传订单列表</span>
+                    </div>
+                    <div class="x-nav">
+                        <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                            <i class="layui-icon">&#xe9aa;</i>
+                        </a>
+                        <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                            <i class="layui-icon">&#xe65c;</i>
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="row margin-bottom-15">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-2 margin-bottom-15">
+                                    <input type="text" class="form-control col-md-2" id="searchStr" placeholder="请输入订单单号" />
+                                </div>
+                                <div class="col-md-2 margin-bottom-15">
+                                    <input type="button" class="btn btn-circle red" id="searchBtn" onclick="showOrderList()" value="&nbsp;搜&nbsp;索&nbsp;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="checkAllOrders" name="name" />订单ID</th>
+                                        <th style="width:20%">OMS订单号</th>
+                                        <th style="width:20%">店铺</th>
+                                        <th>收货人</th>
+                                        <th style="width:20%">手机号码</th>
+                                        <th>平台订单号</th>
+                                        <th>订单状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="row margin-bottom-15">
+                                <div class="col-md-12">
+                                    <button type="button" id="sendOrderBtn" name="sendOrderBtn" class="btn btn-outline red ladda-button" data-style="zoom-out" data-spinner-color="#333">
+                                        <span class="ladda-label">&nbsp;推&nbsp;送&nbsp;</span>
+                                        <span class="ladda-spinner"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <ul id="pageLimit" style="float:right"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Styles{
+    <link href="~/PlugIn/plugins/ladda/ladda-themeless.min.css" rel="stylesheet" />
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script src="~/PlugIn/plugins/ladda/spin.min.js"></script>
+    <script src="~/PlugIn/plugins/ladda/ladda.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            showOrderList();
+            var loading = Ladda.create(document.querySelector('.ladda-button'));
+
+            /*设置checkbox为全选状态*/
+            $("#checkAllOrders").change(function () {
+                if ($("#checkAllOrders").prop("checked") == true) {
+                    $("table tbody tr td input:checkbox").each(function () {
+                        this.checked = true;
+                    })
+                } else {
+                    $("table tbody tr td input:checkbox").each(function () {
+                        this.checked = false;
+                    })
+                }
+            });
+
+            /*推送订单*/
+            $("#sendOrderBtn").click(function () {
+                isContinue(function () {
+                    loading.start();
+                    var orderList = new Array();
+                    $("table tbody tr input:checkbox").each(function () {
+                        if (this.checked == true) {
+                            orderList.push(parseInt($(this).val()));
+                        }
+                    })
+                    $.ajax({
+                        url: "/K3/SendOrdersToK3",
+                        type: "post",
+                        data: { data: orderList },
+                        success: function (data) {
+                            if (data.isSucc) {
+                                var str = "";
+                                var errOrder = 0;
+                                for (var i = 0; i < data.data.length; i++) {
+                                    if (data.data[i]["statusCode"] != "200") {
+                                        errOrder += 1;
+                                    }
+                                    str += data.data[i]["orderId"] + "：" + data.data[i]["message"] + "\r\n";
+                                }
+                                if (errOrder > 0) {
+                                    loading.stop();
+                                    alertWarn(str);
+                                } else {
+                                    loading.stop();
+                                    alertSuccess(str);
+                                }
+                                setTimeout(function () { window.location.reload() }, 6000);
+                            } else {
+                                loading.stop();
+                                alertError(data.msg);
+                            }
+                        },
+                        error: function (data) {
+                            loading.stop();
+                            alertError("推送失败！请查看日志");
+                        }
+                    })
+                }, null, "点击继续推送订单！");
+            });
+        });
+
+
+        /*展示订单列表*/
+        var showOrderList = function () {
+            var searchStr = $("#searchStr").val().trim();
+            var pageSize = 20;
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/K3/GetAllNeedToSendOrders",
+                data: { searchStr: searchStr, pageSize: pageSize },
+                success: function (data) {
+                    var html = "";
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += "<tr>" +
+                                "<td><input type='checkbox' name='needSendOrders' value='" + data[i].id + "'><span class=''>" + data[i].id + "</span></td>" +
+                                "<td>" + data[i].serialNumber + "</td>" +
+                                "<td>" + data[i].shopId + "</td>" +
+                                "<td>" + data[i].customerName + "</td>" +
+                                "<td>" + data[i].customerPhone + "</td>" +
+                                "<td>" + data[i].orgionSerialNumber + "</td>" +
+                                "<td>" + data[i].state + "</td>" +
+                                "</tr>"
+                        }
+                    }
+                    $("table tbody").html(html);
+                }
+            });
+
+        }
+    </script>
+}

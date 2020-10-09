@@ -1,0 +1,115 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="/vue.js"></script>
+<link rel="stylesheet" href="/element-ui/lib/theme-chalk/index.css">
+<script src="/element-ui/lib/index.js"></script>
+<script src="~/dist/signalr.min.js"></script>
+<script src="~/signalrHub.js"></script>
+<script src="/jquery.min.js"></script>
+
+<div class="layui-tab-item layui-show">
+    <div class="x-nav">
+        <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+            <i class="layui-icon">&#xe9aa;</i>
+        </a>
+    </div>
+    <div class="row-index">
+        <div class="col-md-12" style="padding-top:10px">
+            <div class="row">
+                <div class="col-md-1">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-addon">月份</span>
+                        <select id="showMonthInfo" class="form-control" style="width:55px;"></select>
+                    </div>
+                </div>
+            </div>
+            <div id="chartdiv" class="col-md-12" style="height:600px"></div>
+        </div>
+    </div>
+</div>
+
+
+@section Styles{
+    <link rel="stylesheet" href="~/Metronic/assets/global/plugins/amcharts/plugins/export/export.css" type="text/css" media="all" />
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/amcharts/amcharts.js"></script>
+    <script src="~/Metronic/assets/global/plugins/amcharts/serial.js"></script>
+    <script src="~/Metronic/assets/global/plugins/amcharts/plugins/export/export.js"></script>
+    <script type="text/javascript">
+        $(function () {
+
+
+            /*设置月份及数据*/
+            var iStr = "";
+            for (var i = 0, maxMonth = parseInt(new Date().getMonth()); i <= maxMonth; i++) {
+                iStr += "<option value='" + (i + 1) + "'>" + (i + 1) + "</option> \r\n";
+            }
+            $("#showMonthInfo").append(iStr);
+            getChartData((new Date().getMonth() + 1));
+            $("#showMonthInfo").find("option[value=" + (new Date().getMonth() + 1) + "]").attr("selected", true);
+            $("#showMonthInfo").change(function () {
+                getChartData($("#showMonthInfo").attr("option", "selected").val());
+            })
+
+        })
+
+
+        /*图表配置*/
+        var chart = AmCharts.makeChart("chartdiv", {
+            "type": "serial",//显示样式
+            //"categoryField": "dayOfMonth",//X轴数据
+            "categoryAxis": {
+                "gridPosition": "start"
+            },
+            "graphs": [{//数据图形
+                "title": "订单数",
+                "valueField": "orderCount",
+                "type": "column",
+                "bullet": "round",
+                "fillAlphas": 0.6,
+                "columnWidth": 0.5
+            }, {
+                "valueField": "orderCount",
+                "title": "订单数",
+                "bullet": "round"
+            }, {
+                "valueField": "deliveredOrder",
+                "title": "发货订单数",
+                "bullet": "round"
+            }],
+            //"valueAxes": [{//Y轴标题
+            //    "title":" 订单数"
+            //}],
+            "legend": {//数据图形设置
+                "useGraphSettings": true
+            },
+            "export": { "enabled": true }
+        })
+
+
+        /*获取每个月订单*/
+        var getChartData = function (month) {
+            $.ajax({
+                url: "/B2COrder/GetEveryMonthOrder",
+                type: "get",
+                data: { month: month },
+                success: function (data) {
+                    if (data.isSucc) {
+                        chart["dataProvider"] = data.data;
+                        chart["titles"] = [{ "size": 16, "text": "B2C订单月数量图" + new Date().getFullYear() + "-" + $("#showMonthInfo").attr("option", "selected").val() }]
+                        chart["categoryField"] = "dayOfMonth";
+                        chart.validateNow();
+                        chart.validateData();
+                    }
+                }
+            })
+        }
+
+
+    </script>
+}
+

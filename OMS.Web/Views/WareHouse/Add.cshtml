@@ -1,0 +1,95 @@
+﻿
+@{
+    ViewData["Title"] = "Add";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="row">
+    <div class="portlet light form-fit bordered">
+        <div class="portlet-title">
+            <div class="caption">
+                <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">添加仓库</font></font></span>
+            </div>
+            <div class="x-nav">
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                    <i class="layui-icon">&#xe65c;</i>
+                </a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <form id="AddWareHouseForm" method="post" class="form-horizontal" style="width:430px">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group vgroup">
+                            <label class="col-md-5 control-label">仓库名<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-7">
+                                <input class="form-control vinput" type="type" name="Name" id="Name" value="" placeholder="请输入仓库名称" required />
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="col-md-5 control-label">仓库代码<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-7">
+                                <input class="form-control vinput" name="Code" id="Code" value="" placeholder="请输入仓库代码" required />
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="col-md-5 control-label">仓库类型<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-7">
+                                <select name="WareHouseType" id="WareHouseType" class="form-control">
+                                    <option value="0" selected>正常仓库</option>
+                                    <option value="1">线下店仓库</option>
+                                    <option value="2">虚拟仓库</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="col-md-5 control-label">是否同步库存到商城</label>
+                            <div class="col-md-7">
+                                <label class="radio radio-inline">
+                                    <input type="radio" id="IsSyncStock1" name="IsSyncStock" value="false" checked /> 否
+                                </label>
+                                <label class="radio radio-inline">
+                                    <input type="radio" id="IsSyncStock2" name="IsSyncStock" value="true" /> 是
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-5"></div>
+                            <div class="col-md-7">
+                                <input class="btn green" type="button" id="subBtn" name="subBtn" value="提交" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        $().ready(function () {
+            $("#subBtn").click(function () {
+                $.ajax({
+                    url: "/WareHouse/Add",
+                    type: "post",
+                    data: $("#AddWareHouseForm").serialize(),
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("添加成功！");
+                            setTimeout(function () { window.location.reload() }, 1000);
+                        } else {
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {
+                        alertError("添加错误！");
+                    }
+                });
+            });
+        });
+    </script>
+
+}

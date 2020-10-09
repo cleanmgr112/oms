@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="TagHelpers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="6.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.2" />
+    <PackageReference Include="Pomelo.AspNetCore.TimedJob" Version="2.0.0-rtm-10046" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OMS.Core\OMS.Core.csproj" />
+    <ProjectReference Include="..\OMS.Services\OMS.Services.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,304 @@
+﻿@using OMS.Data.Domain;
+@{
+    ViewData["Title"] = "B2B销货数据分析";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <style type="text/css">
+        .pagehead { margin-bottom: 10px; padding: 10px 0 10px 0; }
+    </style>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">B2B销货数据分析</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a href="javascript:void(0);" class="btn btn-default blue align-reverse" id="exportExcel" style="float:right;margin-right:20px;">导出EXCEL</a>
+                    <iframe id="ifile" style="display:none"></iframe>
+                </div>
+
+
+                <div class="portlet-body">
+                    <div class="row pagehead ">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">下单时间</span>
+                                <input type="text" class="form_datetime form-control" id="StartTime" name="StartTime" value="@DateTime.Now.AddYears(-1).ToString("yyyy-MM-dd")" autocomplete="off" />
+                                <span class="input-group-addon">~</span>
+                                <input type="text" class="form_datetime form-control" id="EndTime" name="EndTime" value="@DateTime.Now.ToString("yyyy-MM-dd")" autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">客户</span>
+                                <select id="customer" class="form-control select2" tabindex="-1" aria-hidden="true">
+                                    <option>全部</option>
+                                    @foreach (var item in ViewBag.Customer as List<Customers>)
+                                    {
+                                        <option value="@item.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@item.Name</font></font></option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">客户类型</span>
+                                @Html.DropDownList("customerType", ViewBag.CustomerType as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">仓库</span>
+                                @Html.DropDownList("wareHouse", ViewBag.WareHouses as SelectList, "请选择", new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">单据类型</span>
+                                <select id="orderType" name="orderType" class="form-control">
+                                    <option value="">请选择</option>
+                                    <option value="1">销货单</option>
+                                    <option value="2">退货单</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row pagehead">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">收发时间</span>
+                                <input type="text" class="form_datetime form-control" id="DeliverStartTime" name="DeliverStartTime" autocomplete="off" />
+                                <span class="input-group-addon">~</span>
+                                <input type="text" class="form_datetime form-control" id="DeliverEndTime" name="DeliverStartTime" autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">验收</span>
+                                <select id="isCheckAccept" name="isCheckAccept" class="form-control">
+                                    <option value="">请选择</option>
+                                    <option value="1">已验收</option>
+                                    <option value="2">未验收</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">付款状态</span>
+                                <select id="bookKeeping" name="bookKeeping" class="form-control">
+                                    <option value="">请选择</option>
+                                    <option value="1">已付款</option>
+                                    <option value="2">部分付款</option>
+                                    <option value="3">未付款</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-addon">关键词</span>
+                                <input type="text" class="form-control" id="SearchStr" value="" placeholder="订单编号，商品名称，商品编号，备注" />
+                                <div class="input-group-btn">
+                                    <input type="button" class="btn btn-default red" name="BtnSearchStr" value="搜索" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row pagehead">
+                        <div class="col-md-12" style="color:#333;font:15px;font-weight:bold;">
+                            <span id="sumQuantity"></span>
+                            <span id="sumPrice"></span>
+                        </div>
+                    </div>
+                    <!--DataTable Begin-->
+                    <div class="dataTable" style=" white-space:nowrap;overflow:scroll;">
+                        <table id="OrderTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>单据类型</th>
+                                    <th>单据编号</th>
+                                    <th>下单日期</th>
+                                    <th>收发日期</th>
+                                    <th>商品名称</th>
+                                    <th>商品编码</th>
+                                    <th>数量</th>
+                                    <th>单价</th>
+                                    <th>金额</th>
+                                    <th>客户</th>
+                                    <th>客户类型</th>
+                                    <th>仓库</th>
+                                    <th>验收</th>
+                                    <th>记账</th>
+                                    <th>业务员</th>
+                                    <th>备注</th>
+                                    @*<th>验收人</th>*@
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <ul id="pageLimit" style="float:right"></ul>
+                    </div>
+                    <!--DataTable End-->
+                    <!--用于列表页确定当前分页的index-->
+                    <input type="number" id="pageNumber" value="1" hidden />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-paginator/src/bootstrap-paginator.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            ShowData();
+
+            $("input[name='BtnSearchStr']").click(function () {
+                $("#pageNumber").val(1);
+                ShowData();
+            })
+        });
+
+        var ShowData = function () {
+            var data = $("#SearchStr").val();
+            var customerId = $("#customer option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var customerTypeId = $("#customerType option:selected").val();
+            var orderType = $("#orderType option:selected").val();
+            var checkType = $("#isCheckAccept option:selected").val();
+            var bookKeepType = $("#bookKeeping option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            var deliverStartTime = $("#DeliverStartTime").val();
+            var deliverEndTime = $("#DeliverEndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择下单时间");
+                return false;
+            }
+            if ((deliverEndTime != "") && deliverStartTime > deliverEndTime) {
+                alertError("请重新选择收发时间");
+                return false;
+            }
+            //if (endTime != "") {
+            //    endTime = new Date(endTime);
+            //    endTime = (endTime.setDate(endTime.getDate() + 1));
+            //    endTime = new Date(endTime);
+            //    var year = endTime.getFullYear();
+            //    var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+            //    var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+            //    endTime = year + "-" + month + "-" + date;
+            //}
+
+
+            $oms.paginator({
+                pageLimitId: "pageLimit",
+                url: "/B2BOrder/GetB2BSaleDataModel",
+                data: { pageIndex: $("#pageNumber").val(), search: data, pageSize: pageSize, customerId: customerId, wareHouseId: wareHouse, customerTypeId: customerTypeId, startTime: startTime, endTime: endTime, deliverStartTime: deliverStartTime, deliverEndTime: deliverEndTime, orderType: orderType, checkType: checkType, bookKeepType: bookKeepType },
+                success: function (data) {
+                    html = "";
+                    if (data.result.length > 0) {
+                        for (var i = 0; i < data.result.length; i++) {
+
+                            var linkUrl = data.result[i].originalOrderId == null ? "" : ("<button class='btn green-haze btn-outline btn-circle btn-sm' onclick='linkToDetail(" + data.result[i].originalOrderId + ")' type='button'>原订单</button>");
+                            html += "<tr>" +
+                                "<td>" + data.result[i].orderTypeStr + "</a></td>" +
+                                "<td>" + data.result[i].serialNumber + "</td>" +
+                                "<td>" + data.result[i].createdTime + "</td>" +
+                                "<td>" + (data.result[i].deliveryDate == null ? "" : data.result[i].deliveryDate) + "</td>" +
+                                "<td>" + data.result[i].productName + "</td>" +
+                                "<td>" + data.result[i].productCode + "</td>" +
+                                "<td>" + data.result[i].quantity + "</td>" +
+                                "<td>" + data.result[i].unitPrice + "</td>" +
+                                "<td>" + data.result[i].price + "</td>" +
+                                "<td>" + data.result[i].customerName + "</td>" +
+                                "<td>" + data.result[i].customerTypeName + "</td>" +
+                                "<td>" + data.result[i].wareHouseName + "</td>" +
+                                "<td>" + (data.result[i].isCheck == true ? "<i class='fa fa-check'></i>" : "<i class='fa fa-'") + "</td>" +
+                                //"<td>" + (data.result[i].isBookKeeping == true ? "<i class='fa fa-check'></i>" : "<i class='fa fa-'") + "</td>" +
+                                "<td>" + data.result[i].isBookKeepingStr + "</td>" +
+                                "<td>" + data.result[i].salesManName + "</td>" +
+                                "<td>" + data.result[i].mark + "</td>" +
+                                //"<td>" + data.result[i].checkerName + "</td>" +
+                                "<td>" + linkUrl + "</td>" +
+                                "</tr>"
+                        }
+                        $("#OrderTable").find('tbody').html(html);
+
+                        $("#sumQuantity").text("合计--数量:" + data.count + "  |");
+                        $("#sumPrice").text("金额:" + data.sumPrice);
+                    } else {
+                        $("#OrderTable").find('tbody').html(html);
+                    }
+
+                }
+            });
+        }
+
+        var linkToDetail = function (orderSerialNumber,id) {
+            //是否有打开tab
+            for (var i = 0; i < parent.$('.x-iframe').length; i++) {
+                if (parent.$('.x-iframe').eq(i).attr('tab-id') == orderSerialNumber) {
+                    parent.$tap.tabChange(orderSerialNumber);
+                    event.stopPropagation();
+                    return;
+                }
+            };
+            var url = "/B2BOrder/AddSalesBill?orderId=" + id;
+            parent.$tap.tabAdd("B2B销货单信息", url, orderSerialNumber); // 新开一个tap页面
+            parent.$tap.tabChange(orderSerialNumber);
+            event.stopPropagation();
+        }
+
+        $('#exportExcel').click(function () {
+
+            var data = $("#SearchStr").val();
+            var customerId = $("#customer option:selected").val();
+            var wareHouse = $("#wareHouse option:selected").val();
+            var customerTypeId = $("#customerType option:selected").val();
+            var orderType = $("#orderType option:selected").val();
+            var checkType = $("#isCheckAccept option:selected").val();
+            var bookKeepType = $("#bookKeeping option:selected").val();
+            var pageSize = 20;
+            var startTime = $("#StartTime").val();
+            var endTime = $("#EndTime").val();
+            var deliverStartTime = $("#DeliverStartTime").val();
+            var deliverEndTime = $("#DeliverEndTime").val();
+            if ((endTime != "") && startTime > endTime) {
+                alertError("请重新选择时间");
+                return false;
+            }
+            if ((deliverEndTime != "") && deliverStartTime > deliverEndTime) {
+                alertError("请重新选择收发时间");
+                return false;
+            }
+            //if (endTime != "") {
+            //    endTime = new Date(endTime);
+            //    endTime = (endTime.setDate(endTime.getDate() + 1));
+            //    endTime = new Date(endTime);
+            //    var year = endTime.getFullYear();
+            //    var month = endTime.getMonth() + 1 < 10 ? "0" + (endTime.getMonth() + 1) : endTime.getMonth();
+            //    var date = endTime.getDate() < 10 ? "0" + endTime.getDate() : endTime.getDate();
+            //    endTime = year + "-" + month + "-" + date;
+            //}
+
+            var valueStr = "?" + "startTime=" + startTime + "&endTime=" + endTime + "&deliverStartTime=" + deliverStartTime + "&deliverEndTime=" + deliverEndTime + "&customerId=" + customerId + "&orderType=" + orderType + "&checkType=" + checkType + "&bookKeepType=" + bookKeepType + "&wareHouseId=" + wareHouse + "&customerTypeId=" + customerTypeId + "&search=" + data;
+
+            var dom = document.getElementById('ifile');
+            dom.src = "/B2BOrder/" + "ExportB2BSaleDataAnalysis" + valueStr;
+        })
+
+
+
+
+    </script>
+}

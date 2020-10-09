@@ -1,0 +1,599 @@
+﻿@using OMS.Data.Domain;
+@model OrderModel
+@{
+    ViewData["Title"] = "添加批发退货单";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <style type="text/css">
+        .form-group { margin-bottom: 10px; }
+        .order-product { height: 550px; background-color: #fff; margin-top: 20px; }
+        .select2-container--bootstrap.select2-container--disabled .select2-selection, .form-control[disabled] { cursor: text !important; }
+    </style>
+}
+
+
+    <div class="portlet light bordered " style=" padding-bottom:30px;">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="icon-equalizer font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">添加批发退货单</font></font></span>
+            </div>
+            <div class="x-nav">
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                    <i class="layui-icon">&#xe65c;</i>
+                </a>
+            </div>
+        </div>
+        <form class="form-horizontal">
+            <div class="form-body ">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">单据编号</font></font></label>
+                            <div class="col-md-8">
+                                <input type="text" id="billNo" readonly class="form-control class-edit " value="@Model.SerialNumber">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-3" style="padding-right:0px;"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">原单号&nbsp;&nbsp;<i class="text-danger">*</i></font></font></label>
+                            <div class="col-md-6" style="padding-right:0px;">
+                                <input type="text" id="orginalNo" class="form-control class-edit " value="">
+                            </div>
+                            <div class="col-md-3" style="padding-left:0px;">
+                                <a id="orginalOrderBtn" class="btn btn-outline green button-next">
+                                    @Html.Raw("原单明细")
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="single" class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">客户</font></font></label>
+
+                            <div class="col-md-8 class-edit ">
+                                <select id="customer" class="form-control select2" tabindex="-1" aria-hidden="false">
+                                    @{
+                                        var Customer = Model.Customers.Where(p => p.Id == Model.CustomerId).FirstOrDefault();
+                                        if (Customer != null)
+                                        {
+                                            <option value="@Customer.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@Customer.Name</font></font></option>
+                                            @(Model.Customers.Remove(Customer))
+                                        }
+                                        else
+                                        {
+                                            <option></option>
+                                        }
+                                    }
+
+                                    @foreach (var item in Model.Customers)
+                                    {
+                                        <option value="@item.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@item.Name</font></font></option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">仓库</font></font></label>
+
+                            <div class="col-md-8 class-edit">
+                                <select id="wareHouses" class="form-control select2" tabindex="-1" aria-hidden="true">
+                                    @{
+                                        var WareHouse = Model.WareHouses.Where(p => p.Id == Model.WarehouseId).FirstOrDefault();
+                                        if (WareHouse != null)
+                                        {
+                                            <option value="@WareHouse.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@WareHouse.Name</font></font></option>
+                                            @(Model.WareHouses.Remove(WareHouse))
+                                        }
+                                        else
+                                        {
+                                            <option></option>
+                                        }
+                                    }
+
+                                    @foreach (var item in Model.WareHouses)
+                                    {
+                                        <option value="@item.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@item.Name</font></font></option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">物流方式</font></font></label>
+
+                            <div class="col-md-8 class-edit">
+                                <select id="delivery" class="form-control select2" tabindex="-1" aria-hidden="true">
+                                    @{
+                                        var Delivery = Model.Deliverys.Where(p => p.Id == Model.DeliveryTypeId).FirstOrDefault();
+                                        if (Delivery != null)
+                                        {
+                                            <option value="@Delivery.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@Delivery.Name</font></font></option>
+                                            @(Model.Deliverys.Remove(Delivery))
+                                        }
+                                        else
+                                        {
+                                            <option></option>
+                                        }
+                                    }
+                                    @foreach (var item in Model.Deliverys)
+                                    {
+                                        <option value="@item.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@item.Name</font></font></option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">价格类型&nbsp;&nbsp;<i class="text-danger">*</i></font></font></label>
+
+                            <div class="col-md-8 class-edit">
+                                <select id="priceType" class="form-control select2" tabindex="-1" aria-hidden="true">
+                                    @{
+                                        var PriceType = Model.PriceType.Where(p => p.Id == Model.PriceTypeId).FirstOrDefault();
+                                        if (PriceType != null)
+                                        {
+                                            <option value="@PriceType.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@PriceType.Value</font></font></option>
+                                            @(Model.PriceType.Remove(PriceType))
+                                        }
+                                        else
+                                        {
+                                            <option></option>
+                                        }
+                                    }
+                                    @foreach (var item in Model.PriceType)
+                                    {
+                                        <option value="@item.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@item.Value</font></font></option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">联系人</font></font></label>
+                            <div class="col-md-8">
+                                <input type="text" id="contact" class="form-control  class-edit" value="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">电话</font></font></label>
+                            <div class="col-md-8">
+                                <input type="text" id="mobile" class="form-control class-edit" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label col-md-4"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">业务员</font></font></label>
+
+                            <div class="col-md-8 class-edit">
+                                <select id="salesMan" class="form-control select2" tabindex="-1" aria-hidden="true">
+                                    @if (Model.Id == 0)
+                                    {
+                                        <option></option>
+                                    }
+                                    else
+                                    {
+                                        var SalesMan = Model.SalesMans.Where(p => p.Id == Model.SalesManId).FirstOrDefault();
+                                        if (SalesMan != null)
+                                        {
+                                            <option value="@SalesMan.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@SalesMan.UserName</font></font></option>
+                                            @Model.SalesMans.Remove(SalesMan);
+                                        }
+                                        else
+                                        {
+                                            <option></option>
+                                        }
+                                    }
+                                    @foreach (var item in Model.SalesMans)
+                                    {
+                                        <option value="@item.Id"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">@item.UserName</font></font></option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="control-label col-md-2"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">备注</font></font></label>
+                            <div class="col-md-8">
+                                <textarea id="adminMark" class="form-control  class-edit">@Model.AdminMark</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-offset-1">
+                        <a id="createdRefundBtn" class="btn btn-outline green button-next">
+                            @Html.Raw("生成退单")
+                            <i class="fa fa-pencil"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+        <div class="modal-body order-product">
+            <div class="col-md-12">
+                <div class="portlet-body">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th> 商品名称 </th>
+                                <th> 商品编码 </th>
+                                <th> 原价 </th>
+                                <th> 单价 </th>
+                                <th> 数量 </th>
+                                <th> 金额 </th>
+                                <th> 操作 </th>
+                            </tr>
+                        </thead>
+                        <tbody id="addProductsTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<!-- 原订单商品模态框（Modal） -->
+<div class="modal fade" id="productsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">原订单商品明细</h4>
+            </div>
+            <div class="modal-body" style="display:table;width:100%;">
+                <div class="col-md-12">
+                    <div class="portlet-body">
+                        <table class="table table-striped table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>商品名称</th>
+                                    <th>商品编码</th>
+                                    <th>原价</th>
+                                    <th>单价</th>
+                                    <th>数量</th>
+                                    <th>金额</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTbody"></tbody>
+                        </table>
+                        @*<ul id="pageLimit" style="float:right"></ul>*@
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-dismiss="modal" class="btn blue btn-outline">关闭</button>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div><!-- /.modal -->
+
+<!-- 添加商品模态框（Modal） -->
+<div id="addProductModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog" style="width:800px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">商品信息</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="tab-pane">
+                        <div class="portlet box" style="border-bottom: 1px solid #5cd1db;">
+                            <div class="portlet-body form">
+                                <!-- BEGIN FORM-->
+                                <form action="#" class="form-horizontal">
+                                    <div class="form-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-2">商品名称</label>
+                                                    <div class="col-md-10">
+                                                        <input type="hidden" id="product_Id" value="" />
+                                                        <input type="hidden" id="product_type" value="" />
+                                                        <input type="hidden" id="totalQuantity" value="" />
+                                                        <p class="form-control-static" id="pName"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-4">商品编号</label>
+                                                    <div class="col-md-8">
+                                                        <p class="form-control-static" id="pCode"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-4" id="priceName">标准价</label>
+                                                    <div class="col-md-8">
+                                                        <input type="number" id="productOrginPrice" readonly class="form-control" value="">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-4">折扣</label>
+                                                    <div class="col-md-8">
+                                                        <input type="number" class="form-control" id="discount" oninput="discountChangePrice()" min="0.01" max="1.00" step="0.1" value="1.00">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-4">单价</label>
+                                                    <div class="col-md-8">
+                                                        <input type="number" id="productPrice" oninput="priceChangePrice()" class="form-control" min="0.00">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-4">数量</label>
+                                                    <div class="col-md-8">
+                                                        <input type="number" id="pQuantity" oninput="quantityChangePrice()" class="form-control" min="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!--/span-->
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label col-md-4">总金额</label>
+                                                    <div class="col-md-8">
+                                                        <input type="text" id="productSumprice" class="form-control">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!--/span-->
+                                        </div>
+                                    </div>
+                                </form>
+                                <!-- END FORM-->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-dismiss="modal" class="btn dark btn-outline">取消</button>
+                <button type="button" class="btn green" id="order_product_ok" onclick="submitOrderProduct()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script type="text/javascript">
+        var productArr = new Array();
+        $(function () {
+
+            $("#createdRefundBtn").click(function () {
+                var originalNo = $("#orginalNo").val().trim();
+                if (originalNo == null || originalNo == "") {
+                    alertError("原单号不能为空");
+                    return false;
+                }
+                var priceType = $("#priceType option:selected").val();
+                if (priceType == null || priceType == "") {
+                    alertError("请选择价格类型");
+                    return false;
+                }
+                var salesManId = parseInt($("#salesMan").select2("data")[0].id);
+                if (!(salesManId > 0)) {
+                    alertError("请选择业务员");
+                    return false;
+                }
+
+                var serialNumber = $("#billNo").val().trim();
+                var customer = $("#customer option:selected").val();
+                var wareHouse = $("#wareHouses option:selected").val();
+                var delivery = $("#delivery option:selected").val();
+                var contactName = $("#contact").val().trim();
+                var mobile = $("#mobile").val().trim();
+                var mark = $("#adminMark").val().trim();
+                var model = {
+                    SerialNumber: serialNumber,
+                    OrgionSerialNumber: originalNo,
+                    CustomerId: customer,
+                    WarehouseId: wareHouse,
+                    DeliveryTypeId: delivery,
+                    PriceTypeId: priceType,
+                    CustomerName: contactName,
+                    CustomerPhone: mobile,
+                    AdminMark: mark,
+                    salesManId: salesManId
+                };
+                $.ajax({
+                    url: "/B2BOrder/CreatedB2BRefundOrder",
+                    type: "POST",
+                    data: { orderModel: model, orderProductModels: productArr },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            window.location.href = "/B2BOrder/B2BRefundOrderDetail?id=" + res.id;
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            })
+
+            
+            //获取原订单的商品详情
+            $("#orginalOrderBtn").click(function () {
+                var originalNo = $("#orginalNo").val().trim();
+                if (originalNo == null || originalNo == "") {
+                    alertError("原单号不能为空");
+                    return false;
+                }
+                $.ajax({
+                    url: "/B2BOrder/GetOriginalB2BOrder",
+                    type: "POST",
+                    data: { "serialNumber": originalNo },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            if (res.data.products.length > 0) {
+                                if (res.data.order != null) {
+                                    $("#customer").val(res.data.order.customerId);
+                                    $("#wareHouses").val(res.data.order.warehouseId);
+                                    $("#delivery").val(res.data.order.deliveryTypeId);
+                                    $("#priceType").val(res.data.order.priceTypeId);
+                                    $("#contact").val(res.data.order.customerName);
+                                    $("#mobile").val(res.data.order.customerPhone);
+                                    $(".select2").trigger('change');
+                                }
+                                var htmlStr = "";
+                                for (var i = 0; i < res.data.products.length; i++) {
+                                    htmlStr += "<tr><td>" + res.data.products[i].productName + "</td><td>" + res.data.products[i].productCode + "</td><td>" + res.data.products[i].orginPrice + "</td><td>"
+                                        + res.data.products[i].price + "</td><td>" + res.data.products[i].quantity + "</td><td>" + res.data.products[i].sumPrice
+                                        + "</td><td style=\"display:none\">" + res.data.products[i].saleProductId + "</td><td style=\"display:none\">" + res.data.products[i].type
+                                        + "</td><td><a href=\"javascript:void(0);\" class=\"addBtn\">添加</a></td></tr>";
+                                }
+                                $("#productsTbody").html(htmlStr);
+                            }
+
+                            $("#productsModal").modal();
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+
+                    }
+                })
+            })
+        })
+
+        $("body").on("click", ".addBtn", function () {
+            var obj = $(this).parent().siblings();
+
+            $("#pName").text(obj[0].innerText);
+            $("#pCode").text(obj[1].innerText);
+            $("#productOrginPrice").val(obj[2].innerText);
+            $("#productPrice").val(obj[3].innerText);
+            $("#pQuantity").val(obj[4].innerText);
+            $("#productSumprice").val(obj[5].innerText);
+            $("#discount").val(obj[3].innerText / obj[2].innerText);
+            $("#product_Id").val(obj[6].innerText);
+            $("#product_type").val(obj[7].innerText);
+            $("#totalQuantity").val(obj[4].innerText);
+            $("#addProductModal").modal();
+        });
+        //折扣改变，重算价格
+        var discountChangePrice = function () {
+            var disVal = $("#discount").val();
+
+            var disPrice = $("#productOrginPrice").val() * disVal;//原价*折扣
+            $("#productPrice").val(disPrice);
+            $("#productSumprice").val(disPrice * $("#pQuantity").val());
+        }
+        //数量改变，重算价格
+        var quantityChangePrice = function () {
+            var quantity = $("#pQuantity").val();
+            var price = $("#productPrice").val();
+            $("#productSumprice").val(price * quantity);
+
+        }
+        //单价改变，重算价格
+        var priceChangePrice = function () {
+            var price = $("#productPrice").val();
+            var originalPrice = $("#productOrginPrice").val();
+            $("#discount").val((price / originalPrice).toFixed(2));
+
+            $("#productSumprice").val(price * $("#pQuantity").val());
+
+        }
+
+        //向商品数组中添加商品对象
+        var submitOrderProduct = function () {
+            var quantity = $("#pQuantity").val();
+            var totalQuantity = $("#totalQuantity").val();
+            if (quantity > totalQuantity) {
+                alertError("商品数量大于原订单数量！");
+                return false;
+            }
+            var saleProductId = $("#product_Id").val();
+            var orginPrice = $("#productOrginPrice").val();
+            var price = $("#productPrice").val();
+
+            //合并相同的商品，只计算数量
+            var product = productArr.filter(item => item.SaleProductId == saleProductId && item.OrginPrice == orginPrice && item.Price == price);
+            if (product.length > 0) {
+                var sumQuantity = parseInt(product[0].Quantity) + parseInt(quantity);
+                if (sumQuantity > totalQuantity) {
+                    alertError("商品数量大于原订单数量！");
+                    return false;
+                }
+                product[0].Quantity = parseInt(product[0].Quantity) + parseInt(quantity);
+            }
+            else {
+                var model = {
+                    SaleProductId: $("#product_Id").val(),
+                    ProductName: $("#pName").text(),
+                    ProductCode: $("#pCode").text(),
+                    OrginPrice: $("#productOrginPrice").val(),
+                    Price: $("#productPrice").val(),
+                    Quantity: $("#pQuantity").val(),
+                    SumPrice: $("#productSumprice").val(),
+                    Type: $("#product_type").val()
+                }
+                productArr.push(model);
+
+            }
+
+            showAllAddProducts();
+            $("#addProductModal").modal('hide');
+        }
+
+        //展示所有的添加商品
+        var showAllAddProducts = function () {
+            $("#addProductsTbody").html("");
+            var htmlStr = "";
+            for (var i = 0; i < productArr.length; i++) {
+                htmlStr += "<tr><td>" + productArr[i].ProductName + "</td><td>" + productArr[i].ProductCode + "</td><td>" + productArr[i].OrginPrice + "</td><td>"
+                    + productArr[i].Price + "</td><td>" + productArr[i].Quantity + "</td><td>" + productArr[i].SumPrice
+                    + "</td><td><a  href=\"javascript:void(0);\" class=\"deleteProBtn\">删除</a></td></tr>";
+            }
+            $("#addProductsTbody").html(htmlStr);
+        }
+
+        //删除添加的商品
+        $("body").on("click", ".deleteProBtn", function () {
+            var obj = $(this).parent().parent();
+            var index = obj[0].rowIndex - 1;//获取到当前tr在table中是第几行tr
+            obj.remove();//移除当前点击删除行的tr
+            productArr.splice(index, 1);//在数组中移除对应的tr对象
+        })
+    </script>
+}

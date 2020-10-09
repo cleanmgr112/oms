@@ -1,0 +1,218 @@
+﻿@using OMS.Model.B2B;
+@using OMS.Data.Domain;
+@{
+    ViewData["Title"] = "B2B审核设置";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered" @*style="height:800px;"*@>
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-gavel font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">B2B审核设置</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="portlet light bordered">
+                            <div class="portlet-body">
+                                <table class="table table-striped table-bordered table-hover dt-responsive" width="100%" id="datatable1">
+                                    <thead>
+                                        <tr>
+                                            <th class="all">编号</th>
+                                            <th class="all">审核流程名称</th>
+                                            <th class="all">审核人员</th>
+                                            <th class="all">删除</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{ var i = 1;
+                                            var data = ViewBag.List as List<ApprovalProcessModel>;
+                                        }
+                                        @foreach (var item in data)
+                                        {
+                                            <tr id="tr_@item.Id">
+                                                <td>@item.Id</td>
+                                                <td>@item.Name</td>
+                                                <td>
+                                                    <div class="portlet-body ">
+                                                        <div class="dd" id="dd_@i">
+                                                            <ol class="dd-list">
+                                                                <sign name="id" style="display:none">@item.Id</sign>
+
+                                                                @{ i++;
+                                                                    var res = item.ApprovalProcessDetailModel.OrderBy(p => p.Sort);
+                                                                }
+                                                                @foreach (var it in res)
+                                                                {
+                                                                    <li class="dd-item" data-id="@it.UserId">
+                                                                        <div class="dd-handle"> @it.UserName</div>
+                                                                    </li>
+                                                                }
+                                                            </ol>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <a class="delete" href="javascript:;" onclick="delete1('@item.Id')"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">删除</font></font></a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <span class="caption-subject font-red">新增审核流程</span>
+                                </div>
+                            </div>
+                            <div class="portlet-body">
+                                <form action="" class="form-horizontal form-bordered">
+                                    <div class="form-body">
+                                        <div class="form-group">
+                                            <label class="control-label col-md-2"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">审核流程名</font></font></label>
+                                            <div class="col-md-8">
+                                                <input type="text" id="name" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label col-md-2"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">审核人员</font></font></label>
+                                            <div class="col-md-8">
+                                                <select id="multiple" class="form-control select2-multiple" multiple>
+                                                    @foreach (var item in ViewBag.Users as List<User>)
+                                                    {
+                                                        <option value="@item.Id">@item.Name</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-md-2"></div>
+                                            <div class="col-md-3">
+                                                <button type="button" onclick="onsubmit1()" class="btn btn-circle blue"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">&nbsp;添&nbsp;加&nbsp;</font></font></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/datatables/datatables.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/Metronic/assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="~/Metronic/assets/global/plugins/jquery-nestable/jquery.nestable.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/css/components.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/css/plugins.css" rel="stylesheet" />
+}
+
+@section Scripts{
+    <!-- BEGIN PAGE LEVEL PLUGINS -->
+    <script src="~/Metronic/assets/global/scripts/datatable.js" type="text/javascript"></script>
+    <script src="~/Metronic/assets/global/plugins/datatables/datatables.min.js" type="text/javascript"></script>
+    <script src="~/Metronic/assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" type="text/javascript"></script>
+    <script src="~/Metronic/assets/global/plugins/jquery-nestable/jquery.nestable.js"></script>
+    <!-- END PAGE LEVEL PLUGINS -->
+    <!-- BEGIN PAGE LEVEL SCRIPTS -->
+    <script src="~/Script/Component/nestableComponent.js"></script>
+    <script src="~/Script/Component/datatableExtension.js"></script>
+    <!-- END PAGE LEVEL SCRIPTS -->
+    <script type="text/javascript">
+        function onsubmit1() {
+            var name = $("#name").val();
+            if (name == "") {
+                alertWarn("请填写审核流程名称");
+                return false;
+            }
+            var users = $("#multiple").select2("data");
+            if (users.length == 0) {
+                alertWarn("请选择审核人员");
+                return false;
+            }
+            var ids = "";
+            var arr = [];
+            for (var i = 0; i < users.length; i++) {
+                var id = users[i].id;
+                arr.push(id);
+            }
+            ids = arr.join(',')
+            $oms.ajax({
+                url: "/B2BOrder/AddApprovalProcess",
+                data: {
+                    name: name,
+                    ids: ids
+                },
+                success: function (data) {
+                    if (data.isSucc) {
+                        alertSuccess("添加成功");
+                        if (data.data) {
+                            var d = data.data;
+                            var tr = '' +
+                                '<tr id="tr_' + d.id + '">' +
+                                '<td>' + d.id + '</td>' +
+                                '<td>' + d.name + '</td > ' +
+                                '<td> ' +
+                                '<div class="portlet-body"> ' +
+                                '<div class="dd" id= "dd_' + d.id + '"> ' +
+                                '<ol class="dd-list">' +
+                                '<sign name="id" style= "display:none" >' + d.id + '</sign > ';
+                            for (var i = 0; i < d.approvalProcessDetailModel.length; i++) {
+                                tr += '<li class="dd-item" data-id="' + d.approvalProcessDetailModel[i].userId + '">' +
+                                    '<div class="dd-handle"> ' + d.approvalProcessDetailModel[i].userName + '</div>' +
+                                    '</li>';
+                            }
+                            tr += '</ol>' +
+                                '</div>' +
+                                '</div>' +
+                                '</td>' +
+                                '<td>' +
+                                '<a class="delete" href="javascript:;" onclick="delete1(\'' + d.id + '\')"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">删除</font></font></a>' +
+                                '</td>' +
+                                '</tr>';
+                        }
+                        $(tr).insertBefore($("tbody").children("tr:first-child"));
+                    } else {
+                        alertError(data.msg)
+
+                    }
+                },
+            });
+        }
+        function delete1(id) {
+            isContinue(function () {
+                $oms.ajax({
+                    url: "/B2BOrder/DeleteApprovalProcess",
+                    data: { id: id },
+                    success: function (data) {
+                        if (data.isSucc) {
+                            alertSuccess("删除成功");
+                            $("#tr_" + id).hide();
+                        } else {
+                            alertError(data.msg);
+
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+
+}
+

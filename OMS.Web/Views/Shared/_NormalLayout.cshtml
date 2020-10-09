@@ -1,0 +1,88 @@
+﻿@{
+    var CurrentUser = this.workContext.CurrentUser;
+
+}
+
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8 no-js"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9 no-js"> <![endif]-->
+<!--[if !IE]><!-->
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1,IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta content="" name="description" />
+    <meta content="" name="author" />
+
+    <!-- BEGIN GLOBAL MANDATORY STYLES -->
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link href="~/PlugIn/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/select2/css/select2.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" />
+    <link href="~/PlugIn/plugins/bootstrap-toastr/toastr.css" rel="stylesheet" />
+    <link href="~/PlugIn/css/components.min.css" rel="stylesheet" />
+    <link href="~/PlugIn/css/plugins.min.css" rel="stylesheet" />
+    <link href="~/XAdmin/lib/layui/css/layui.css" rel="stylesheet" />
+    <link href="~/Style/Normal.css" rel="stylesheet" />
+    @*<link href="~/XAdmin/css/xadmin.css" rel="stylesheet" />*@
+    @RenderSection("Styles", required: false)
+    <!--END Page Style-->
+    @*<link rel="shortcut icon" href="favicon.ico" />*@
+</head>
+
+<body>
+    @RenderBody()
+
+    <script src="~/PlugIn/plugins/jquery.min.js" type="text/javascript"></script>
+    <script src="~/PlugIn/plugins/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="~/PlugIn/plugins/jquery-slimscroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+    <script src="~/PlugIn/plugins/jquery.blockui.min.js" type="text/javascript"></script>
+    <script src="~/PlugIn/plugins/bootstrap-switch/js/bootstrap-switch.min.js" type="text/javascript"></script>
+    <script src="~/PlugIn/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"></script>
+    <script src="~/PlugIn/plugins/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+    <script src="~/Metronic/assets/global/scripts/app.js"></script>
+    <script src="~/PlugIn/plugins/select2/js/select2.full.js"></script>
+    <script src="~/Script/Component/select2Component.js"></script>
+    <script src="~/PlugIn/plugins/bootstrap-toastr/toastr.js"></script>
+    <script src="~/Script/Component/toastrComponent.js"></script>
+    <script src="~/Script/Component/modalsComponent.js"></script>
+    <script src="~/PlugIn/plugins/jquery-validation/js/jquery.validate.min.js" type="text/javascript"></script>
+    <script src="~/PlugIn/plugins/jquery-validation/js/localization/messages_zh.js"></script>
+    <script src="~/PlugIn/plugins/jquery-validation/js/additional-methods.min.js" type="text/javascript"></script>
+    <script src="~/Script/tool/tool.js"></script>
+    <script>
+        var zh_CN = {
+            "sProcessing": "处理中...",
+            "sLengthMenu": "显示 _MENU_ 项结果",
+            "sZeroRecords": "没有匹配结果",
+            "sInfo": "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+            "sInfoEmpty": "显示第 0 至 0 项结果，共 0 项",
+            "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+            "sInfoPostFix": "",
+            "sSearch": "搜索：",
+            "sUrl": "",
+            "sEmptyTable": "表中数据为空",
+            "sLoadingRecords": "载入中...",
+            "sInfoThousands": ",",
+            "oPaginate": {
+                "sFirst": "首页",
+                "sPrevious": "上页",
+                "sNext": "下页",
+                "sLast": "末页"
+            },
+            "oAria": {
+                "sSortAscending": ": 以升序排列此列",
+                "sSortDescending": ": 以降序排列此列"
+            }
+        }
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+
+</html>

@@ -1,0 +1,65 @@
+﻿/* 配置系统菜单*/
+{
+  "SiteMap": {
+    "Nodes": [
+      {
+        "Name": "账户管理",
+        "Icon": "fa fa-file-word-o",
+        "Url": "/"
+      },
+      {
+        "Name": "客户管理",
+        "Icon": "fa fa-users",
+        "Url": "/Customer/"
+      },
+      {
+        "Name": "系统管理",
+        "Icon": "fa fa-cog",
+        "Permit": "SystemManage",
+        "ChildNodes": [ 
+          {
+            "Name": "用户管理",
+            "Icon": "fa fa-cog",
+            "Url": "/"
+          },
+          {
+            "Name": "附件类型",
+            "Icon": "fa fa-cog",
+            "Url": "/"
+          }
+        ]
+      },
+      {
+        "Name": "B2B订单",
+        "Icon": "fa fa-bar-chart-o",
+        "Url": "",
+        "Permit": "SystemManage",
+        "ChildNodes": [
+          {
+            "Name": "B2B销货单",
+            "Icon": "fa fa-file-pdf-o",
+            "Url": "/B2BOrder/B2BSalesBill"
+          },
+          {
+            "Name": "B2B审核设置",
+            "Icon": "fa fa-file-pdf-o",
+            "Url": "/B2BOrder/ApprovalProcess"
+          }
+        ]
+      },
+      {
+        "Name": "商品管理",
+        "Icon": "fa fa-glass",
+        "Url": "",
+        "Permit": "SystemManage",
+        "ChildNodes": [
+          {
+            "Name": "商品列表",
+            "Icon": "fa fa-list-alt",
+            "Url": "/Product/List"
+          }
+        ]
+      }
+    ]
+  }
+}

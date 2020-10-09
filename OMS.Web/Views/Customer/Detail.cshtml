@@ -1,0 +1,266 @@
+﻿@model OMS.Data.Domain.Customers
+@{
+    ViewData["Title"] = "Detail";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="portlet light form-fit bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">客户详情页</font></font></span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="center-block" style="width:600px;">
+                    <form action="" class="form-horizontal" id="customerInfoForm">
+                        <div class="form-group vgroup">
+                            <label class="col-md-3 control-label">客户名称<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.Id, new { @hidden = "true" })
+                                @Html.TextBoxFor(model => model.Name, new { @class = "form-control vinput", @placeholder = "请输入客户名称", required = true })
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="col-md-3 control-label">联系人姓名<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-9 ">
+                                @Html.TextBoxFor(model => model.PriceTypeId, new { hidden = true })
+                                @Html.TextBoxFor(model => model.DisCount, new { hidden = true })
+                                @Html.TextBoxFor(model => model.Contact, new { @class = "form-control vinput", @placeholder = "请输入联系人姓名（如无则填写客户名称）", required = true })
+                            </div>
+                        </div>
+                        <div class="form-group vgroup">
+                            <label class="col-md-3 control-label">客户类型<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-9">
+                                @Html.DropDownList("CustomerTypeId", ViewBag.CustomerType as SelectList, "请选择", new { @class = "form-control vinput", required = true })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">联系电话</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.Mobile, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">邮箱</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.Email, new { @class = "form-control", type = "email" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">地址</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.Address, new { hidden = true })
+                                <div id="Shengshiqu" class="btn-group" data-toggle="distpicker">
+                                    <select class="btn btn-default"></select>
+                                    <select class="btn btn-default"></select>
+                                    <select class="btn btn-default"></select>
+                                </div>
+                                <input type="text" id="xiangxi" name="xiangxi" class="form-control" value="" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">描述</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.Mark, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        @*<div class="form-group vgroup">
+                                <label class="col-md-3 control-label">价格类型<span class="required" aria-required="true">*</span></label>
+                                <div class="col-md-9">
+                                    @Html.DropDownList("PriceTypeId", ViewBag.PriceType as SelectList, "请选择", new { @class = "form-control vinput", required = true })
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="col-md-3 control-label">折扣<span class="required" aria-required="true">*</span></label>
+                                <div class="col-md-9">
+                                    @Html.TextBoxFor(model => model.DisCount, new { @class = "form-control vinput", min = 0, max = 9.99, type = "number" })
+                                </div>
+                            </div>*@
+                        <div class="form-group vgroup">
+                            <label class="col-md-3 control-label">电子发票接收邮箱</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.CustomerEmail, new { @class = "form-control vinput", type = "email" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">发票抬头</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.Title, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">纳税人识别码<span class="required" aria-required="true">*</span></label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.TaxpayerId, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">注册地址</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.RegisterAddress, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">注册电话</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.RegisterTel, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">开户银行</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.BankOfDeposit, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">银行帐号</label>
+                            <div class="col-md-9">
+                                @Html.TextBoxFor(model => model.BankAccount, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-9">
+                                <input class="btn green" type="button" id="subCustomerInfo" value="提交" />&nbsp;&nbsp;&nbsp;&nbsp;
+                                @*<input type="button" class="btn red" id="@Model.Id " name="DeleteCustomer" value="删&nbsp;除" />*@
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!--Modal Start-->
+                <!-- loading Modal -->
+                <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+                    <div class="modal-dialog modal-sm" style="top:40%;">
+                        <div class="loader">
+                            <svg class="circular" viewBox="25 25 50 50">
+                                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10" />
+                            </svg>
+                        </div>
+                        <div id="loaderText">
+                            正在加载请稍后......
+                        </div>
+                    </div>
+                </div>
+                <!--Modal End-->
+            </div>
+        </div>
+    </div>
+</div>
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link href="~/Style/loading.css" rel="stylesheet" />
+}
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/distpicker/distpicker.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#UpdateCustomerForm").$validate();
+
+            /*设置省市区*/
+            var add_split = ($('#Address').val()).split(" ");
+            if (add_split.length != 1) {
+                $("#Shengshiqu").children('select:first').find("option[value='" + add_split[0] + "']").attr("selected", true);
+                $("#Shengshiqu").children('select:eq(1)').append('<option value="' + add_split[1] + '" selected>' + add_split[1] + '</option>')
+                $("#Shengshiqu").children('select:last').append('<option value="' + add_split[2] + '" selected>' + add_split[2] + '</option>')
+                $("#xiangxi").val(add_split[3])
+            }
+
+
+            /*删除*/
+            $('input[name="DeleteCustomer"]').click(function () {
+                var id = $(this).attr("id");
+                isContinue(function () {
+                    $.ajax({
+                        url: "/Customer/Del/" + id,
+                        success: function (data) {
+                            if (data.isSucc) {
+                                alertSuccess("删除成功！");
+                                setTimeout(function () {
+                                    window.location.href = "/Customer/";
+                                }, 1000)
+
+                            } else {
+                                alertError(data.msg);
+
+                            }
+                        }
+                    })
+                }, null, "确定要删除？")
+            })
+
+            /*提交修改*/
+            $("#subCustomerInfo").click(function () {
+                if ($("#Name").val().trim() == "") {
+                    alertError("请填写客户名称！");
+                    return false;
+                }
+                if ($("#Contact").val().trim() == "") {
+                    alertError("请填写联系人名字！");
+                    return false;
+                }
+                if ($("#CustomerTypeId option:selected").val() == "") {
+                    alertError("请选择客户类型！");
+                    return false;
+                }
+                //if ($("#Name").val().trim().indexOf("公司") > 0 && $("#TaxpayerId").val().trim() == "") {
+                //    alertError("请填写纳税人识别码！");
+                //    return false;
+                //}
+                $("#Address").val(" ");
+                var address = "";
+                $('#Shengshiqu').children('select').each(function () {
+                    address += $(this).val() + " ";
+                });
+                var xx = $("#xiangxi").val();
+                if (address != "" && xx != "") {
+                    $("#Address").val(address + xx);
+                } else if (address.trim() != "" && xx.trim() == "") {
+                    alertError("请填入正确的详细地址！");
+                    return false;
+                }
+                if (address.trim().length == 0 && xx.trim().length != 0) {
+                    alertError("请选择正确的地址！");
+                    return false;
+                }
+                $("#loading").modal("show");
+                $("#subCustomerInfo").attr("disabled", true);
+                $.ajax({
+                    url: "/Customer/Detail",
+                    type: "post",
+                    data: $("#customerInfoForm").serialize(),
+                    success: function (data) {
+                        $("#loading").modal("hide");
+                        if (data.isSucc) {
+                            alertSuccess("修改成功！");
+                            setTimeout(function () { window.location.reload(); }, 1500);
+                        } else {
+                            $("#subCustomerInfo").attr("disabled", false);
+                            alertError(data.msg);
+                        }
+                    },
+                    error: function (data) {
+                        $("#loading").modal("hide");
+                        $("#subCustomerInfo").attr("disabled", false);
+                        alertError("修改错误，请查看日志！");
+                    }
+
+
+
+                })
+            });
+        });
+    </script>
+}

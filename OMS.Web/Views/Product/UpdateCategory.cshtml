@@ -1,0 +1,103 @@
+﻿@model OMS.Data.Domain.Category
+@{
+    ViewData["Title"] = "系列详情";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+<div class="row">
+    <div class="portlet light bordered">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="icon-bag font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">添加商品系列</font></font></span>
+            </div>
+            <div class="x-nav">
+                <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                    <i class="layui-icon">&#xe9aa;</i>
+                </a>
+                <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                    <i class="layui-icon">&#xe65c;</i>
+                </a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="row">
+                <div class="right">
+                    @using (Html.BeginForm("UpdateCategory", "Product", FormMethod.Post, new { id = "category-form", @class = "form-horizontal" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="form-body">
+                            <div class="alert alert-danger display-hide">
+                                <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                            </div>
+                            <div class="alert alert-success display-hide">
+                                <button class="close" data-close="alert"></button> Your form validation is successful!
+                            </div>
+                            <div class="form-group  margin-top-20 vgroup">
+                                <label class="control-label col-md-3">
+                                    系列名称
+                                    <span class="required"> * </span>
+                                </label>
+                                <div class="col-md-4">
+                                    <div class="input-icon right">
+                                        @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control vinput", required = true } })
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-3">
+                                    父系列
+                                </label>
+                                <div class="col-md-4">
+                                    <div class="input-icon right">
+                                        <i class="fa"></i>
+                                        @Html.DropDownList("ParentCategoryId", ViewBag.Category as SelectList, "请选择", new { @class = "form-control" })
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="control-label col-md-3">
+
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="input-icon right">
+                                        <input class="btn green" type="submit" name="name" value="修改" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/datatables/datatables.min.js"></script>
+    <script src="~/Metronic/assets/global/plugins/DataTables-1.10.15/media/js/dataTables.bootstrap.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            $("#category-form").$validate();
+            $("#category-datable").DataTable({
+                language: {
+                    "sLengthMenu": "显示 _MENU_ 项结果",
+                    "sSearch": "搜索：",
+                    "sInfo": "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+                    "sInfoEmpty": "显示第 0 至 0 项结果，共 0 项",
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "上页",
+                        "sNext": "下页",
+                        "sLast": "末页"
+                    },
+                    "sZeroRecords": "没有匹配结果",
+                    "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                },
+                stateSave: true,
+                "Bootstrap": true,
+                "info": false,
+                "paging": false,
+                "searching": false,
+            });
+        });
+    </script>
+}

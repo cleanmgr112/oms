@@ -1,0 +1,223 @@
+﻿@model IEnumerable<OMS.Data.Domain.K3BaseData>
+
+@{
+    ViewData["Title"] = "K3配置页";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+    var XSCK = Model.Where(s => s.Type == 1).FirstOrDefault();
+    var XSFS = Model.Where(s => s.Type == 2).FirstOrDefault();
+    var FH = Model.Where(s => s.Type == 3).FirstOrDefault();
+    var YW1 = Model.Where(s => s.Type == 4 && s.No == 0).FirstOrDefault();
+    var YW2 = Model.Where(s => s.Type == 4 && s.No == 1).FirstOrDefault();
+    var YW3 = Model.Where(s => s.Type == 4 && s.No == 2).FirstOrDefault();
+    var YW4 = Model.Where(s => s.Type == 4 && s.No == 3).FirstOrDefault();
+    var BG = Model.Where(s => s.Type == 5).FirstOrDefault();
+    var ZD = Model.Where(s => s.Type == 6).FirstOrDefault();
+    var SH = Model.Where(s => s.Type == 7).FirstOrDefault();
+    var CK = Model.Where(s => s.Type == 8).FirstOrDefault();
+    var JH = Model.Where(s => s.Type == 9).FirstOrDefault();
+    var LP = Model.Where(s => s.Type == 10).FirstOrDefault();
+    var DW = Model.Where(s => s.Type == 11).FirstOrDefault();
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">K3配置</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="col-md-12">
+                    <form id="dataForm" class="form-horizontal" method="post">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>发货仓库</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="ck" data-id="@CK.Id" asp-for="@CK.FName" placeholder="发货仓库_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="ck_number" data-id="@CK.Id" placeholder="发货仓库_FNumber" asp-for="@CK.FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>审核人</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="sh" asp-for="@SH.FName" data-id="@SH.Id" placeholder="审核人_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="sh_number" asp-for="@SH.FNumber" data-id="@SH.Id" placeholder="审核人_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>发货人</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="fh" asp-for="@FH.FName" data-id="@FH.Id" placeholder="发货人_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="fh_number" asp-for="@FH.FNumber" data-id="@FH.Id" placeholder="发货人_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>保管</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="bg" asp-for="@BG.FName" data-id="@BG.Id" placeholder="保管_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="bg_number" asp-for="@BG.FNumber" data-id="@BG.Id" placeholder="保管_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>业务员（丰泽园）</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw1" asp-for="@YW1.FName" data-id="@YW1.Id" placeholder="（丰泽园）业务员_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw1_number" asp-for="@YW1.FNumber" data-id="@YW1.Id" placeholder="（丰泽园）业务员_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>业务员（北京）</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw2" asp-for="@YW2.FName" data-id="@YW2.Id" placeholder="（北京）业务员_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw2_number" asp-for="@YW2.FNumber" data-id="@YW2.Id" placeholder="（北京）业务员_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>业务员（上海）</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw3" asp-for="@YW3.FName" data-id="@YW3.Id" placeholder="（上海）业务员_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw3_number" asp-for="@YW3.FNumber" data-id="@YW3.Id" placeholder="（上海）业务员_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>业务员（沈阳）</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw4" asp-for="@YW4.FName" data-id="@YW4.Id" placeholder="（沈阳）业务员_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="yw4_number" asp-for="@YW4.FNumber" data-id="@YW4.Id" placeholder="（沈阳）业务员_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>销售方式</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="xsfs" asp-for="@XSFS.FName" data-id="@XSFS.Id" placeholder="销售方式_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="xsfs_number" asp-for="@XSFS.FNumber" data-id="@XSFS.Id" placeholder="销售方式_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>销售出库类型</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="xsck" asp-for="@XSCK.FName" data-id="@XSCK.Id" placeholder="销售出库类型_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="xsck_number" asp-for="@XSCK.FNumber" data-id="@XSCK.Id" placeholder="销售出库类型_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong>计划模式</strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="jh" asp-for="@JH.FName" data-id="@JH.Id" placeholder="计划模式_FName" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><strong></strong></label>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="jh_number" asp-for="@JH.FNumber" data-id="@JH.Id" placeholder="计划模式_FNumber" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-4">
+                                <input type="submit" class="btn btn-circle red" id="saveBtn" value="&nbsp;保&nbsp;存&nbsp;" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/PlugIn/plugins/jquery-validation/js/jquery.validate.min.js"></script>
+    <script src="~/PlugIn/plugins/jquery-validation/js/localization/messages_zh.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#dataForm").validate({
+                submitHandler: function (form) {
+                    isContinue(function () {
+                        var data2 = new Array();
+                        $("form input[type='text']").each(function () {
+                            if ($(this).attr("id").indexOf("_number") >= 0) {
+                                data2.push({ "Id": $(this).attr("data-id"), "FNumber": $(this).val() });
+                            } else {
+                                data2.push({ "Id": $(this).attr("data-id"), "FName": $(this).val() });
+                            }
+                        });
+                        $.ajax({
+                            url: "/K3/UpdateK3BaseData",
+                            data: { data: data2 },
+                            type: "post",
+                            success: function (data) {
+                                if (data.isSucc) {
+                                    alertSuccess("修改成功！");
+                                    window.setTimeout(function () { location.reload() }, 800);
+                                } else {
+                                    alertError(data.msg);
+                                }
+                            },
+                            error: function (data) {
+                                alertError(data.data);
+                            }
+                        });
+                    }, null, "点击继续修改！")
+                }
+            });
+        })
+    </script>
+}
+

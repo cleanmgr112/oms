@@ -1,0 +1,339 @@
+﻿@*@model OMS.Data.Domain.SaleProductPriceList
+    @{
+        ViewData["Title"] = "EditSaleProductsPrice";
+        Layout = "~/Views/Shared/_NormalLayout.cshtml";
+    }
+
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-bubble font-green"></i>
+                        <span class="caption-subject font-green bold uppercase">销售商品价格详情</span>
+                    </div>
+                    <div class="x-nav">
+                        <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                            <i class="layui-icon">&#xe9aa;</i>
+                        </a>
+                        <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                            <i class="layui-icon">&#xe65c;</i>
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="col-lg-8">
+                        @using (Html.BeginForm("EditSaleProductsPrice", "Product", FormMethod.Post, new { id = "EditSaleProductsPriceForm", @class = "form-horizontal" }))
+                        {
+                        <div class="form-body">
+                            <div class="alert alert-danger display-hide">
+                                <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                            </div>
+                            <div class="alert alert-success display-hide">
+                                <button class="close" data-close="alert"></button> Your form validation is successful!
+                            </div>
+                            <div class="form-group  margin-top-20 vgroup">
+                                <label class="control-label col-md-4">
+                                    销售商品名
+                                </label>
+                                <div class="col-md-6">
+                                    <div class="input-icon right">
+                                        <input class="form-control" type="type" name="name" value="@Model.SaleProductName" readonly />
+                                        <input type="type" name="ProductId" value="@Model.SaleProductPriceBaseList[0].ProductId" hidden />
+                                        <input type="type" name="SaleProductId" value="@Model.SaleProductId" hidden />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    销售渠道
+                                </label>
+                                <div class="col-md-6">
+                                    <div class="input-icon right">
+                                        <i class="fa"></i>
+                                        <input class="form-control" type="type" id="ChannelName" name="ChannelName" value="@Model.ChannelName" readonly />
+                                        <input type="type" name="Channel" value="@Model.SaleProductPriceBaseList[0].Channel" hidden />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-4">
+                                    库存
+                                </label>
+                                <div class="col-md-6">
+                                    <div class="input-icon right">
+                                        <i class="fa"></i>
+                                        <input class="form-control" type="type" id="Stock" name="Stock" value="@Model.Stock"  readonly/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    标准价
+                                </label>
+                                <div class="col-md-6">
+                                    <input class="form-control vinput" type="number" step="0.01" min="0" name="BzPrice" value="@Model.SaleProductPriceBaseList[0].Price" />
+                                    <input type="type" name="BzPriceId" value="@Model.SaleProductPriceBaseList[0].Id" hidden />
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    团购价
+                                </label>
+                                <div class="col-md-6">
+                                    <input class="form-control vinput" type="number" step="0.01" min="0" name="TgPrice" value="@Model.SaleProductPriceBaseList[1].Price" />
+                                    <input type="type" name="TgPriceId" value="@Model.SaleProductPriceBaseList[1].Id" hidden />
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    经销商价
+                                </label>
+                                <div class="col-md-6">
+                                    <input class="form-control vinput" type="number" step="0.01" min="0" name="JxsPrice" value="@Model.SaleProductPriceBaseList[2].Price" />
+                                    <input type="type" name="JxsPriceId" value="@Model.SaleProductPriceBaseList[2].Id" hidden />
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    内部员工价
+                                </label>
+                                <div class="col-md-6">
+                                    <input class="form-control vinput" type="number" step="0.01" min="0" name="NbPrice" value="@Model.SaleProductPriceBaseList[3].Price" />
+                                    <input type="type" name="NbPriceId" value="@Model.SaleProductPriceBaseList[3].Id" hidden />
+                                </div>
+                            </div>
+                            <div class="form-group vgroup">
+                                <label class="control-label col-md-4">
+                                    批发价
+                                </label>
+                                <div class="col-md-6">
+                                    <input class="form-control vinput" type="number" step="0.01" min="0" name="PfPrice" value="@Model.SaleProductPriceBaseList[4].Price" />
+                                    <input type="type" name="PfPriceId" value="@Model.SaleProductPriceBaseList[4].Id" hidden />
+                                </div>
+                            </div>
+                        </div>
+                            <div class="form-actions">
+                                <div class="row">
+                                    <div class="col-md-offset-4 col-md-9">
+                                        <button type="submit" class="btn green">更改</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @section Scripts{
+        <script type="text/javascript">
+        $('#delSaleProduct').click(function () {
+            isContinue(function () {
+                $.ajax({
+                    url: "/Product/DelSaleProducts?id=@Model.Id",
+                        success: function () {
+                            alertSuccess("删除成功~~~~");
+                            setTimeout(function () {
+                                window.location.href = "/Product/SaleProducts";
+                            }, 2000)
+                    }, error: function (e) {
+                        alertError("删除失败！(请查看是否有关联销售商品价格信息)");
+                    }
+                })
+            }, null, "删除同时会把销售商品价格数据删除，确认是否继续？")
+        })
+        </script>
+    }*@
+
+
+
+
+
+@model OMS.Model.SaleProductDetailModel
+@{
+    ViewData["Title"] = "EditSaleProductsPrice";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">销售商品价格详情</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    @*<a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>*@
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="col-lg-8">
+                    @*@using (Html.BeginForm("EditSaleProductsPrice", "Product", FormMethod.Post, new { id = "EditSaleProductsPriceForm", @class = "form-horizontal" }))
+                    {*@
+                    <div class="form-body form-horizontal">
+                        <div class="alert alert-danger display-hide">
+                            <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                        </div>
+                        <div class="alert alert-success display-hide">
+                            <button class="close" data-close="alert"></button> Your form validation is successful!
+                        </div>
+                        <div class="form-group  margin-top-20 vgroup">
+                            <label class="control-label col-md-4">
+                                销售商品名
+                            </label>
+                            <div class="col-md-6">
+                                <div class="input-icon right">
+                                    <input class="form-control" type="text" name="name" value="@Model.ProductName" readonly />
+                                    <input type="hidden" name="ProductId" value="@Model.ProductId" hidden />
+                                    <input type="hidden" name="SaleProductId" value="@Model.Id" hidden />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-4">
+                                销售渠道
+                            </label>
+                            <div class="col-md-6">
+                                <div class="input-icon right">
+                                    <i class="fa"></i>
+                                    <input class="form-control" type="text" id="ChannelName" name="ChannelName" value="@Model.ChannelName" readonly />
+                                    <input type="hidden" name="Channel" value="@Model.Channel" hidden />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-4">
+                                库存
+                            </label>
+                            <div class="col-md-6">
+                                <div class="input-icon right">
+                                    <i class="fa"></i>
+                                    <input class="form-control" type="number" id="Stock" name="Stock" value="@Model.Stock" readonly />
+                                </div>
+                            </div>
+                            @*<div class="col-md-1">
+                                <input class="btn green" type="button" name="getWMSStock" value="获取WMS库存" />
+                            </div>*@
+                        </div>
+                        @{
+                            var priceTypes = ViewBag.PriceTypes as List<OMS.Data.Domain.Dictionary>;
+                            @for (int i = 0; i < priceTypes.Count; i++)
+                            {
+                                var priceModel = Model.SaleProductPriceDetailModels.Where(r => r.CustomerTypeId == priceTypes[i].Id).FirstOrDefault();
+                                var price = priceModel != null ? priceModel.Price : 0;
+                                var name = "Price" + i;
+                                //if (priceTypes[i].Value.Contains("标准价"))
+                                //{
+                                    <div class="form-group vgroup priceFormGroup">
+                                        <label class="control-label col-md-4">
+                                            @priceTypes[i].Value
+                                        </label>
+                                        <div class="col-md-6">
+                                            <input class="form-control vinput" type="number" step="0.01" min="0" name="@name" value="@price" />
+                                            <input class="form-control vinput" type="hidden" name="priceType" value="@priceTypes[i].Id" />
+                                        </div>
+                                    </div>
+                                //}
+
+                            }
+                        }
+                    </div>
+                        <div class="form-actions">
+                            <div class="row">
+                                <div class="col-md-offset-4 col-md-9">
+                                    <button type="submit" id="updateSaleProduct" class="btn green">更改</button>
+                                </div>
+                            </div>
+                        </div>
+                    @*}*@
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        //获取WMS库存信息
+        $(function () {
+            $("input[name='getWMSStock']").click(function () {
+                var productId= $("input[name='ProductId']").val();
+                $.ajax({
+                    url: '/Product/GetWMSProductStock',
+                    type: "POST",
+                    data: { productId: productId },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            $("input[name='Stock']").val(res.count);
+                            alertSuccess(res.msg);
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            })
+        });
+
+    $('#delSaleProduct').click(function () {
+        isContinue(function () {
+            $.ajax({
+                url: "/Product/DelSaleProducts?id=@Model.Id",
+                    success: function () {
+                        alertSuccess("删除成功~~~~");
+                        setTimeout(function () {
+                            window.location.href = "/Product/SaleProducts";
+                        }, 2000)
+                }, error: function (e) {
+                    alertError("删除失败！(请查看是否有关联销售商品价格信息)");
+                }
+            })
+        }, null, "删除同时会把销售商品价格数据删除，确认是否继续？")
+        })
+
+        $('#updateSaleProduct').click(function () {
+
+            var priceArr = new Array(); 
+            $(".priceFormGroup").each(function () {
+                var iput = $(this).find('input');
+
+                var priceModel = {
+                    Price: iput[0].value,
+                    CustomerTypeId: iput[1].value
+                }
+                priceArr.push(priceModel);
+            });
+
+            isContinue(function () {
+                var model = {
+                    Id: $("input[name='SaleProductId']").val(),
+                    SaleProductPriceDetailModels: priceArr,
+                    Stock: $("input[name='Stock']").val()
+                };
+
+                $.ajax({
+                    url: "/Product/UpdateSaleProductInfo",
+                    type:"POST",
+                    data: { saleProductDetailModel:model},
+                    success: function (res) {
+                        if (res.isSucc) {
+                            alertSuccess("修改成功");
+                            setTimeout(function () { window.location.reload(); }, 1000);
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            }, null,"确定修改销售商品信息？")
+        })
+    </script>
+}

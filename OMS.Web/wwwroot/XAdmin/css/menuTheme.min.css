@@ -1,0 +1,23 @@
+#nav li a{
+    text-decoration:none;
+    border-left: 4px solid transparent;
+}
+.left-nav {
+    background: #364150 !important;
+}
+
+.left-nav a {
+    color: #dddada !important;
+}
+
+.left-nav a:hover, .left-nav a.active {
+    background: rgba(0, 150, 136, 1) !important;
+}
+
+.left-nav a:hover, .left-nav a.active {
+    color: #dddada !important;
+}
+
+.left-nav a:hover, .left-nav a.active {
+    border-color: rgba(255, 120, 0, 1) !important;
+}

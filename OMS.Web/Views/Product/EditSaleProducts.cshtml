@@ -1,0 +1,140 @@
+﻿@{
+    ViewData["Title"] = "EditSaleProducts";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">销售商品详情</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="col-lg-8">
+                    @using (Html.BeginForm("EditSaleProducts", "Product", FormMethod.Post, new { id = "SaleProductsForm", @class = "form-horizontal" }))
+        {
+            <div class="form-body">
+                <div class="alert alert-danger display-hide">
+                    <button class="close" data-close="alert"></button> You have some form errors. Please check below.
+                </div>
+                <div class="alert alert-success display-hide">
+                    <button class="close" data-close="alert"></button> Your form validation is successful!
+                </div>
+                <div class="form-group  margin-top-20 vgroup">
+                    <label class="control-label col-md-4">
+                        销售商品名
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <div class="input-icon right">
+                            <input class="form-control vinput" type="type" name="Name" value="@Model[0].Name" required readonly />
+                            <input type="text" name="Id" value="@Model[0].Id" hidden />
+                            <input type="text" id="ProductId" name="ProductId" value="@Model[0].ProductId" hidden />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-4">
+                        销售渠道
+                    </label>
+                    <div class="col-md-6">
+                        <div class="input-icon right">
+                            <i class="fa"></i>
+                            <input type="type" id="Channel" name="Channel" value="@Model[0].Channel" hidden/>
+                            <input class = "form-control" type="type" name="Value" value="@Model[0].Value" readonly/>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group vgroup">
+                    <label class="control-label col-md-4">
+                        库存
+                        <span class="required"> * </span>
+                    </label>
+                    <div class="col-md-6">
+                        <input class="form-control vinput" type="type" name="Stock" value="@Model[0].Stock" required />
+                    </div>
+                    @*<div class="col-md-1">
+                        <input class="btn green" type="button" name="getWMSStock" value="获取WMS库存" />
+                    </div>*@
+                </div>
+                <div class="form-group vgroup">
+                    <label class="control-label col-md-4">
+                        锁定库存
+                    </label>
+                    <div class="col-md-6">
+                        <input class="form-control" type="type" name="LockStock" value="@Model[0].LockStock" readonly />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-4">
+                        可用库存
+                    </label>
+                    <div class="col-md-6">
+                        <input class="form-control" type="type" name="AvailableStock" value="@Model[0].AvailableStock" readonly />
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset-4 col-md-9">
+                        <button type="submit" class="btn green">更改</button>
+                        &nbsp;
+                        <a id="delSaleProduct" class="btn red">删除</a>
+                    </div>
+                </div>
+            </div>
+}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{ 
+<script type="text/javascript">
+
+    $(function () {
+        $("input[name='getWMSStock']").click(function () {
+            $.ajax({
+                url: '/Product/GetWMSProductStock',
+                type: "POST",
+                data: { productId: productId },
+                success: function (res) {
+                    if (res.isSucc) {
+                        $("input[name='Stock']").val(res.count);
+                        alertSuccess(res.msg);
+                    }
+                    else {
+                        alertError(res.msg);
+                    }
+                }
+            })
+        })
+    });
+    $('#delSaleProduct').click(function () {
+        isContinue(function () {
+            $.ajax({
+                url: "/Product/DelSaleProducts?id=@Model[0].Id",
+                    success: function () {
+                        alertSuccess("删除成功~~~~");
+                        setTimeout(function () {
+                            window.location.href = "/Product/SaleProducts";
+                        }, 2000)
+                }, error: function (e) {
+                    alertError("删除失败！(请查看是否有关联销售商品价格信息)");
+                }
+            })
+        }, null, "删除同时会把销售商品价格数据删除，确认是否继续？")
+    })
+</script>
+}

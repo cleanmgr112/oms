@@ -1,0 +1,186 @@
+﻿@model OMS.Model.SaleProductModel
+@{
+    ViewData["Title"] = "CreatedSaleProducts";
+    Layout = "~/Views/Shared/_NormalLayout.cshtml";
+}
+@section Styles{
+    <link href="~/Metronic/assets/global/plugins/bootstrap-modal/css/bootstrap-modal.css" rel="stylesheet" />
+    <link href="~/Metronic/assets/global/plugins/jquery-file-upload/css/jquery.fileupload.css" rel="stylesheet" />
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bubble font-green"></i>
+                    <span class="caption-subject font-green bold uppercase">销售商品</span>
+                </div>
+                <div class="x-nav">
+                    <a class="btn btn-primary btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:window.location.reload();" title="刷新">
+                        <i class="layui-icon">&#xe9aa;</i>
+                    </a>
+                    <a class="btn btn-success btn-circle btn-sm" style="float:right" href="javascript:;" onClick="javascript:history.back(-1);" title="返回">
+                        <i class="layui-icon">&#xe65c;</i>
+                    </a>
+                </div>
+            </div>
+            <div class="portlet-body">
+                @using (Html.BeginForm("CreatedSaleProducts", "Product", FormMethod.Post, new { @class = "form-horizontal", id = "CreatedSaleProductsForm" }))
+    {
+            <div class="form-group  margin-top-20 vgroup">
+                <label class="control-label col-md-2">
+                    酒款名
+                    <span class="required"> * </span>
+                </label>
+                <div class="col-md-5 ">
+                    <div class="input-icon vinput">
+                        <select id="ProductId" name="ProductId" class="form-control select2" tabindex="-1" aria-hidden="true" required>
+                            <option></option>
+                            @foreach (var item in ViewBag.SaleProducts)
+                {
+                    <option value="@item.Id">@item.Name</option>
+    }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group vgroup">
+                <label class="control-label col-md-2">
+                    销售渠道
+                    <span class="required"> * </span>
+                </label>
+                <div class="col-md-5">
+                    <div class="input-icon vinput">
+                        <select id="Channel" name="Channel" class="form-control select2 " onchange="changeStockInput(this.options[this.options.selectedIndex].value)" tabindex="-1" aria-hidden="true" required>
+                            <option></option>
+                            @foreach (var channel in ViewBag.Channel)
+                {
+                    <option value="@channel.Id">@channel.Value</option>
+    }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            @*<div class="form-group vgroup">
+                <label class="control-label col-md-2">
+                    库存
+                    <span class="required"> * </span>
+                </label>
+                <div class="col-md-4 ">
+                    <input class="form-control input-icon vinput" type="number" name="Stock" value="" readonly tabindex="-1" aria-hidden="true" required/>
+                </div>
+                <div class="col-md-1">
+                    <input class="btn green" type="button" name="getWMSStock" value="获取WMS库存"/>
+                </div>
+            </div>*@
+            <div class="form-group vgroup">
+                <label class="control-label col-md-2">
+                    标准价
+                </label>
+                <div class="col-md-5">
+                    <input class="form-control vinput" type="number" step="0.01" min="0" name="BzPrice" value="0"/>
+                    <input type="number" name="BzPriceId" value="103" hidden />
+                </div>
+            </div>
+             @*暂时隐藏只显示标准价*@
+            <div>
+                <div class="form-group vgroup">
+                    <label class="control-label col-md-2">
+                        团购价
+                    </label>
+                    <div class="col-md-5">
+                        <input class="form-control vinput" type="number" step="0.01" min="0" name="TgPrice" value="0" />
+                        <input type="number" name="TgPriceId" value="104" hidden />
+                    </div>
+                </div>
+                <div class="form-group vgroup">
+                    <label class="control-label col-md-2">
+                        经销商价
+                    </label>
+                    <div class="col-md-5">
+                        <input class="form-control vinput" type="number" step="0.01" min="0" name="JxsPrice" value="0" />
+                        <input type="number" name="JxsPriceId" value="105" hidden />
+                    </div>
+                </div>
+                <div class="form-group vgroup">
+                    <label class="control-label col-md-2">
+                        内部员工价
+                    </label>
+                    <div class="col-md-5">
+                        <input class="form-control vinput" type="number" step="0.01" min="0" name="NbPrice" value="0" />
+                        <input type="number" name="NbPriceId" value="106" hidden />
+                    </div>
+                </div>
+                <div class="form-group vgroup">
+                    <label class="control-label col-md-2">
+                        批发价
+                    </label>
+                    <div class="col-md-5">
+                        <input class="form-control vinput" type="number" step="0.01" min="0" name="PfPrice" value="0" />
+                        <input type="number" name="PfPriceId" value="107" hidden />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-offset-2 col-md-9">
+                        <button type="submit" class="btn green">提交</button>
+                    </div>
+                </div>
+            </div>
+}
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modal.js"></script>
+    <script src="~/Metronic/assets/global/plugins/bootstrap-modal/js/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript">
+        $(function () { 
+            $("#CreatedSaleProductsForm").$validate();
+
+            $("input[name='getWMSStock']").click(function () { 
+                var productId = $("#ProductId option:selected").val();
+                if (productId == "" || productId == undefined) {
+                    alertError("请选择酒款");
+                    return false;
+                }
+                var channelId = $("#Channel option:selected").val();
+                if (channelId == "" || channelId == undefined) {
+                    alertError("请选择销售渠道");
+                    return false;
+                }
+                if (channelId != "94") {
+                    alertError("销售渠道不是现货，不能获取");
+                    return false;
+                }
+                $.ajax({
+                    url: '/Product/GetWMSProductStock',
+                    type: "POST",
+                    data: { productId: productId },
+                    success: function (res) {
+                        if (res.isSucc) {
+                            $("input[name='Stock']").val(res.count);
+                            alertSuccess(res.msg);
+                        }
+                        else {
+                            alertError(res.msg);
+                        }
+                    }
+                })
+            })
+        })
+
+        var changeStockInput = function (id) {
+            if (id != "94") {
+                $("input[name='Stock']").removeAttr("readonly");
+                $("input[name='getWMSStock']").attr("disabled", true);
+            } else {
+                $("input[name='Stock']").attr("readonly", true);
+                $("input[name='getWMSStock']").attr("disabled", false);
+            }
+        }
+    </script>
+}

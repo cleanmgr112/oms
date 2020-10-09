@@ -1,0 +1,198 @@
+﻿
+@{
+    ViewData["Title"] = "dialog弹出框 必须使用vue.js和element才能用";
+    Layout = "";
+}
+@RenderBody()
+
+<style>
+    .el-input {
+        width: 222px;
+    }
+
+    .el-input__inner.error {
+        border-color: #FF0000 !important;
+    }
+</style>
+
+<el-dialog title="提示" :visible.sync="dialogVisible" width="30%" id="diaMessage" :before-close="handleClose">
+    <span>{{content}}</span>
+    <span slot="footer" class="dialog-footer">
+        <el-button @@click="close">取 消</el-button>
+        <el-button type="primary" @@click="confirm">确 定</el-button>
+    </span>
+</el-dialog>
+
+<el-dialog :title="title" id="dialog" :visible.sync="dialogFormVisible" :width="width" :height="height">
+    <el-form :model="form" label-position="top">
+
+        <el-form-item label="提醒标题">
+            <component-a></component-a>
+            <el-input placeholder="请输入内容" v-model="form.templateTitle" id="input1"></el-input>
+        </el-form-item>
+
+        <el-form-item label="预警库存">
+            <component-a></component-a>
+            <el-input placeholder="请输入内容" v-model="form.remindStock" id="input3"></el-input>
+        </el-form-item>
+
+        <el-form-item label="负责人">
+            <component-a></component-a>
+            <el-select v-model="form.user" placeholder="请选择" multiple value-key="id" id="input2">
+                <el-option v-for="item in userData" :key="item.id" :label="item.userName" :value="item"></el-option>
+            </el-select>
+        </el-form-item>
+
+
+    </el-form>
+
+    <div slot="footer" class="dialog-footer">
+        <el-button size="small" v-on:click="cancel()">取消</el-button>
+        <el-button type="primary" size="small" @@click="confirm">确定</el-button>
+    </div>
+</el-dialog>
+
+<script>
+
+    Vue.component("component-a", {
+        template: "<span style = 'color:red' >*</span>"
+    });
+
+    var dialog = new Vue({
+        el: '#dialog',
+        data: {
+            form: {
+                user: [],
+                templateTitle: '',
+                remindStock:null
+            },
+            userData: [],
+            //弹出框三维设置
+            dialogFormVisible: false,
+            width: '',
+            height: '',
+            title: '',
+
+            request: {
+                data: null,
+                url: '',
+                type: '',
+                success: function () { }
+            }
+        },
+        methods: {
+            //打开弹框
+            open: function (title, width, height, request) {
+                this.title = title;
+                this.width = width;
+                this.height = height;
+                this.request = request;
+                this.dialogFormVisible = true;
+            },
+            //取消回调
+            cancel: function () {
+                this.dialogFormVisible = false;
+            },
+            //确认回调
+            confirm: function () {
+                var flag = true;
+                if (this.form.templateTitle == '') {
+                    $("#input1").addClass('error');
+                    flag = false;
+                }
+                if (this.form.user.length == 0) {
+                    $("#input2").addClass('error')
+                    flag = false;
+                }
+
+                if (this.form.remindStock == ''||this.form.remindStock==null) {
+                    $("#input3").addClass('error')
+                    flag = false;
+                }
+
+                if (flag == false) {
+                    this.remove();
+                    return;
+                }
+                this.ajax(this.request.url, this.request.type, { key: this.request.data, user: this.form.user, templateTitle: this.form.templateTitle,remindStock:this.form.remindStock }, this.request.success)
+                this.dialogFormVisible = false;
+            },
+            // ajax 请求
+            ajax: function (url, type, data, res) {
+                $.ajax({
+                    url: url,
+                    type: type,
+                    data: data,
+                    success: res
+                })
+            },
+
+            //清空值
+            remove: function () {
+                this.form = {
+                    user: [],
+                    templateTitle: ''};
+            }
+        },
+        watch: {
+            dialogFormVisible: function (value) {
+                if (value == true) {
+                    this.ajax('/remind/user', 'get', '', function (res) {
+                        dialog.userData = res;
+                    });
+                    //单行编辑
+                    if (this.request.data.length == 1)
+                        this.ajax('/remind/title/user/' + this.request.data[0].templateCode, 'get', '', function (res) {
+                            dialog.form.templateTitle = res.templateTitle;
+                            dialog.form.user = res.user;
+                            dialog.form.remindStock = res.remindStock;
+                        });
+                    //多行编辑
+                    else {
+
+                    }
+                }
+                else  this.remove();
+                
+            }
+        }
+    });
+
+</script>
+<script>
+    var diaMessage = new Vue({
+        el: '#diaMessage',
+        data: {
+            dialogVisible: false,
+            content: '',
+            request: {
+                url: '',
+                type: '',
+                data: null,
+                success: function () { }
+            }
+        },
+        methods: {
+            handleClose(done) {
+                this.$confirm('确认关闭？')
+                    .then(_ => {
+                        done();
+                    })
+                    .catch(_ => { });
+            },
+            open: function (content, request) {
+                this.content = content;
+                this.request = request;
+                this.dialogVisible = true;
+            },
+            close: function () {
+                this.dialogVisible = false;
+            },
+            confirm: function () {
+                if (this.request != null)
+                    dialog.ajax(this.request.url, this.request.type, this.request.data, this.request.success);
+                this.dialogVisible = false;
+            }
+        }
+    });
+</script>
