@@ -43,9 +43,11 @@ namespace OMS.Services
             services.AddTransient<StockRemindService>();
             services.AddTransient<StockTitleService>();
             services.AddTransient<RemindTemplate>();
-            services.AddTransient<ISearch,TemplateSearch>();
-            services.AddTransient<ISet,TemplateSet>();
-            services.AddTransient<ISearch,TitleSearch>();
+            services.AddTransient<ISearch, TemplateSearch>();
+            services.AddTransient<ISet, TemplateSet>();
+            services.AddTransient<ISearch, TitleSearch>();
+            services.AddSingleton<Email>();
+            services.AddTransient<IStockRemindNotify, StockRemindNotify>();
             #endregion
 
 

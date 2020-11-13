@@ -31,10 +31,10 @@
                         type: 'POST',
                         url: '/User/UpdateUser'
                     },
-                    remove: {
-                        type: 'POST',
-                        url: '/User/DeleteUser'
-                    }
+                    //remove: {
+                    //    type: 'POST',
+                    //    url: '/User/DeleteUser'
+                    //}
                 },
                 table: "#user-table",
                 idSrc: 'id',
@@ -81,15 +81,15 @@
                         title: "编辑权限信息",
                         submit: "更新"
                     },
-                    remove: {
-                        button: "删除",
-                        title: "删除权限",
-                        submit: "删除",
-                        confirm: {
-                            _: "是否删除被选中的 %d 个角色?",
-                            1: "是否删除被选中的 1 个角色?"
-                        }
-                    },
+                    //remove: {
+                    //    button: "删除",
+                    //    title: "删除权限",
+                    //    submit: "删除",
+                    //    confirm: {
+                    //        _: "是否删除被选中的 %d 个角色?",
+                    //        1: "是否删除被选中的 1 个角色?"
+                    //    }
+                    //},
                     error: {
                         system: "发生错误，操作失败了！"
                     },
@@ -225,8 +225,8 @@
                 select: true,
                 buttons: [
                     { extend: "create", editor: editor },
-                    { extend: "edit", editor: editor },
-                    { extend: "remove", editor: editor }
+                    { extend: "edit", editor: editor }
+                    //{ extend: "remove", editor: editor }
                 ]
             });
 

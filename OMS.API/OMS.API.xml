@@ -171,5 +171,12 @@
             更新所有商品库存到商城
             </summary>
         </member>
+        <member name="M:OMS.API.Controllers.ProductController.GetSaleProductLockInfo(System.String)">
+            <summary>
+            获取商品仓库库存锁定信息（供WMS调用）
+            </summary>
+            <param name="productCode"></param>
+            <returns></returns>
+        </member>
     </members>
 </doc>

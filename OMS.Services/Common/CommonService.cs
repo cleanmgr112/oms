@@ -563,11 +563,19 @@ namespace OMS.Services.Common
             request.ToAddress = toAddress;//目标地址
             request.Subject = subject;//邮件主题
             request.HtmlBody = body;//邮件正文
-            SingleSendMailResponse httpResponse = client.GetAcsResponse(request);
-            if (httpResponse.HttpResponse.Status != 200)
+            try
             {
+                SingleSendMailResponse httpResponse = client.GetAcsResponse(request);
+            }
+            catch (Exception ex)
+            {
+                var messgae = ex.Message;
                 return false;
             }
+            //if (httpResponse.HttpResponse.Status != 200)
+            //{
+            //    return false;
+            //}
             return true;
         }
         /// <summary>

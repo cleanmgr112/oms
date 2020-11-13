@@ -13,6 +13,21 @@
     .el-input__inner.error {
         border-color: #FF0000 !important;
     }
+
+    .el-input-class {
+        width: 90% !important;
+    }
+
+    .mask {
+        background-color: rgb(0, 0, 0);
+        opacity: 0.3;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1
+    }
 </style>
 
 <el-dialog title="提示" :visible.sync="dialogVisible" width="30%" id="diaMessage" :before-close="handleClose">
@@ -23,27 +38,27 @@
     </span>
 </el-dialog>
 
-<el-dialog :title="title" id="dialog" :visible.sync="dialogFormVisible" :width="width" :height="height">
-    <el-form :model="form" label-position="top">
+<el-dialog :title="title" id="dialog" :visible.sync="dialogFormVisible" :width="width" :height="height" @@opened="hide()" :destroy-on-close=true>
+    <el-form :model="form" label-position="top" close-on-press-escape=true close-on-click-modal=false>
 
-        <el-form-item label="提醒标题">
-            <component-a></component-a>
-            <el-input placeholder="请输入内容" v-model="form.templateTitle" id="input1"></el-input>
+        <el-form-item label="提醒标题" id="input1">
+            <el-col :span="24">
+                <component-a></component-a>
+                <el-input v-model="form.templateTitle" class="el-input-class"></el-input>
+            </el-col>
         </el-form-item>
 
         <el-form-item label="预警库存">
             <component-a></component-a>
-            <el-input placeholder="请输入内容" v-model="form.remindStock" id="input3"></el-input>
+            <el-input placeholder="请输入内容" v-model="form.remindStock" id="input3" @@input="forceUpdate()"></el-input>
         </el-form-item>
 
         <el-form-item label="负责人">
             <component-a></component-a>
-            <el-select v-model="form.user" placeholder="请选择" multiple value-key="id" id="input2">
+            <el-select v-model="form.user" placeholder="请选择" multiple value-key="id" id="input2" filterable>
                 <el-option v-for="item in userData" :key="item.id" :label="item.userName" :value="item"></el-option>
             </el-select>
         </el-form-item>
-
-
     </el-form>
 
     <div slot="footer" class="dialog-footer">
@@ -52,6 +67,7 @@
     </div>
 </el-dialog>
 
+<div id="showModal"  class="mask" alt="正在处理,请等待..." hidden> </div>
 <script>
 
     Vue.component("component-a", {
@@ -64,7 +80,7 @@
             form: {
                 user: [],
                 templateTitle: '',
-                remindStock:null
+                remindStock: ''
             },
             userData: [],
             //弹出框三维设置
@@ -79,6 +95,8 @@
                 type: '',
                 success: function () { }
             }
+            , loading: false
+            , disabled: true
         },
         methods: {
             //打开弹框
@@ -88,34 +106,40 @@
                 this.height = height;
                 this.request = request;
                 this.dialogFormVisible = true;
+                this.form.templateTitle = request.data[0].name + "  库存不足{{RemindStock}},现有库存{{Stock}}";
             },
             //取消回调
             cancel: function () {
                 this.dialogFormVisible = false;
+                this.removeColor();
             },
             //确认回调
             confirm: function () {
                 var flag = true;
-                if (this.form.templateTitle == '') {
-                    $("#input1").addClass('error');
-                    flag = false;
-                }
+
                 if (this.form.user.length == 0) {
                     $("#input2").addClass('error')
                     flag = false;
-                }
+                } else $("#input2").removeClass('error');
 
-                if (this.form.remindStock == ''||this.form.remindStock==null) {
+                if (this.form.remindStock == '') {
                     $("#input3").addClass('error')
                     flag = false;
-                }
+                } else $("#input3").removeClass('error');
+
+
+                if (this.form.remindStock == '') {
+                    $("#input4").addClass('error')
+                    flag = false;
+                } else $("#input4").removeClass('error');
 
                 if (flag == false) {
-                    this.remove();
                     return;
                 }
-                this.ajax(this.request.url, this.request.type, { key: this.request.data, user: this.form.user, templateTitle: this.form.templateTitle,remindStock:this.form.remindStock }, this.request.success)
+
+                this.ajax(this.request.url, this.request.type, { key: this.request.data, user: this.form.user, templateTitle: this.form.templateTitle, remindStock: this.form.remindStock }, this.request.success)
                 this.dialogFormVisible = false;
+                demo.selection = [];
             },
             // ajax 请求
             ajax: function (url, type, data, res) {
@@ -123,7 +147,13 @@
                     url: url,
                     type: type,
                     data: data,
-                    success: res
+                    success: res,
+                    beforeSend: function () {
+                        $("#showModal").show();
+                    },
+                    complete: function () {
+                        $("#showModal").hide();
+                    }
                 })
             },
 
@@ -131,7 +161,23 @@
             remove: function () {
                 this.form = {
                     user: [],
-                    templateTitle: ''};
+                    templateTitle: '',
+                    remindStock: ''
+                };
+            },
+            forceUpdate: function () { // 强制刷新视图，解决input 无法输入问题.
+                this.$forceUpdate();
+            },
+            removeColor: function () {
+                $("#input2").removeClass('error');
+                $("#input3").removeClass('error');
+                $("#input4").removeClass('error');
+            },
+            hide: function () {
+                if (this.request.data.length > 1) {
+                    $("#input1").hide();
+                }
+                else $("#input1").show();
             }
         },
         watch: {
@@ -143,17 +189,18 @@
                     //单行编辑
                     if (this.request.data.length == 1)
                         this.ajax('/remind/title/user/' + this.request.data[0].templateCode, 'get', '', function (res) {
-                            dialog.form.templateTitle = res.templateTitle;
+                            if (res.templateTitle != "" && res.templateTitle != null)
+                                dialog.form.templateTitle = res.templateTitle;
                             dialog.form.user = res.user;
                             dialog.form.remindStock = res.remindStock;
                         });
                     //多行编辑
                     else {
-
+                         this.form.templateTitle=""
                     }
                 }
-                else  this.remove();
-                
+                else this.remove();
+
             }
         }
     });

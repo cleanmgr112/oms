@@ -1,6 +1,4 @@
 ﻿
-
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using OMS.Services.StockRemid;
 using OMS.Services.StockRemid.StockRemindDto;
@@ -51,7 +49,7 @@ namespace OMS.Web.Controllers
         [HttpPost("product")]
         public IActionResult GetProduct(SearchProductDto product, int page, int limit)
         {
-            return Ok(new { data = template.templateSearch.Search(product, out int count, page, limit) ,count=count});
+            return Ok(new { data = template.templateSearch.Search(product, out int count, page, limit), count = count });
         }
 
         /// <summary>
@@ -69,10 +67,13 @@ namespace OMS.Web.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost("template/swtich")]
-        public async Task<IActionResult> TemplateSwtich(templateSwtichDto swtich)
+        public async Task<IActionResult> TemplateSwtich(templateSwtichDto swtich, TemplateSaleDto key)
         {
-
-            return Ok(await template.TemplateSwtich(swtich));
+            var templateCode = string.Empty;
+            var flag = template.TemplateSwtich(swtich, out templateCode);
+            key.TemplateCode = templateCode;
+            var res = await ((TemplateSet)template.TemplateSet).Set(key);
+            return Ok(flag && res);
         }
 
 
@@ -80,11 +81,12 @@ namespace OMS.Web.Controllers
         /// 模板设置
         /// </summary>
         [HttpPost("template/set")]
+        [DisableRequestSizeLimit]
         public IActionResult TempalteUpdate(List<TemplateSaleDto> key, List<UserDto> user, string templateTitle, int remindStock)
         {
             if (key.Count == 0)
                 return BadRequest();
-            return Ok( template.TemplateSet.Set(new SetDto() { Key = key, User = user, TemplateTitle = templateTitle, RemindStock = remindStock }));
+            return Ok(template.TemplateSet.Set(new SetDto() { Key = key, User = user, TemplateTitle = templateTitle, RemindStock = remindStock }));
         }
 
         /// <summary>
@@ -116,8 +118,9 @@ namespace OMS.Web.Controllers
         [HttpGet("template/warn")]
         public async Task<IActionResult> templateWarn()
         {
-            await stockRemind.UserMesaage();
-            await stockRemind.TemplateValid();
+            var task = stockRemind.UserMesaage();
+            var task1 = stockRemind.TemplateValid();
+            await task1; await task;
             return Ok();
         }
         #endregion
@@ -142,7 +145,7 @@ namespace OMS.Web.Controllers
         [HttpGet("title/{min?}/{max?}")]
         public IActionResult GetTemplate(DateTime? min, DateTime? max, int page = 1, int limit = 5)
         {
-            return Ok(new { title = stockTitle.ISearch.FirstOrDefault(c=>c is TitleSearch).Search(new SearchDto() { Min=min,Max=max},out int count,page,limit), titleCount = count });
+            return Ok(new { title = stockTitle.ISearch.FirstOrDefault(c => c is TitleSearch).Search(new SearchDto() { Min = min, Max = max }, out int count, page, limit), titleCount = count });
         }
 
         /// <summary>
@@ -170,7 +173,7 @@ namespace OMS.Web.Controllers
         /// <param name=""></param>
         /// <returns></returns>
         [HttpPost("export")]
-        public IActionResult Export(List<TitleSearchDto> data)
+        public IActionResult Export([FromForm] List<TitleSearchDto> data)
         {
             stockTitle.Excel(data);
             return Ok();

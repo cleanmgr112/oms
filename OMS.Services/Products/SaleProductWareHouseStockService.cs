@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OMS.Core;
 using OMS.Data.Domain;
 using OMS.Data.Interface;
+using OMS.Model;
 using OMS.Services.Log;
 using OMS.Services.Order1;
 using System;
@@ -121,6 +123,32 @@ namespace OMS.Services.Products
                 _omsAccessor.SaveChanges();
                 return true;
             }
+        }
+        public object GetSaleWareHouseStockLockInfo(string productCode)
+        {
+            var saleProduct = _omsAccessor.Get<SaleProduct>().Join(_omsAccessor.Get<Product>()
+                .Where(r => r.Code == productCode.Trim()), p => p.ProductId, r => r.Id, (r, p) => new { r, p })
+                .Select(r => r.r).FirstOrDefault();
+            if (saleProduct == null)
+            {
+                return "无法查找到该商品";
+            }
+            var saleProStockList = _omsAccessor.Get<SaleProductWareHouseStock>().Where(r => r.SaleProductId == saleProduct.Id)
+                     .Include(r => r.SaleProduct).ThenInclude(r => r.Product)
+                     .Join(_omsAccessor.Get<WareHouse>(), sp => sp.WareHouseId, w => w.Id, (sp, w) => new { sp, w }).Select(r => new SaleProductWareHouseStockModel
+                     {
+                         Id = r.sp.Id,
+                         SaleProductId = r.sp.SaleProductId,
+                         ProductId = r.sp.ProductId,
+                         ProductName = r.sp.SaleProduct.Product.Name,
+                         ProductCode = r.sp.SaleProduct.Product.Code,
+                         WareHouseId = r.sp.WareHouseId,
+                         WareHouseName = r.w.Name,
+                         WareHouseCode = r.w.Code,
+                         Stock = r.sp.Stock,
+                         LockStock = r.sp.LockStock
+                     }).ToList();
+            return saleProStockList;
         }
     }
 }

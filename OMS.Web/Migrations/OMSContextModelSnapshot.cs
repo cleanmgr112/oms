@@ -1495,6 +1495,8 @@ namespace OMS.Web.Migrations
 
                     b.Property<DateTime>("CreatedTime");
 
+                    b.Property<bool>("IsSyncStock");
+
                     b.Property<bool>("Isvalid");
 
                     b.Property<int?>("ModifiedBy");
@@ -1579,14 +1581,13 @@ namespace OMS.Web.Migrations
                         .HasMaxLength(10);
 
                     b.Property<string>("En")
-                        .IsRequired()
-                        .HasMaxLength(100);
+                        .HasMaxLength(200);
 
                     b.Property<bool>("Isdelete");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100);
+                        .HasMaxLength(200);
 
                     b.Property<decimal>("Price");
 
@@ -1614,6 +1615,8 @@ namespace OMS.Web.Migrations
                     b.Property<string>("Edtior")
                         .HasMaxLength(10);
 
+                    b.Property<bool>("IsUpdate");
+
                     b.Property<bool>("Isdelete");
 
                     b.Property<string>("ProductId");
@@ -1626,13 +1629,13 @@ namespace OMS.Web.Migrations
 
                     b.Property<string>("TemplateCode")
                         .IsRequired()
-                        .HasMaxLength(10);
+                        .HasMaxLength(17);
 
                     b.Property<string>("TemplateTitle")
-                        .HasMaxLength(80);
+                        .HasMaxLength(150);
 
                     b.Property<string>("User")
-                        .HasMaxLength(100);
+                        .HasMaxLength(200);
 
                     b.HasKey("TemplateId");
 
@@ -1660,7 +1663,7 @@ namespace OMS.Web.Migrations
                     b.Property<string>("RemindTemplateModelTemplateId");
 
                     b.Property<string>("RemindTitle")
-                        .HasMaxLength(50);
+                        .HasMaxLength(200);
 
                     b.HasKey("TitleId");
 

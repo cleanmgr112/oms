@@ -910,7 +910,7 @@ namespace OMS.Web.Controllers
         public IActionResult GetOrderLog(int orderId)
         {
             Dictionary<int, string> dUser = new Dictionary<int, string>();
-            foreach (var item in _userService.GetAllUserList())
+            foreach (var item in _userService.GetAllUsers())
             {
                 dUser.Add(item.Id, item.Name);
             }
@@ -2269,7 +2269,7 @@ namespace OMS.Web.Controllers
             {
                 return View("_AccessDeniedView");
             }
-            ViewBag.Users = _userService.GetAllUserList().ToList();
+            ViewBag.Users = _userService.GetAllUsers().ToList();
             var result = _orderService.GetAllApprovalProcessList();
             List<ApprovalProcessModel> list = new List<ApprovalProcessModel>();
             foreach (var item in result)

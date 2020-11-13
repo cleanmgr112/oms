@@ -23,21 +23,21 @@ namespace OMS.Model.StockRemind
         /// 模板编号
         /// </summary>
         [Required]
-        [StringLength(10)]
-        public string TemplateCode { get; set; } = GuidHelper.RandomCode("TS");
+        [StringLength(17)]
+        public string TemplateCode { get; set; } = GuidHelper.GuidTo16String();
 
 
         /// <summary>
         /// 模板标题 可按规定的规则设置
         /// </summary>
-        [StringLength(80)]
+        [StringLength(200)]
         public string TemplateTitle { get; set; }
 
 
         /// <summary>
         /// 授权用户 Json{ userid，username}
         /// </summary>
-        [StringLength(100)]
+        [StringLength(200)]
         public string User { get; set; } = JsonConvert.SerializeObject(new List<string>());
 
         /// <summary>
@@ -69,9 +69,14 @@ namespace OMS.Model.StockRemind
         /// </summary>
         public RemindProduct Product { get; set; }
 
+        /// <summary>
+        /// 是否更新
+        /// </summary>
+        public bool IsUpdate { get; set; } = true;
+
     }
 
-    public class RemindProduct:BaseModel
+    public class RemindProduct : BaseModel
     {
 
         [Key]
@@ -80,21 +85,20 @@ namespace OMS.Model.StockRemind
         /// <summary>
         /// 商品编号
         /// </summary>
-        [StringLength(20)]
+        [StringLength(30)]
         [Required]
         public string ProductCode { get; set; }
         /// <summary>
         /// 中文名
         /// </summary>
-        [StringLength(100)]
+        [StringLength(200)]
         [Required]
         public string Name { get; set; }
 
         /// <summary>
         /// 英文名
         /// </summary>
-        [StringLength(100)]
-        [Required]
+        [StringLength(200)]
         public string En { get; set; }
 
         /// <summary>

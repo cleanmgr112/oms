@@ -7,6 +7,7 @@ using OMS.Model.StockRemind;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Threading;
+using OMS.Data.Domain;
 
 namespace OMS.Data.Implementing
 {
@@ -21,6 +22,9 @@ namespace OMS.Data.Implementing
         public DbSet<RemindTemplateModel> RemindTemplate { get; set; }
         public DbSet<RemindTitleModel> RemindTitle { get; set; }
         public DbSet<UserMessageModel> UserMessage { get; set; }
+        public DbSet<User> Users{ get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var typesToRegister = from t in Assembly.GetExecutingAssembly().GetTypes()

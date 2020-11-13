@@ -120,6 +120,7 @@ namespace OMS.Web.Controllers
             {
                 return View("_AccessDeniedView");
             }
+            
             var orderresult = _orderService.GetOrderByIdB2C(id);
             orderresult.InvoiceInfo = _orderService.GetOrderInvoiceRecord(id);
             ViewBag.User = GetUserName();
@@ -3741,6 +3742,27 @@ namespace OMS.Web.Controllers
             {
                 return Error(checkResult);
             }
+            if (order.PayPrice == 0 && order.SumPrice != 0)
+            {
+                #region 订单日志(自动计算已付价格)
+                OrderLog orderLog1 = new OrderLog();
+                orderLog1.OrderId = order.Id;
+                orderLog1.OrderState = order.State;
+                orderLog1.PayState = order.PayState;
+                orderLog1.OptionType = "自动设置已付金额";
+                orderLog1.Mark = "原来已付金额：" + order.PayPrice + " 修改为已付金额：" + order.SumPrice;
+                _logService.InsertOrderLog(orderLog1);
+                #endregion
+                order.PayPrice = order.SumPrice;
+                OrderPayPrice orderPayPrice = new OrderPayPrice();
+                orderPayPrice.OrderId = order.Id;
+                orderPayPrice.IsPay = true;
+                orderPayPrice.PayType = order.PayType;
+                orderPayPrice.PayMentType = order.PayMentType;
+                orderPayPrice.Price = order.SumPrice;
+                orderPayPrice.Mark = "自动设置已付价格";
+                _orderService.AddOrderPayPrice(orderPayPrice);
+            }
             order.State = OrderState.B2CConfirmed;
             _orderService.UpdateOrder(order);
             #region 订单日志(确认订单)
@@ -4121,7 +4143,7 @@ namespace OMS.Web.Controllers
         Dictionary<int, string> GetUserName()
         {
             Dictionary<int, string> dUser = new Dictionary<int, string>();
-            foreach (var item in _userService.GetAllUserList())
+            foreach (var item in _userService.GetAllUsers())
             {
                 dUser.Add(item.Id, item.Name);
             }

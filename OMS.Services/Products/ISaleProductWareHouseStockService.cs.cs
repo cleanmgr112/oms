@@ -1,4 +1,5 @@
 ﻿using OMS.Data.Domain;
+using OMS.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,5 +16,6 @@ namespace OMS.Services.Products
         /// </summary>
         /// <returns></returns>
         bool UpdateSPWHStockAndSPLockedTrack(OrderProduct orderProduct,string orderSerialNumber,int productId,int wareHouseId, bool isAdmin);
+        object GetSaleWareHouseStockLockInfo(string productCode);
     }
 }

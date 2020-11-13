@@ -32,6 +32,10 @@ namespace OMS.Services.Account
         {
             return _omsAccessor.Get<User>().Where(p => p.Isvalid && p.State == UserState.Enabled && p.Isvalid);
         }
+        public IQueryable<User> GetAllUsers()
+        {
+            return _omsAccessor.Get<User>();
+        }
 
         public void Update(User user)
         {

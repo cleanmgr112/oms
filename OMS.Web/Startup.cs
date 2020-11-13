@@ -18,6 +18,7 @@ using System.Net;
 using System.IO;
 using OMS.Services;
 using OMS.Services.StockRemid;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace OMS.Web
 {
@@ -47,7 +48,11 @@ namespace OMS.Web
             //    options.CheckConsentNeeded = context => false;
             //    options.MinimumSameSitePolicy = SameSiteMode.None;
             //});
-
+            services.Configure<FormOptions>(options =>
+            {
+                options.ValueCountLimit = 40000; // 5000 items max
+                options.ValueLengthLimit = 1024 * 1024 * 10; // 100MB max len form data
+            });
 
 
             //注入配置

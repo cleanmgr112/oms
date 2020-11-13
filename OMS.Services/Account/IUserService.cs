@@ -13,6 +13,11 @@ namespace OMS.Services.Account
         User GetUserByName(string name);
         void Update(User user);
         IQueryable<User> GetAllUserList();
+        /// <summary>
+        /// 获取所有用户，包括无效用户，未启用用户
+        /// </summary>
+        /// <returns></returns>
+        IQueryable<User> GetAllUsers();
         IPageList<User> GetUsersByPage(string searchValue, int pageIndex, int pageSize);
         User CreateUser(User user);
         User UpdateUser(User user);

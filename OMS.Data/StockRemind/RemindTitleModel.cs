@@ -1,6 +1,5 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OMS.Model.StockRemind
 {
@@ -18,7 +17,7 @@ namespace OMS.Model.StockRemind
         /// <summary>
         /// 提醒标题
         /// </summary>
-        [StringLength(50)]
+        [StringLength(200)]
         public string RemindTitle { get; set; }
 
 

@@ -90,6 +90,7 @@ namespace OMS.API
             services.AddScoped<Core.IWebHelper, Core.WebHelper>();
             services.AddScoped<Services.K3Wise.IK3WiseService, Services.K3Wise.K3WiseService>();
             services.AddScoped<Services.CMB.ICMBService, Services.CMB.CMBService>();
+            services.AddScoped<Services.Products.ISaleProductWareHouseStockService, Services.Products.SaleProductWareHouseStockService>();
 
             services.AddAuthentication(x =>
             {

@@ -52,6 +52,7 @@ namespace OMS.API.Controllers
         private readonly IScheduleTaskFuncService _scheduleTaskFuncService;
         private readonly ICMBService _cmbService;
         private readonly IHubContext<HubContext, IHubContext> hubContext;
+        private readonly ISaleProductWareHouseStockService _saleProductWareHouseStockService;
         public ProductController(IProductService productService,
             IOrderService orderService,
             IDeliveriesService deliveriesService,
@@ -61,7 +62,8 @@ namespace OMS.API.Controllers
             IDbAccessor omsAccessor,
             IScheduleTaskFuncService scheduleTaskFuncService,
             ICMBService cmbService,
-            IHubContext<HubContext, IHubContext> hubContext
+            IHubContext<HubContext, IHubContext> hubContext,
+            ISaleProductWareHouseStockService saleProductWareHouseStockService
             )
         {
             _productService = productService;
@@ -74,6 +76,7 @@ namespace OMS.API.Controllers
             _scheduleTaskFuncService = scheduleTaskFuncService;
             _cmbService = cmbService;
            this.hubContext = hubContext;
+            _saleProductWareHouseStockService = saleProductWareHouseStockService;
         }
         #endregion
 
@@ -737,6 +740,16 @@ namespace OMS.API.Controllers
             }
 
             return Ok();
+        }
+        /// <summary>
+        /// 获取商品仓库库存锁定信息（供WMS调用）
+        /// </summary>
+        /// <param name="productCode"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public IActionResult GetSaleProductLockInfo(string productCode)
+        {
+            return Json(_saleProductWareHouseStockService.GetSaleWareHouseStockLockInfo(productCode));
         }
     }
 }

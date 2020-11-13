@@ -24,6 +24,11 @@ namespace OMS.Services.StockRemid.StockRemindDto
         /// 商品类型
         /// </summary>
         public string ProductType { get; set; }
+
+        /// <summary>
+        /// 中文名/英文名/商品编码
+        /// </summary>
+        public string  NameCode { get; set; }
     }
 
     /// <summary>

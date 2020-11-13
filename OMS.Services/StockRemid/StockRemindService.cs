@@ -11,6 +11,9 @@ using System.Linq;
 using OMS.Model.StockRemind;
 using OMS.Services.StockRemid.StockRemindDto;
 using System.Threading.Tasks;
+using OMS.Services.Common;
+using Microsoft.Extensions.Configuration;
+using OMS.Data.Implementing;
 
 namespace OMS.Services.StockRemid
 {
@@ -23,12 +26,19 @@ namespace OMS.Services.StockRemid
         private readonly User user;
         private readonly IDistributedCache cache;
         private readonly IHubContext<HubContext, IHubContext> hubContext;
-        public StockRemindService(IDbAccessor omsAccessor, IWorkContext context, IDistributedCache cache, IHubContext<HubContext, IHubContext> hubContext)
+        private readonly ICommonService common;
+        private static string Mail = "support@mail.wine-world.cn";
+        private readonly string conn;
+        private readonly IStockRemindNotify remindNotify;
+        public StockRemindService(IDbAccessor omsAccessor, IWorkContext context, IDistributedCache cache, IHubContext<HubContext, IHubContext> hubContext, ICommonService common, IStockRemindNotify remindNotify, IConfiguration configuration)
         {
             this.omsAccessor = omsAccessor;
             user = context.CurrentUser;
             this.cache = cache;
             this.hubContext = hubContext;
+            this.common = common;
+            this.remindNotify = remindNotify;
+            this.conn = configuration["ConnectionStrings:DefaultConnection"];
         }
 
 
@@ -42,7 +52,7 @@ namespace OMS.Services.StockRemid
         /// <summary>
         /// 获取用户
         /// </summary>
-        public object GetUser() => omsAccessor.Get<User>().Select(c => new { id = c.Id, userName = c.UserName }).AsNoTracking().ToList();
+        public object GetUser() => omsAccessor.Get<User>().Select(c => new { id = c.Id, userName = c.UserName }).ToList();
 
 
 
@@ -75,29 +85,35 @@ namespace OMS.Services.StockRemid
             if (cache.GetString(user.Id.ToString()) == null)
                 return;
 
-            omsAccessor.Get<RemindTemplateModel>().Where(c => c.Statu == true).Include(c => c.RemindTitles).Include(c => c.UserMessages).Include(c => c.Product).ToList().ForEach(c =>
-                {
-                    //预警库存达到触发条件
-                    if (c.Product != null && c.RemindStock >= c.Product.Stock)
-                    {
-                        var str = $"{c.Product.Name}<span style='color:red'>库存仅剩:{c.Product.Stock}</span>";
+            var template = omsAccessor.Get<RemindTemplateModel>().Where(c => c.Statu && c.IsUpdate).Include(c => c.RemindTitles).Include(c => c.UserMessages).Include(c => c.Product).ToList();
 
-                        //向在线的人发送消息
+
+            var list = new List<Task>();
+            template.ForEach(c =>
+               {
+                    // 预警库存达到触发条件.
+                    if (c.Product != null && c.RemindStock >= c.Product.Stock)
+                   {
+                        // 预警消息.
+                        var str = c.TemplateTitle?.Replace("{{RemindStock}}", c.RemindStock.ToString()).Replace("{{Stock}}", c.Product.Stock.ToString());
+
+                       list.Add(MaliSendAsync(JsonConvert.DeserializeObject<List<UserDto>>(c.User), "库存提醒", str));  // 发送邮件.
+
+                        // 向在线的人发送消息.
                         var _user = SendMessage(c.User, str);
-                        if (_user.Count != 0)
-                        {
-                            //向有权限的人且离线的人记录消息
+                       if (_user.Count != 0)
+                       {
+                            // 向有权限的人且离线的人记录消息.
                             c.UserMessages.Add(new UserMessageModel() { Message = str, User = JsonConvert.SerializeObject(_user) });
-                            //发送邮件
-                            //MaliSend(_user, "库存提醒", str);
-                            //测试用例
-                            new Mail("1215389476@qq.com", "库存提醒", str).Send();
-                        }
+                       }
                         //生成标题
-                        c.RemindTitles.Add(new RemindTitleModel() { RemindTitle = c.TemplateTitle });
-                    }
-                });
-            await omsAccessor.OMSContext.SaveChangesAsync();
+                        c.RemindTitles.Add(new RemindTitleModel() { RemindTitle = str });
+                   }
+               });
+
+            await remindNotify.ReadRule(omsAccessor, template);
+            Task.WaitAll(list.ToArray());
+
         }
 
         /// <summary>
@@ -110,15 +126,15 @@ namespace OMS.Services.StockRemid
             var userid = JsonConvert.DeserializeObject<List<string>>(cache.GetString("user"));
             var connection = new List<string>();
 
-            //向有权的用户发送消息
+            // 向有权的用户发送消息.
             var union = userid.Intersect(userDto.Select(c => c.Id.ToString())).ToList();
             union.ForEach(c =>
             {
-                //移除已发送消息的用户
+                // 移除已发送消息的用户.
                 userDto.Remove(userDto.Where(d => d.Id.ToString() == c).FirstOrDefault());
                 var conn = JsonConvert.DeserializeObject<List<string>>(cache.GetString(c));
                 connection.AddRange(conn);
-                //发送邮件给授权人
+                // 发送邮件给授权人.
             });
 
             hubContext.Clients.Clients(connection).SendMessage("message", message);
@@ -133,16 +149,16 @@ namespace OMS.Services.StockRemid
         {
             var connections = JsonConvert.DeserializeObject<List<string>>(cache.GetString(user.Id.ToString()));
             var userJson = JsonConvert.SerializeObject(new { Id = user.Id, UserName = user.UserName });
-            omsAccessor.Get<UserMessageModel>().Where(c => EF.Functions.Like(c.User, userJson)).ToList().ForEach(c =>
-            {
-                hubContext.Clients.Clients(connections).SendMessage("message", c.Message);
-                var _user = JsonConvert.DeserializeObject<List<UserDto>>(c.User);
-                //移除发送消息用户
-                _user.Remove(_user.Where(d => d.Id == user.Id).FirstOrDefault());
-                if (_user.Count() == 0)
-                    omsAccessor.OMSContext.UserMessage.Remove(c);
-                else c.User = JsonConvert.SerializeObject(_user);
-            });
+            omsAccessor.Get<UserMessageModel>().Where(c => c.User.Contains(userJson)).ToList().ForEach(c =>
+           {
+               hubContext.Clients.Clients(connections).SendMessage("message", c.Message);
+               var _user = JsonConvert.DeserializeObject<List<UserDto>>(c.User);
+               //移除发送消息用户
+               _user.Remove(_user.Where(d => d.Id == user.Id).FirstOrDefault());
+               if (_user.Count() == 0)
+                   omsAccessor.OMSContext.UserMessage.Remove(c);
+               else c.User = JsonConvert.SerializeObject(_user);
+           });
             await omsAccessor.OMSContext.SaveChangesAsync();
 
         }
@@ -150,14 +166,18 @@ namespace OMS.Services.StockRemid
         /// <summary>
         /// 发送邮件给授权人
         /// </summary>
-        public void MaliSend(List<UserDto> user, string subject, string message, string destination)
+        public async Task<bool> MaliSendAsync(List<UserDto> user, string subject, string message)
         {
-            user.ForEach(c =>
-            {
-                var email = omsAccessor.Get<User>().Where(u => u.Id == c.Id).Select(u => u.Email).FirstOrDefault();
-                var mail = new Mail(email, subject, message);
-                mail.Send();
-            });
+            var context = new OMSContext(new DbContextOptionsBuilder<OMSContext>().UseSqlServer(conn).Options);
+            await Task.Delay(100);
+            var UserId = user.Select(c => c.Id).ToList();
+            //var entity = context.ChangeTracker.Entries<User>().Select(c=>c.Entity);
+            var entity = context.Set<User>();
+            var emails = entity.Where(c => UserId.Any(d => d ==c.Id)).Select(c => c.Email).ToList();
+            var address = string.Join(",", emails);
+            context.Dispose();
+            return common.SendEmailByAliYun(subject, message, address, Mail, "红酒世界");
+       
         }
     }
 }

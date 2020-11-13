@@ -13,7 +13,7 @@ namespace OMS.Services.StockRemid
 
     public interface IHubContext
     {
-        Task SendMessage(string title,string message);
+        Task SendMessage(string title, string message);
     }
     public class HubContext : Hub<IHubContext>
     {
@@ -27,9 +27,14 @@ namespace OMS.Services.StockRemid
 
         public override Task OnConnectedAsync()
         {
-            var ConnectionId = Context.ConnectionId;
+            Record(Context.ConnectionId);
+            return base.OnConnectedAsync();
+        }
+
+        private void Record(string ConnectionId)
+        {
             var userAll = cache.GetString("user");
-            var  list=new List<string>();
+            var list = new List<string>();
             if (userAll == null)
             {
                 cache.SetString("user", JsonConvert.SerializeObject(new List<string>() { userId }));
@@ -37,7 +42,7 @@ namespace OMS.Services.StockRemid
             }
             else
             {
-                list=  JsonConvert.DeserializeObject<List<string>>(cache.GetString("user"));
+                list = JsonConvert.DeserializeObject<List<string>>(cache.GetString("user"));
                 if (!list.Any(c => c == userId))
                 {
                     list.Add(userId);
@@ -52,18 +57,20 @@ namespace OMS.Services.StockRemid
                     cache.SetString(userId, JsonConvert.SerializeObject(user));
                 }
             }
-            var test = cache.GetString(userId);
-            return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(System.Exception exception)
         {
-            var ConnectionId = Context.ConnectionId;
-            var connections = JsonConvert.DeserializeObject<List<string>>(cache.GetString(userId));
-            if (connections.Remove(ConnectionId))
-                cache.SetString(userId, JsonConvert.SerializeObject(connections));
+            RemoveRecord(Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
 
+
+        private void RemoveRecord(string ConnectionId)
+        {
+            var connections = JsonConvert.DeserializeObject<List<string>>(cache.GetString(userId));
+            if (connections.Remove(ConnectionId))
+                cache.SetString(userId, JsonConvert.SerializeObject(connections));
+        }
     }
 }

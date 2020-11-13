@@ -6,8 +6,6 @@
 <link rel="stylesheet" href="/element-ui/lib/theme-chalk/index.css">
 <script src="/element-ui/lib/index.js"></script>
 <script src="/jquery.min.js"></script>
-@*<script src="~/dist/signalr.min.js"></script>
-<script src="/signalrHub.js"></script>*@
 
 <style>
     .el-table .warning-row {
@@ -17,6 +15,7 @@
     .el-table .success-row {
         background: #f0f9eb;
     }
+
     .el-button {
         height: 40px;
     }
@@ -27,7 +26,7 @@
         flex-wrap: wrap
     }
 
-    .el-input,.el-button{
+    .el-input, .el-button {
         margin-right: 5px;
     }
 
@@ -64,21 +63,26 @@
                     <el-input placeholder="销售价" style="width: 100%;" v-model="form.MaxPrice"></el-input>
                 </el-col>
             </el-form-item>
+
             <el-select placeholder="商品类型" v-model="form.ProductType">
                 <el-option v-for="item in type" :label="item" :value="item" :key="item"> </el-option>
             </el-select>
+
+
         </el-form>
+        <el-input v-model="form.nameCode" placeholder="中文名/英文名/商品编码"></el-input>
         <el-button type="primary" icon="el-icon-search" size="small" style="margin-right:0 !important" @@click="search">搜索</el-button>
         <el-button size="small" @@click="reload()">重置</el-button>
         <el-button size="small" onclick="edtior()">编辑</el-button>
+
+        <el-select v-model="form.Take" @@change="option(form.Take)">
+            <el-option v-for="item in options" :key="item" :label="item" :value="item"></el-option>
+        </el-select>
     </el-row>
 
     <el-row>
-        @*<select v-model="form.limit" class="a">
-                <option v-for="item in limits" value="item">{{item}} </option>
-            </select>*@
 
-        <el-table :data="table" style="width:auto" border @@select="select" @@select-all="select" :row-style="{height: '48px'}" :cell-style="{padding: '0'}" max-height="528px">
+        <el-table :data="table" style="width:auto" border @@select="select" @@select-all="select" :row-style="{height: '48px'}" :cell-style="{padding: '0'}" v-loading="loading">
             <el-table-column type="selection" width="55"></el-table-column>
 
             <el-table-column label="序号" width="50px">
@@ -87,9 +91,11 @@
                 </template>
             </el-table-column>
 
-            <el-table-column prop="name" label="中文名" width="341"> </el-table-column>
+            <el-table-column prop="name" label="中文名" width="200"> </el-table-column>
 
-            <el-table-column prop="en" label="英文名" width="341"> </el-table-column>
+            <el-table-column prop="en" label="英文名" width="241"> </el-table-column>
+
+            <el-table-column prop="productCode" label="商品编码" width="150"> </el-table-column>
 
             <el-table-column prop="price" label="价格" width="100"> </el-table-column>
 
@@ -98,10 +104,10 @@
             <el-table-column prop="statu" label="预警状态" width="100">
                 <template slot-scope="scope">
                     <el-switch active-color="#C0C4CC" inactive-color="#13ce66" v-model="scope.row.statu"
-                               :active-value=false :inactive-value=true @@change="swtich(scope.row.statu,scope.row.templateCode,scope.row.saleProductId)"></el-switch>
+                               :active-value=false :inactive-value=true @@change="swtich(scope.row.statu,scope.row)"></el-switch>
                 </template>
             </el-table-column>
-            
+
             <el-table-column label="操作" width="55">
                 <template slot-scope="scope">
                     <el-button type="text" size="small" @@click="dialog(scope.row)">编辑</el-button>
@@ -114,9 +120,8 @@
     </div>
 </div>
 
-
-
 <script>
+
     var demo = new Vue({
         el: '#table',
         data: {
@@ -124,6 +129,8 @@
                 ProductType: '',
                 MinPrice: null,
                 MaxPrice: null,
+                Take: 10,
+                nameCode: '',
             },
             content: {
                 page: 1,
@@ -133,7 +140,9 @@
             selection: [],
             type: ['A', 'B', 'C'],
             limits: [5, 10, 20, 50],
-            table: [{ productName: 'productName', en: '北泽园', statu: false, price: 10000, stock: 999, saleProductId: 0, templateCode: 'xxx', saleProductId: 123 }]
+            table: [{ productName: 'productName', en: '北泽园', statu: false, price: 10000, stock: 999, saleProductId: 0, templateCode: 'xxx', saleProductId: 123 }],
+            options: [10, 30, 50, 100, 300, 1000, 3000],
+            loading: false
         },
         methods: {
             ajax: function (url, type, data, success) {
@@ -141,13 +150,19 @@
                     url: url,
                     type: type,
                     data: data,
-                    success: success
+                    success: success,
+                    beforeSend: function () {
+                        $("#showModal").show();
+                    },
+                    complete: function () {
+                        $("#showModal").hide();
+                    }
                 });
             },
             //获取商品类型
             productType: function () {
                 this.ajax('/remind/product/type', 'get', '', function (res) {
-                    demo.type = res
+                    demo.type = res;
                 });
             },
             product: function () {
@@ -158,13 +173,14 @@
             },
             change: function (value) {
                 this.content.page = value;
+                this.selection = []; // 清空多选
                 this.product();
             },
             dialog: function (value) {
-                dialog.open("设置", "500px", '600px', {
+                dialog.open("设置", "600px", '600px', {
                     url: '/remind/template/set', type: 'post', data: [{
                         templateCode: value.templateCode, saleProductId: value.saleProductId, price: value.price,
-                        en: value.en, name: value.name, stock: value.stock,productCode:value.productCode
+                        en: value.en, name: value.name, stock: value.stock, productCode: value.productCode
                     }], success: function () {
                         demo.product();
                     }
@@ -187,8 +203,22 @@
             select: function (selection) {
                 this.selection = selection;
             },
-            swtich: function (value, tempalteCode, saleProductId) {
-                this.ajax('/remind/template/swtich', 'post', { statu: value, saleProductId: saleProductId, templateCode: tempalteCode });
+            swtich: function (value, row) {
+                this.ajax('/remind/template/swtich', 'post', {
+                    swtich: { statu: value, saleProductId: row.saleProductId, templateCode: row.templateCode }, key: {
+                        templateCode: row.templateCode, price: row.price, en: row.en, name: row.name,
+                        stock: row.stock, productCode: row.productCode, saleProductId: row.saleProductId
+                    }
+                }, function (res) {
+                    if (res == false) {
+                        diaMessage.open("开启提醒失败!");
+                    }
+                });
+            },
+            option: function (e) {
+                this.content.limit = e;
+                this.content.page = 1;
+                this.product();
             }
         },
         mounted() {
@@ -202,7 +232,11 @@
         else {
             var data = demo.selection;
             dialog.open("设置", "500px", '600px', {
-                url: '/remind/template/set', type: 'post', data: data, success: function () {
+                url: '/remind/template/set', type: 'post', data: data, success: function (res) {
+                    if (res)
+                        diaMessage.open("设置成功");
+                    else diaMessage.open("设置失败");
+
                     demo.product();
                 }
             });
@@ -210,4 +244,5 @@
 
     }
 </script>
+
 

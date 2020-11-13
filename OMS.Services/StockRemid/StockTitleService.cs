@@ -25,7 +25,7 @@ namespace OMS.Services.StockRemid
         }
 
         /// <summary>
-        /// 标题条件搜索
+        /// SearchDto 标题条件搜索
         /// </summary>
         public object Search(object ob, out int count, int page = 1, int limit = 5)
         {
@@ -62,7 +62,7 @@ namespace OMS.Services.StockRemid
         public List<TitleSearchDto> GetTemplate(out int count, string productCode = null, int page = 1, int limit = 10)
         {
             var list =((TemplateSearch)ISearch.FirstOrDefault(c => c is TemplateSearch)).Search(productCode,out count,page,limit);
-            return Mapper.Map<List<TitleSearchDto>>(list.Skip((page - 1) * limit).Take(limit).ToList());
+            return Mapper.Map<List<TitleSearchDto>>(list.ToList());
         }
 
         /// <summary>

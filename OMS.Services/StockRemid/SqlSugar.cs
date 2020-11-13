@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Logging;
 using SqlSugar;
 using System;
 using System.Linq;
@@ -12,7 +11,9 @@ namespace OMS.Services.StockRemid
     /// </summary>
     public class SqlSugar : IDisposable
     {
-        public readonly SqlSugarClient db ;
+        public SqlSugarClient db;
+        private bool disposedValue;
+
         public SqlSugar(IConfiguration configuration)
         {
             db = new SqlSugarClient(
@@ -27,15 +28,29 @@ namespace OMS.Services.StockRemid
             //调式代码 用来打印SQL 
             db.Aop.OnLogExecuting = (sql, pars) =>
             {
-                Console.WriteLine(sql + "\r\n" + db.Utilities.SerializeObject(pars.ToDictionary(it => it.ParameterName, it => it.Value)));
+                var str = sql + "\r\n" + db.Utilities.SerializeObject(pars.ToDictionary(it => it.ParameterName, it => it.Value));
+                Console.WriteLine(str);
             };
         }
 
-
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: 释放托管状态(托管对象)
+                }
+                db = null;
+                disposedValue = true;
+            }
+        }
 
         public void Dispose()
         {
-            db.Dispose();
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -129,7 +129,7 @@ namespace OMS.Web.Controllers
 
             ViewBag.OrderLogInfo = _purchasingService.GetPurchasingOrderLogInfo(id);
             Dictionary<int, string> dUser = new Dictionary<int, string>();
-            foreach (var item in _userService.GetAllUserList())
+            foreach (var item in _userService.GetAllUsers())
             {
                 dUser.Add(item.Id, item.Name);
             }
@@ -557,7 +557,7 @@ namespace OMS.Web.Controllers
 
             ViewBag.OrderLogInfo = _purchasingService.GetPurchasingOrderLogInfo(id);
             Dictionary<int, string> dUser = new Dictionary<int, string>();
-            foreach (var item in _userService.GetAllUserList())
+            foreach (var item in _userService.GetAllUsers())
             {
                 dUser.Add(item.Id, item.Name);
             }

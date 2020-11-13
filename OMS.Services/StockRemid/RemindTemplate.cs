@@ -7,8 +7,8 @@ using OMS.Data.Interface;
 using OMS.Model.StockRemind;
 using OMS.Services.StockRemid.StockRemindDto;
 using SqlSugar;
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -36,9 +36,11 @@ namespace OMS.Services.StockRemid
     public class TemplateSet : ISet
     {
         private readonly IDbAccessor omsAccessor;
-        public TemplateSet(IDbAccessor omsAccessor)
+        private readonly IStockRemindNotify remindNotify;
+        public TemplateSet(IDbAccessor omsAccessor, IStockRemindNotify remindNotify)
         {
             this.omsAccessor = omsAccessor;
+            this.remindNotify = remindNotify;
         }
         public bool Set(object ob)
         {
@@ -51,26 +53,56 @@ namespace OMS.Services.StockRemid
                 _user = JsonConvert.SerializeObject(str);
             }
 
+            // 更新规则
+            remindNotify.Rule(omsAccessor, dto);
+
+            var _template = dto.Key.Select(c => c.TemplateCode).ToList();
+
+            var templates = omsAccessor.Get<RemindTemplateModel>().Include(c => c.Product).Where(c => _template.Any(d => d == c.TemplateCode)).ToList();
+
             dto.Key.ForEach(k =>
             {
-                var template = omsAccessor.Get<RemindTemplateModel>().Include(c => c.Product).Where(c => c.TemplateCode == k.TemplateCode).FirstOrDefault();
+                var template = templates.Where(c => c.TemplateCode == k.TemplateCode).FirstOrDefault();
                 var product = new RemindProductdto() { Name = k.Name, ProductCode = k.ProductCode, En = k.En, Price = k.Price, Stock = k.Stock };
                 if (template == null)
                 {
-                    var list = new RemindTemplateDto() { TemplateTitle = dto.TemplateTitle, User = _user, SaleProductId = k.SaleProductId, Product = product, RemindStock = dto.RemindStock };
+                    var list = new RemindTemplateDto() { TemplateTitle = string.IsNullOrEmpty(dto.TemplateTitle) ? k.Name + "库存不足{{RemindStock}},可用库存{{Stock}}" : dto.TemplateTitle, User = _user, SaleProductId = k.SaleProductId, Product = product, RemindStock = dto.RemindStock };
                     var entity = new RemindTemplateModel();
                     Mapper.Map(list, entity);
+                    entity.Statu = true;
                     omsAccessor.OMSContext.RemindTemplate.Add(entity);
                 }
                 else
                 {
-                    template.TemplateTitle = dto.TemplateTitle;
+                    template.TemplateTitle = string.IsNullOrEmpty(dto.TemplateTitle) ? k.Name + "库存不足{{RemindStock}},可用库存{{Stock}}" : dto.TemplateTitle;
                     template.User = _user;
                     template.Product = Mapper.Map(product, template.Product);
                     template.RemindStock = dto.RemindStock;
+                    template.Statu = true;
                 }
             });
+
             return omsAccessor.OMSContext.SaveChangesAsync().Result > 0;
+        }
+
+        /// <summary>
+        /// 开关设置
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        public async Task<bool> Set(TemplateSaleDto dto)
+        {
+            var template = omsAccessor.Get<RemindTemplateModel>().Include(c => c.Product).Where(c => c.TemplateCode == dto.TemplateCode).FirstOrDefault();
+            var product = new RemindProductdto() { Name = dto.Name, ProductCode = dto.ProductCode, En = dto.En, Price = dto.Price, Stock = dto.Stock };
+            if (template == null)
+            {
+                var list = new RemindTemplateDto() { Product = product };
+                var entity = new RemindTemplateModel();
+                Mapper.Map(list, entity);
+                omsAccessor.OMSContext.RemindTemplate.Add(entity);
+            }
+            else template.Product = Mapper.Map(product, template.Product);
+            return await omsAccessor.OMSContext.SaveChangesAsync() > 0;
         }
     }
 
@@ -94,20 +126,22 @@ namespace OMS.Services.StockRemid
         public object Search(object ob, out int count, int page, int limit)
         {
             count = 0; var list = new List<SaleProductDto>();
-            var search = ob as SearchProductDto;
+            var search = ob as SearchProductDto; search.NameCode = search.NameCode?.Trim();
             if (search == null)
                 return null;
             //查询字典
-            var productType = omsAccessor.Get<Dictionary>().AsNoTracking().Where(c => c.Value == search.ProductType).Select(c => (int?)c.Type).FirstOrDefault();
-            using (var db = new SqlSugar(configuration).db)
+            var productType = omsAccessor.Get<Dictionary>().AsNoTracking().Where(c => c.Value == search.ProductType).Select(c => (int?)c.Id).FirstOrDefault();
+
+            using (var sqlsugar = new SqlSugar(configuration))
             {
+                var db = sqlsugar.db;
                 count = 0;
                 var data = db.Queryable<SaleProductPrice, SaleProduct, Product>((spp, sp, p) => new object[]{
                 JoinType.Left,spp.SaleProductId==sp.Id,
                 JoinType.Left,sp.ProductId==p.Id,
                 }).Where((spp, sp, p) => sp.Isvalid &&
                         ((search.MaxPrice == null || spp.Price <= search.MaxPrice) && (search.MinPrice == null || spp.Price >= search.MinPrice)) &&
-                      (productType == null || p.Type == productType)
+                      (productType == null || p.Type == productType) && (string.IsNullOrEmpty(search.NameCode) || p.Name.Contains(search.NameCode) || p.NameEn.Contains(search.NameCode) || p.Code == search.NameCode)
                       ).GroupBy((spp, sp, p) => new { spp.SaleProductId, p.Name, p.NameEn, p.Code })
                       .Select((spp, sp, p) => new
                       {
@@ -118,9 +152,11 @@ namespace OMS.Services.StockRemid
                           En = p.NameEn,
                           ProductCode = p.Code
                       }).ToPageList(page, limit, ref count);
+
+                var _template = omsAccessor.Get<RemindTemplateModel>().AsNoTracking().ToList();
                 data.ForEach(c =>
                 {
-                    var template = omsAccessor.Get<RemindTemplateModel>().FirstOrDefault(d => d.SaleProductId == c.SaleProductId);
+                    var template = _template.FirstOrDefault(d => d.SaleProductId == c.SaleProductId);
                     list.Add(new SaleProductDto()
                     {
                         SaleProductId = c.SaleProductId,
@@ -142,7 +178,7 @@ namespace OMS.Services.StockRemid
         /// </summary>
         public IQueryable<RemindTemplateModel> Search(string productCode, out int count, int page = 1, int limit = 10)
         {
-            var list = omsAccessor.Get<RemindTemplateModel>().AsNoTracking().Include(c => c.Product).Where(c => string.IsNullOrEmpty(productCode) || c.Product.ProductCode == productCode);
+            var list = omsAccessor.Get<RemindTemplateModel>().AsNoTracking().Include(c => c.Product).Where(c => (string.IsNullOrEmpty(productCode) || c.Product.ProductCode == productCode) && c.Statu );
             count = list.Count();
             return list.Skip((page - 1) * limit).Take(limit);
         }
@@ -160,11 +196,11 @@ namespace OMS.Services.StockRemid
         public readonly ISearch templateSearch;
         public readonly ISet TemplateSet;
         private readonly IDbAccessor omsAccessor;
-        public RemindTemplate(IEnumerable<ISearch> search, IDbAccessor omsAccessor, ISet set)
+        public RemindTemplate(IEnumerable<ISearch> search, IDbAccessor omsAccessor, IEnumerable<ISet> set)
         {
             this.templateSearch = search.Where(c => c is TemplateSearch).FirstOrDefault();
             this.omsAccessor = omsAccessor;
-            this.TemplateSet = set;
+            this.TemplateSet = set.Where(c => c is TemplateSet).FirstOrDefault();
         }
 
         /// <summary>
@@ -172,34 +208,42 @@ namespace OMS.Services.StockRemid
         /// </summary>
         public virtual async Task<bool> TemplateAdd(object ts)
         {
-            object t;
-            if (ts is RemindTemplateModel)
-                t = (RemindTemplateModel)ts;
-            else t = ts as List<RemindTemplateModel>;
-            if (t == null)
+            var res = ExChange(ts);
+            if (res == null)
                 return false;
-            omsAccessor.OMSContext.AddRange(t);
+            omsAccessor.OMSContext.AddRange(res);
             return await omsAccessor.OMSContext.SaveChangesAsync() > 0;
         }
 
         /// <summary>
-        /// 新增模板
+        /// Dto 转换成实体
         /// </summary>
-        public virtual async Task<bool> TemplateDtoAdd(object ts)
+        private object ExChange(object ob)
         {
             object t; object entity;
-            if (ts is RemindTemplateDto)
+            if (ob is RemindTemplateDto)
             {
-                t = (RemindTemplateDto)ts;
+                t = (RemindTemplateDto)ob;
                 entity = new RemindTemplateModel();
+                Mapper.Map(t, entity);
+                return entity;
             }
-            else { t = ts as List<RemindTemplateDto>; entity = new List<RemindTemplateModel>(); }
-            if (t == null)
-                return false;
-            Mapper.Map(t, entity);
-            omsAccessor.OMSContext.AddRange(entity);
-            return await omsAccessor.OMSContext.SaveChangesAsync() > 0;
+            else if (ob is List<RemindTemplateDto>)
+            {
+                t = (List<RemindTemplateDto>)ob;
+                entity = new List<RemindTemplateModel>();
+                Mapper.Map(t, entity);
+                return entity;
+            }
+            else if (ob is RemindTemplateModel)
+            {
+                t = (RemindTemplateModel)ob;
+                return t;
+            }
+            else t = ob as List<RemindTemplateModel>;
+            return t;
         }
+
 
         /// <summary>
         /// 删除模板
@@ -218,13 +262,19 @@ namespace OMS.Services.StockRemid
         /// 模板开关
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> TemplateSwtich(templateSwtichDto swtich)
+        public bool TemplateSwtich(templateSwtichDto swtich, out string templateCode)
         {
+            templateCode = null;
             var tempalte = omsAccessor.Get<RemindTemplateModel>().Where(c => c.TemplateCode == swtich.TemplateCode).FirstOrDefault();
             if (tempalte == null)
-                return await TemplateDtoAdd(new RemindTemplateDto() { Statu = swtich.Statu, SaleProductId = swtich.SaleProductId });
+            {
+                var flag = TemplateAdd(new RemindTemplateDto() { Statu = swtich.Statu, SaleProductId = swtich.SaleProductId }).Result;
+                templateCode = omsAccessor.Get<RemindTemplateModel>().FirstOrDefault(c => c.SaleProductId == swtich.SaleProductId).TemplateCode;
+                return flag;
+
+            }
             tempalte.Statu = swtich.Statu;
-            return await omsAccessor.OMSContext.SaveChangesAsync() > 0;
+            return omsAccessor.OMSContext.SaveChangesAsync().Result > 0;
         }
 
         /// <summary>
@@ -235,5 +285,6 @@ namespace OMS.Services.StockRemid
 
 
     }
+
 
 }

@@ -21,7 +21,10 @@ namespace OMS.Web
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+            WebHost.CreateDefaultBuilder()
+                .UseKestrel(c =>
+                {
+                    c.Limits.MaxRequestBodySize =null;
+                }).UseStartup<Startup>();
     }
 }
