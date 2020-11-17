@@ -136,27 +136,29 @@ namespace OMS.Services.StockRemid
             {
                 var db = sqlsugar.db;
                 count = 0;
-                var data = db.Queryable<SaleProductPrice, SaleProduct, Product>((spp, sp, p) => new object[]{
-                JoinType.Left,spp.SaleProductId==sp.Id,
-                JoinType.Left,sp.ProductId==p.Id,
-                }).Where((spp, sp, p) => sp.Isvalid &&
+                var data = db.Queryable<SaleProductWareHouseStock, SaleProductPrice, SaleProduct, Product>((w, spp, sp, p) => new object[]{
+                JoinType.Inner,w.SaleProductId==spp.SaleProductId,
+                JoinType.Inner,spp.SaleProductId==sp.Id,
+                JoinType.Inner,sp.ProductId==p.Id,
+                }).Where((w, spp, sp, p) => sp.Isvalid &&
                         ((search.MaxPrice == null || spp.Price <= search.MaxPrice) && (search.MinPrice == null || spp.Price >= search.MinPrice)) &&
                       (productType == null || p.Type == productType) && (string.IsNullOrEmpty(search.NameCode) || p.Name.Contains(search.NameCode) || p.NameEn.Contains(search.NameCode) || p.Code == search.NameCode)
-                      ).GroupBy((spp, sp, p) => new { spp.SaleProductId, p.Name, p.NameEn, p.Code })
-                      .Select((spp, sp, p) => new
+                      ).GroupBy((w, spp, sp, p) => new { spp.SaleProductId, p.Name, p.NameEn, p.Code })
+                      .Select((w, spp, sp, p) => new
                       {
                           SaleProductId = spp.SaleProductId,
                           Price = SqlFunc.AggregateAvg(spp.Price),
-                          Stock = SqlFunc.AggregateSum(sp.AvailableStock),
+                          Stock = SqlFunc.AggregateSum(w.Stock - w.LockStock),
                           Name = p.Name,
                           En = p.NameEn,
                           ProductCode = p.Code
                       }).ToPageList(page, limit, ref count);
 
-                var _template = omsAccessor.Get<RemindTemplateModel>().AsNoTracking().ToList();
+                var _template = omsAccessor.Get<RemindTemplateModel>().Select(c => new { c.TemplateCode, c.Statu, c.SaleProductId }).ToList();
                 data.ForEach(c =>
                 {
                     var template = _template.FirstOrDefault(d => d.SaleProductId == c.SaleProductId);
+
                     list.Add(new SaleProductDto()
                     {
                         SaleProductId = c.SaleProductId,
@@ -178,10 +180,20 @@ namespace OMS.Services.StockRemid
         /// </summary>
         public IQueryable<RemindTemplateModel> Search(string productCode, out int count, int page = 1, int limit = 10)
         {
-            var list = omsAccessor.Get<RemindTemplateModel>().AsNoTracking().Include(c => c.Product).Where(c => (string.IsNullOrEmpty(productCode) || c.Product.ProductCode == productCode) && c.Statu );
+            var list = omsAccessor.Get<RemindTemplateModel>().AsNoTracking().Include(c => c.Product).Where(c => (string.IsNullOrEmpty(productCode) || c.Product.ProductCode == productCode) && c.Statu);
             count = list.Count();
             return list.Skip((page - 1) * limit).Take(limit);
         }
+
+        /// <summary>
+        ///  根据saleProductId 获取模板
+        /// </summary>
+        public IQueryable<RemindTemplateModel> Search(List<int> saleProductIds)
+        {
+            var list = omsAccessor.Get<RemindTemplateModel>().Where(c => saleProductIds.Any(d => d == c.SaleProductId)).Include(c => c.Product);
+            return list;
+        }
+
     }
 
 

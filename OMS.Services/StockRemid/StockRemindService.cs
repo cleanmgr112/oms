@@ -80,34 +80,35 @@ namespace OMS.Services.StockRemid
         /// 检验模板是否库存不足
         /// </summary>
         /// <returns></returns>
-        public async Task TemplateValid()
+        public async Task TemplateValid(StockTitleService stockTitle)
         {
             if (cache.GetString(user.Id.ToString()) == null)
                 return;
 
             var template = omsAccessor.Get<RemindTemplateModel>().Where(c => c.Statu && c.IsUpdate).Include(c => c.RemindTitles).Include(c => c.UserMessages).Include(c => c.Product).ToList();
-
+            // 同步库存
+            await stockTitle.SynStock(template);
 
             var list = new List<Task>();
             template.ForEach(c =>
                {
-                    // 预警库存达到触发条件.
-                    if (c.Product != null && c.RemindStock >= c.Product.Stock)
+                   // 预警库存达到触发条件.
+                   if (c.Product != null && c.RemindStock >= c.Product.Stock)
                    {
-                        // 预警消息.
-                        var str = c.TemplateTitle?.Replace("{{RemindStock}}", c.RemindStock.ToString()).Replace("{{Stock}}", c.Product.Stock.ToString());
+                       // 预警消息.
+                       var str = c.TemplateTitle?.Replace("{{RemindStock}}", c.RemindStock.ToString()).Replace("{{Stock}}", c.Product.Stock.ToString());
 
                        list.Add(MaliSendAsync(JsonConvert.DeserializeObject<List<UserDto>>(c.User), "库存提醒", str));  // 发送邮件.
 
-                        // 向在线的人发送消息.
-                        var _user = SendMessage(c.User, str);
+                       // 向在线的人发送消息.
+                       var _user = SendMessage(c.User, str);
                        if (_user.Count != 0)
                        {
-                            // 向有权限的人且离线的人记录消息.
-                            c.UserMessages.Add(new UserMessageModel() { Message = str, User = JsonConvert.SerializeObject(_user) });
+                           // 向有权限的人且离线的人记录消息.
+                           c.UserMessages.Add(new UserMessageModel() { Message = str, User = JsonConvert.SerializeObject(_user) });
                        }
-                        //生成标题
-                        c.RemindTitles.Add(new RemindTitleModel() { RemindTitle = str });
+                       //生成标题
+                       c.RemindTitles.Add(new RemindTitleModel() { RemindTitle = str });
                    }
                });
 
@@ -171,13 +172,12 @@ namespace OMS.Services.StockRemid
             var context = new OMSContext(new DbContextOptionsBuilder<OMSContext>().UseSqlServer(conn).Options);
             await Task.Delay(100);
             var UserId = user.Select(c => c.Id).ToList();
-            //var entity = context.ChangeTracker.Entries<User>().Select(c=>c.Entity);
             var entity = context.Set<User>();
-            var emails = entity.Where(c => UserId.Any(d => d ==c.Id)).Select(c => c.Email).ToList();
+            var emails = entity.Where(c => UserId.Any(d => d == c.Id)).Select(c => c.Email).ToList();
             var address = string.Join(",", emails);
             context.Dispose();
             return common.SendEmailByAliYun(subject, message, address, Mail, "红酒世界");
-       
+
         }
     }
 }

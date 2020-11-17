@@ -147,7 +147,6 @@ namespace OMS.API
                 c.IncludeXmlComments(xmlPath, true);
 
             });
-            services.AddSignalR();
             #endregion
 
         }

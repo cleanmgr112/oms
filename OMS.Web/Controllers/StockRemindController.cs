@@ -119,7 +119,7 @@ namespace OMS.Web.Controllers
         public async Task<IActionResult> templateWarn()
         {
             var task = stockRemind.UserMesaage();
-            var task1 = stockRemind.TemplateValid();
+            var task1 = stockRemind.TemplateValid(stockTitle);
             await task1; await task;
             return Ok();
         }
@@ -179,13 +179,5 @@ namespace OMS.Web.Controllers
             return Ok();
         }
         #endregion
-
-
-
-        [HttpGet("api/message")]
-        public object APiMessage()
-        {
-            return new object();
-        }
     }
 }

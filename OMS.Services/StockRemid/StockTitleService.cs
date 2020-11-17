@@ -2,6 +2,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using OMS.Data.Domain;
 using OMS.Data.Interface;
 using OMS.Model.StockRemind;
 using OMS.Services.StockRemid.StockRemindDto;
@@ -59,17 +60,20 @@ namespace OMS.Services.StockRemid
         /// <summary>
         /// 获取已经预警的模板
         /// </summary>
-        public List<TitleSearchDto> GetTemplate(out int count, string productCode = null, int page = 1, int limit = 10)
+        public  List<TitleSearchDto> GetTemplate(out int count, string productCode = null, int page = 1, int limit = 10)
         {
-            var list =((TemplateSearch)ISearch.FirstOrDefault(c => c is TemplateSearch)).Search(productCode,out count,page,limit);
-            return Mapper.Map<List<TitleSearchDto>>(list.ToList());
+            var list = ((TemplateSearch)ISearch.FirstOrDefault(c => c is TemplateSearch)).Search(productCode, out count, page, limit).ToList();
+            var flag = SynStock(list).Result;
+            return Mapper.Map<List<TitleSearchDto>>(list);
         }
 
         /// <summary>
         /// 条件搜索(模板和标题混合搜索)
         /// </summary>
-        public object Search(DateTime? min, DateTime? max, string productCode) =>
-            new { template = GetTemplate(out int count1, productCode), title =  ((TitleSearch)ISearch.FirstOrDefault(c=>c is TitleSearch)).Search(new SearchDto() { Min = min, Max = max }, out int count2), titleCount = count2, templateCount = count1 };
+        public object Search(DateTime? min, DateTime? max, string productCode)
+        {
+            return new { template = GetTemplate(out int count1, productCode), title = ((TitleSearch)ISearch.FirstOrDefault(c => c is TitleSearch)).Search(new SearchDto() { Min = min, Max = max }, out int count2), titleCount = count2, templateCount = count1 };
+        }
 
         /// <summary>
         /// 修改状态
@@ -113,5 +117,17 @@ namespace OMS.Services.StockRemid
             ExcelHelper.Export(path, arr, $"{environment.WebRootPath}\\files\\导出.xlsx");
         }
 
+        /// <summary>
+        /// 同步库存
+        /// </summary>
+       public async Task<bool> SynStock(List<RemindTemplateModel> templates)
+        {
+            var list = templates.Select(c => c.SaleProductId).ToList();
+           var saleproduct= omsAccessor.Get<SaleProductWareHouseStock>().Where(c => list.Any(d => d == c.SaleProductId)).GroupBy(c=>c.SaleProductId).Select(c=>new {saleproductId= c.Key,stock=c.Sum(d=>d.Stock-d.LockStock)}).ToList();
+            saleproduct.ForEach(c => {
+                templates.FirstOrDefault(d => d.SaleProductId == c.saleproductId).Product.Stock = c.stock;
+            });
+            return await omsAccessor.OMSContext.SaveChangesAsync() >= 0;
+        }
     }
 }

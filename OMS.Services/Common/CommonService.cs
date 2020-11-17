@@ -308,7 +308,7 @@ namespace OMS.Services.Common
                 {
                     CanOptOrderStates = new List<OrderState>() {
                        OrderState.Paid
-                },
+                    },
                     OptedOrderState = OrderState.Paid,
                     OptTypeEnum =  OptTypeEnum.B2CSave
                 },

@@ -51,7 +51,6 @@ namespace OMS.API.Controllers
         private readonly IDbAccessor _omsAccessor;
         private readonly IScheduleTaskFuncService _scheduleTaskFuncService;
         private readonly ICMBService _cmbService;
-        private readonly IHubContext<HubContext, IHubContext> hubContext;
         private readonly ISaleProductWareHouseStockService _saleProductWareHouseStockService;
         public ProductController(IProductService productService,
             IOrderService orderService,
@@ -62,7 +61,6 @@ namespace OMS.API.Controllers
             IDbAccessor omsAccessor,
             IScheduleTaskFuncService scheduleTaskFuncService,
             ICMBService cmbService,
-            IHubContext<HubContext, IHubContext> hubContext,
             ISaleProductWareHouseStockService saleProductWareHouseStockService
             )
         {
@@ -75,7 +73,6 @@ namespace OMS.API.Controllers
             _omsAccessor = omsAccessor;
             _scheduleTaskFuncService = scheduleTaskFuncService;
             _cmbService = cmbService;
-           this.hubContext = hubContext;
             _saleProductWareHouseStockService = saleProductWareHouseStockService;
         }
         #endregion
@@ -126,8 +123,6 @@ namespace OMS.API.Controllers
             if (saleProductWareHouseStocks != null)
             {
                 dynamic res = _productService.SyncSaleProductStock(saleProductWareHouseStocks);
-                //向在线的用户发送库存更新消息，重新获取模板
-                hubContext.Clients.All.SendMessage("stock", string.Empty);
                 return Json(res);
             }
             else
@@ -146,8 +141,7 @@ namespace OMS.API.Controllers
             if (saleProductWareHouseStocks != null)
             {
                 dynamic res = _productService.SyncSingleSaleProductStock(saleProductWareHouseStocks);
-                //向在线的用户发送库存更新消息，重新获取模板
-                hubContext.Clients.All.SendMessage("stock", string.Empty);
+
                 return Json(res);
             }
             else
@@ -498,8 +492,6 @@ namespace OMS.API.Controllers
                 var xuniStock = _productService.GetXuniStocks(saleProduct.Id);
                 _productService.SyncProductStockToAssist(productStockFeedData.ShopId, product.Code, saleProduct.AvailableStock - (xuniStock.Sum(r => r.Stock) - xuniStock.Sum(r => r.LockStock)));
 
-                //发送重新获取库存的消息
-                hubContext.Clients.All.SendMessage("stock", string.Empty);
                 return Json(new { isSucc = true, msg = "成功" });
 
             }
@@ -650,8 +642,6 @@ namespace OMS.API.Controllers
                     //更新商品到商城
                     _productService.SyncMoreProductStockToAssist(productStockDataList);
 
-                    //发送重新获取库存的消息
-                    hubContext.Clients.All.SendMessage("stock", string.Empty);
                     return Json(new { isSucc = true, msg = "成功" });
                 }
                 catch(Exception ex)
