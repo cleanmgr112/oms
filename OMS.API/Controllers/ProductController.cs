@@ -74,6 +74,7 @@ namespace OMS.API.Controllers
             _scheduleTaskFuncService = scheduleTaskFuncService;
             _cmbService = cmbService;
             _saleProductWareHouseStockService = saleProductWareHouseStockService;
+            _productService.SynStock();
         }
         #endregion
 

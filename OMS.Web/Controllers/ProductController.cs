@@ -56,6 +56,7 @@ namespace OMS.Web.Controllers
             _logService = logService;
             _scheduleTaskFuncService = scheduleTaskFuncService;
             _wareHouseService = wareHouseService;
+            _productService.SynStock();
         }
         #endregion
 

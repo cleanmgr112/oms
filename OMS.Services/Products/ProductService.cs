@@ -19,6 +19,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace OMS.Services.Products
 {
@@ -2360,7 +2361,121 @@ namespace OMS.Services.Products
         #endregion
 
 
+        /// <summary>
+        /// 同步锁定库存问题
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> SynStock()
+        {
+            var wareHouseStock = _omsAccessor.Get<SaleProductWareHouseStock>().Select(c => new StockDto { Stock = c.Stock, LockStock = c.LockStock, SaleProductId = c.SaleProductId });
 
+            var saleStock = _omsAccessor.Get<SaleProduct>().Join(wareHouseStock, c => c.Id, c => c.SaleProductId, (c, d) => new
+            {
+                saleproduct = new SaleStockDto() { Stock = c.Stock, LockStock = c.LockStock, Id = c.Id },
+                wareHouseStock = d
+            }).GroupBy(c => c.saleproduct.Id).Where(c => c.Max(d => d.saleproduct.Stock) != c.Sum(d => d.wareHouseStock.Stock) || c.Max(d => d.saleproduct.LockStock) < c.Max(d => d.wareHouseStock.LockStock) || c.Min(d => d.saleproduct.LockStock) < 0 || c.Min(d => d.wareHouseStock.LockStock) < 0).Select(c => new SynStockDto
+            {
+                SaleProductId = c.Key,
+                WareStock = c.Select(d => d.wareHouseStock),
+                SaleStock = c.Select(d => d.saleproduct).FirstOrDefault()
+            }).ToList();
+
+
+            var minusLockStock = saleStock.Where(c => c.WareStock.Any(d => d.LockStock < 0) || c.SaleStock.LockStock < 0).ToList();// 仓库锁定库存<0.
+
+            saleStock.RemoveAll(c => minusLockStock.Select(d => d.SaleProductId).Contains(c.SaleProductId)); // 移除
+
+            var MaxLockStock = saleStock.Where(c => c.SaleStock.LockStock < c.WareStock.Sum(d => d.LockStock)).ToList(); // 销售产品库存锁定< 仓库库存锁定
+
+
+            return await SynMinusLockStock(minusLockStock) && await MaxLockSaleStock(MaxLockStock);
+
+        }
+
+        /// <summary>
+        /// 处理锁定库存<0的情况
+        /// </summary>
+        /// <returns></returns>
+        private async Task<bool> SynMinusLockStock(List<SynStockDto> synStocks)
+        {
+            if (synStocks.Count == 0)
+                return true;
+            var saleproductId = synStocks.Select(c => c.SaleProductId).ToList();
+            var saleproduct = _omsAccessor.Get<SaleProduct>().Where(c => saleproductId.Any(d => d == c.Id)).ToList();
+            var wareSaleProduct = _omsAccessor.Get<SaleProductWareHouseStock>().Where(c => saleproductId.Any(d => d == c.SaleProductId)).ToList();
+            synStocks.ForEach(c =>
+            {
+                var sale = saleproduct.Where(d => d.Id == c.SaleProductId).FirstOrDefault();
+                var ware = wareSaleProduct.Where(d => d.SaleProductId == c.SaleProductId).ToList();
+                ware.ForEach(d =>
+                {
+                    if (d.LockStock < 0)
+                        d.LockStock = 0;
+                }); // 将负数的锁定库存改成0
+                var stock = ware.Sum(d => d.LockStock);
+                if (sale.LockStock < stock)
+                {    
+                    sale.LockStock = stock; // 保证 销售商品的锁定库存>= 仓库内的锁定库存
+                    sale.AvailableStock = sale.Stock - sale.LockStock;
+                }
+            });
+            return await _omsAccessor.OMSContext.SaveChangesAsync() >= 0 ;
+        }
+
+        /// <summary>
+        /// 处理 销售产品锁定库存< 仓库库存
+        /// </summary>
+        /// <returns></returns>
+        private async Task<bool> MaxLockSaleStock(List<SynStockDto> synStockDtos)
+        {
+            if (synStockDtos.Count == 0)
+                return true;
+            var saleproductId = synStockDtos.Select(c => c.SaleProductId).ToList();
+            var saleproduct = _omsAccessor.Get<SaleProduct>().Where(c => saleproductId.Any(d => d == c.Id)).ToList();
+            synStockDtos.ForEach(c =>
+            {
+                var sale = saleproduct.Where(d => d.Id == c.SaleProductId).FirstOrDefault();
+                sale.LockStock = c.WareStock.Sum(d => d.LockStock);
+                sale.AvailableStock = sale.Stock - sale.LockStock;
+            });
+
+            return await _omsAccessor.OMSContext.SaveChangesAsync() >= 0;
+        }
+
+    }
+
+    public class SynStockDto
+    {
+        // 销售产品Id.
+        public int SaleProductId { get; set; }
+
+        // 仓库锁定库存数.
+        public IEnumerable<StockDto> WareStock { get; set; }
+
+        public SaleStockDto SaleStock { get; set; }
+    }
+
+    public class StockDto
+    {
+
+        // 总库存
+        public int Stock { get; set; }
+
+        // 锁定库存
+        public int LockStock { get; set; }
+
+        public int SaleProductId { get; set; }
+    }
+
+    public class SaleStockDto
+    {
+        public int Id { get; set; }
+
+        // 总库存
+        public int Stock { get; set; }
+
+        // 锁定库存
+        public int LockStock { get; set; }
 
     }
 }

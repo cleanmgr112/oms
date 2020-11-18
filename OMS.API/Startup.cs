@@ -183,10 +183,7 @@ namespace OMS.API
             ////RecurringJob.AddOrUpdate(() => Console.WriteLine("Hangfire Work!!!!"), Cron.Minutely);
             //RecurringJob.AddOrUpdate<K3WiseService>(t => t.AddOrdersToK3(), Cron.Daily());
             //#endregion
-            app.UseSignalR(routes =>
-            {
-                routes.MapHub<HubContext>("/chathub");
-            });
+
         }
     }
 }

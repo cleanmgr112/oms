@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OMS.Services.Products
 {
@@ -431,6 +432,6 @@ namespace OMS.Services.Products
         bool UpdateWareHouseStock(List<WareHouseStock> wareHouseStocks, int productId = 0);
         List<SaleProductWareHouseStock> GetXuniStocks(int saleProductId);
         #endregion
-
+       Task<bool> SynStock();
     }
 }

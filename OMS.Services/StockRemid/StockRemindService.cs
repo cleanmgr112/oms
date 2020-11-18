@@ -88,7 +88,7 @@ namespace OMS.Services.StockRemid
             var template = omsAccessor.Get<RemindTemplateModel>().Where(c => c.Statu && c.IsUpdate).Include(c => c.RemindTitles).Include(c => c.UserMessages).Include(c => c.Product).ToList();
             // 同步库存
             await stockTitle.SynStock(template);
-
+            var remind = new List<RemindTemplateModel>();
             var list = new List<Task>();
             template.ForEach(c =>
                {
@@ -109,10 +109,11 @@ namespace OMS.Services.StockRemid
                        }
                        //生成标题
                        c.RemindTitles.Add(new RemindTitleModel() { RemindTitle = str });
+                       remind.Add(c);
                    }
                });
 
-            await remindNotify.ReadRule(omsAccessor, template);
+            await remindNotify.ReadRule(omsAccessor, remind);
             Task.WaitAll(list.ToArray());
 
         }
