@@ -27,6 +27,8 @@ namespace OMS.Services.Products
         #region ctor
         private ILogger<ProductService> _logger;
         private ILogService _logService;
+        private readonly IConfiguration configuration;
+
         //锁对象1
         private readonly static object _MyLock1 = new object();
         //锁对象1
@@ -37,6 +39,7 @@ namespace OMS.Services.Products
         {
             _logger = logger;
             _logService = logService;
+            this.configuration = configuration;
         }
         #endregion
 
@@ -250,7 +253,8 @@ namespace OMS.Services.Products
             if (product != null)
             {
                 List<object> proList = new List<object>();
-                proList.Add(new {
+                proList.Add(new
+                {
                     product.Name,
                     OMSId = product.Id,
                     OMSType = product.Type,
@@ -272,7 +276,7 @@ namespace OMS.Services.Products
                 };
                 using (var http = new HttpClient(httpClientHandler))
                 {
-                    var content = new StringContent(JsonConvert.SerializeObject(proList),Encoding.UTF8,"application/json");
+                    var content = new StringContent(JsonConvert.SerializeObject(proList), Encoding.UTF8, "application/json");
                     var response = http.PostAsync(_configuration.GetSection("WMSApi")["domain"] + "/wmsapi/ProductSync/OmsSyncUpdateProducts", content);
                     if (response.Result.IsSuccessStatusCode)
                     {
@@ -805,12 +809,12 @@ namespace OMS.Services.Products
                 saleProductPriceList.SaleProductPriceBaseList = list;
                 data.Add(saleProductPriceList);
             }
-           
+
             if (!string.IsNullOrEmpty(searchProductContext.SearchStr))
             {
                 data = data.Where(x => x.SaleProductName.Contains(searchProductContext.SearchStr.Trim()) || x.ChannelName.Contains(searchProductContext.SearchStr.Trim()) || x.SaleProductCode.Contains(searchProductContext.SearchStr.Trim())).ToList();
             }
-            data = data.OrderByDescending(x => x.ChannelName).ThenByDescending(x=>x.Stock).ToList();
+            data = data.OrderByDescending(x => x.ChannelName).ThenByDescending(x => x.Stock).ToList();
             return new PageList<SaleProductPriceList>(data, searchProductContext.PageIndex, searchProductContext.PageSize);
         }
         /// <summary>
@@ -1065,7 +1069,7 @@ namespace OMS.Services.Products
             {
                 var data = _omsAccessor.Get<SuitProducts>().Where(r => r.Id == suitProId).FirstOrDefault();
                 var pro = _omsAccessor.Get<SuitProductsDetail>().Where(r => r.SuitProductsId == suitProId).ToList();
-                foreach(var item in pro)
+                foreach (var item in pro)
                 {
                     _omsAccessor.Delete<SuitProductsDetail>(item);
                 }
@@ -1073,7 +1077,7 @@ namespace OMS.Services.Products
                 _omsAccessor.SaveChanges();
                 return true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 _logService.Error("<DeleteSuitProductsById> 信息：" + e.Message);
                 return false;
@@ -1113,7 +1117,8 @@ namespace OMS.Services.Products
                 _omsAccessor.Delete<SuitProductsDetail>(data);
                 _omsAccessor.SaveChanges();
                 return true;
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 _logService.Error("<DeleteSuitProductsDetailById> 信息：" + e.Message);
                 return false;
@@ -1581,15 +1586,18 @@ namespace OMS.Services.Products
         /// 通过出库编码和商品ID查询商品仓库库存
         /// </summary>
         /// <returns></returns>
-        public SaleProductWareHouseStock GetSPHStockByWareHouseCodeAndProduct(string wareHouseCode,int productId) {
+        public SaleProductWareHouseStock GetSPHStockByWareHouseCodeAndProduct(string wareHouseCode, int productId)
+        {
 
             var data = new SaleProductWareHouseStock();
             var wareHouse = _omsAccessor.Get<WareHouse>().Where(x => x.Isvalid && x.Code == wareHouseCode.Trim()).FirstOrDefault();
-            if (wareHouse==null) {
+            if (wareHouse == null)
+            {
                 return data;
-            } 
-            data = _omsAccessor.Get<SaleProductWareHouseStock>().Where(r => r.ProductId == productId && r.WareHouseId == wareHouse.Id &&  r.Isvalid).FirstOrDefault();
-            if (data == null) {
+            }
+            data = _omsAccessor.Get<SaleProductWareHouseStock>().Where(r => r.ProductId == productId && r.WareHouseId == wareHouse.Id && r.Isvalid).FirstOrDefault();
+            if (data == null)
+            {
                 data = new SaleProductWareHouseStock();
                 data.Stock = 0;
                 data.LockStock = 0;
@@ -2156,7 +2164,7 @@ namespace OMS.Services.Products
         /// </summary>
         /// <param name="searchProductContext"></param>
         /// <returns></returns>
-        public PageList<WareHouseStockViewModel> GetWareHouseStockViewModels(SearchProductContext searchProductContext,out int allStock,out int allLockStock,out int allAvailableStock)
+        public PageList<WareHouseStockViewModel> GetWareHouseStockViewModels(SearchProductContext searchProductContext, out int allStock, out int allLockStock, out int allAvailableStock)
         {
             var data = (from sp in _omsAccessor.Get<SaleProductWareHouseStock>().Where(x => x.Isvalid && !searchProductContext.WareHouseId.HasValue ? true : x.WareHouseId == searchProductContext.WareHouseId)
                         join p in _omsAccessor.Get<Product>().Where(x => x.Isvalid && (string.IsNullOrEmpty(searchProductContext.SearchStr) ? true : (x.Name.Contains(searchProductContext.SearchStr) || x.Code.Contains(searchProductContext.SearchStr)))) on sp.ProductId equals p.Id
@@ -2166,8 +2174,8 @@ namespace OMS.Services.Products
                             ProductId = p.Id,
                             SaleProductId = sp.SaleProductId,
                             WareHouseId = wh.Id,
-                            SalePrice = _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault()==null?0 : _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault().Price,
-                            SumSalePrice = _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault()==null?0 : _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault().Price * sp.Stock,
+                            SalePrice = _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault() == null ? 0 : _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault().Price,
+                            SumSalePrice = _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault() == null ? 0 : _omsAccessor.Get<SaleProductPrice>().Where(x => x.Isvalid && x.SaleProductId == sp.SaleProductId).FirstOrDefault().Price * sp.Stock,
                             ProductName = p.Name,
                             ProductCode = p.Code,
                             WareHouseName = wh.Name,
@@ -2180,23 +2188,26 @@ namespace OMS.Services.Products
                         }).OrderBy(x => x.ProductId).ThenBy(x => x.WareHouseId).ToList();
 
             //按可用库存进行判断查询
-            if (!(searchProductContext.AvailableStockMin==0 && searchProductContext.AvailableStockMax==0)) {
+            if (!(searchProductContext.AvailableStockMin == 0 && searchProductContext.AvailableStockMax == 0))
+            {
                 data = data.Where(x => x.AvailableStock >= searchProductContext.AvailableStockMin && x.AvailableStock <= searchProductContext.AvailableStockMax).ToList();
             }
             //按销售单价进行查询
-            if (!(searchProductContext.SalePriceMin == 0 && searchProductContext.SalePriceMax == 0)) {
-                data = data.Where(x=>x.SalePrice>=searchProductContext.SalePriceMin && x.SalePrice<=searchProductContext.SalePriceMax).ToList();
+            if (!(searchProductContext.SalePriceMin == 0 && searchProductContext.SalePriceMax == 0))
+            {
+                data = data.Where(x => x.SalePrice >= searchProductContext.SalePriceMin && x.SalePrice <= searchProductContext.SalePriceMax).ToList();
             }
             //对输出的参数进行赋值
-            allStock = data.Sum(x=>x.Stock);
-            allLockStock = data.Sum(x=>x.LockStock);
-            allAvailableStock = data.Sum(x=>x.AvailableStock);
+            allStock = data.Sum(x => x.Stock);
+            allLockStock = data.Sum(x => x.LockStock);
+            allAvailableStock = data.Sum(x => x.AvailableStock);
             return new PageList<WareHouseStockViewModel>(data, searchProductContext.PageIndex, searchProductContext.PageSize);
         }
         #endregion
 
         #region 获取WMS库存并同步到OMS（保持库存一致）
-        public bool SyncStocksWmsToOms(int productId = 0) {
+        public bool SyncStocksWmsToOms(int productId = 0)
+        {
             Monitor.Enter(_MyLock1); //获取排它锁
 
             try
@@ -2258,7 +2269,7 @@ namespace OMS.Services.Products
             }
             catch (Exception ex)
             {
-                _logService.Error("商品仓库库存更新失败："+ex.Message);
+                _logService.Error("商品仓库库存更新失败：" + ex.Message);
                 return false;
             }
 
@@ -2272,7 +2283,8 @@ namespace OMS.Services.Products
         /// 更新商品仓库库存
         /// </summary>
         /// <returns></returns>
-        public bool UpdateWareHouseStock(List<WareHouseStock> wareHouseStocks,int productId=0) {
+        public bool UpdateWareHouseStock(List<WareHouseStock> wareHouseStocks, int productId = 0)
+        {
             Monitor.Enter(_MyLock2); //获取排它锁
 
             try
@@ -2282,7 +2294,7 @@ namespace OMS.Services.Products
                 //单条数据更新（已知商品ID）
                 if (productId != 0)
                 {
-                    var saleproduct = _omsAccessor.Get<SaleProduct>().Include(x=>x.Product).Where(x => x.Isvalid && x.Channel == 94 && x.ProductId == productId).FirstOrDefault();
+                    var saleproduct = _omsAccessor.Get<SaleProduct>().Include(x => x.Product).Where(x => x.Isvalid && x.Channel == 94 && x.ProductId == productId).FirstOrDefault();
                     if (saleproduct == null)
                         return false;
                     foreach (var itemWareHouseStock in wareHouseStocks)
@@ -2313,7 +2325,7 @@ namespace OMS.Services.Products
                         }
                     }
                     saleproduct.Stock = wareHouseStocks.Sum(x => x.Stock);
-                    saleproduct.AvailableStock = saleproduct.Stock - saleproduct.LockStock ;
+                    saleproduct.AvailableStock = saleproduct.Stock - saleproduct.LockStock;
                     _omsAccessor.Update(saleproduct);
                     _omsAccessor.SaveChanges();
                     //更新销售商品的库存到商城
@@ -2328,7 +2340,7 @@ namespace OMS.Services.Products
             }
             catch (Exception ex)
             {
-                _logService.Error("商品仓库库存同步错误："+ex.Message);
+                _logService.Error("商品仓库库存同步错误：" + ex.Message);
                 return false;
             }
 
@@ -2346,5 +2358,9 @@ namespace OMS.Services.Products
             return data;
         }
         #endregion
+
+
+
+
     }
 }

@@ -333,14 +333,14 @@ namespace OMS.Services.Products
         /// <param name="shopid"></param>
         /// <param name="code"></param>
         /// <param name="quantity"></param>
-         void SyncMoreProductStockToAssist(List<ProductStockData> productStockDataList);
+        void SyncMoreProductStockToAssist(List<ProductStockData> productStockDataList);
         #endregion
 
 
         #region 销售商品仓库库存
         SaleProductWareHouseStock CreateSaleProductWareHouseStock(SaleProductWareHouseStock saleProdctWHStock);
         SaleProductWareHouseStock UpdateSaleProductWareHouseStock(SaleProductWareHouseStock saleProdctWHStock);
-        SaleProductWareHouseStock GetSaleProductWareHouseStockById(int saleProId,int wareHouseId);
+        SaleProductWareHouseStock GetSaleProductWareHouseStockById(int saleProId, int wareHouseId);
         IEnumerable<SaleProductWareHouseStock> GetSaleProductStocksBySaleProductId(int saleProductId);
         //IEnumerable<SaleProductWareHouseStockModel> GetSaleProductStocksBySaleProductId(int saleProductId);
         IEnumerable<SaleProductWareHouseStockModel> GetSaleProductStocksByProductId(int productId);
@@ -394,7 +394,7 @@ namespace OMS.Services.Products
         /// <param name="oldWareHouseId"></param>
         /// <param name="newWareHouseId"></param>
         /// <returns></returns>
-        bool ChangeWareHouseSetProLockedLog(int orderId, int oldWareHouseId,int newWareHouseId);
+        bool ChangeWareHouseSetProLockedLog(int orderId, int oldWareHouseId, int newWareHouseId);
         /// <summary>
         /// B2C订单拆分/合并解锁旧订单锁定库存
         /// </summary>
@@ -423,7 +423,7 @@ namespace OMS.Services.Products
         #endregion
 
         #region 获取WMS库存并同步到OMS（保持库存一致）
-        bool SyncStocksWmsToOms(int productId=0);
+        bool SyncStocksWmsToOms(int productId = 0);
         /// <summary>
         /// 更新商品仓库库存
         /// </summary>
@@ -431,5 +431,6 @@ namespace OMS.Services.Products
         bool UpdateWareHouseStock(List<WareHouseStock> wareHouseStocks, int productId = 0);
         List<SaleProductWareHouseStock> GetXuniStocks(int saleProductId);
         #endregion
+
     }
 }

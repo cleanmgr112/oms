@@ -143,10 +143,10 @@ namespace OMS.Services.StockRemid
                 }).Where((w, spp, sp, p) => sp.Isvalid &&
                         ((search.MaxPrice == null || spp.Price <= search.MaxPrice) && (search.MinPrice == null || spp.Price >= search.MinPrice)) &&
                       (productType == null || p.Type == productType) && (string.IsNullOrEmpty(search.NameCode) || p.Name.Contains(search.NameCode) || p.NameEn.Contains(search.NameCode) || p.Code == search.NameCode)
-                      ).GroupBy((w, spp, sp, p) => new { spp.SaleProductId, p.Name, p.NameEn, p.Code })
+                      ).GroupBy((w, spp, sp, p) => new { w.SaleProductId, p.Name, p.NameEn, p.Code })
                       .Select((w, spp, sp, p) => new
                       {
-                          SaleProductId = spp.SaleProductId,
+                          SaleProductId = w.SaleProductId,
                           Price = SqlFunc.AggregateAvg(spp.Price),
                           Stock = SqlFunc.AggregateSum(w.Stock - w.LockStock),
                           Name = p.Name,

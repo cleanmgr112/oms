@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OMS.Data.Domain
 {
@@ -12,7 +13,8 @@ namespace OMS.Data.Domain
             ModifiedTime = DateTime.Now;
         }
 
-        public virtual int Id { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public  int Id { get; set; }
 
         public int? CreatedBy { get; set; }
 
